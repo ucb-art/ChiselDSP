@@ -7,7 +7,7 @@ lazy val ChiselCompatibility = Project(
     name := "chisel-compatibility",
     version := "1.0",
     scalaVersion := "2.10.6",
-    libraryDependencies += "edu.berkeley.cs" %% "chisel" % "latest.release",
+    libraryDependencies += "edu.berkeley.cs" %% "chisel" % "2.2.27",
     libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-compiler" % _ )
   )
 )

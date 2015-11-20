@@ -1,6 +1,8 @@
+PRJ="Demo"
+
 vlsi:
 	mkdir -p vlsi/generated-src
-	cd sbt; sbt "run -params --backend v --targetDir ../vlsi/generated-src"
+	cd sbt; sbt "run -params --backend v --targetDir ../vlsi/generated-src"; mv ../vlsi/generated-src/*.v ../../Verilog$(PRJ)/. 
 
 test:
 	mkdir -p test/generated-src

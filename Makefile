@@ -1,9 +1,9 @@
 # Run 'make setup' first!
 
 setup:
-	cd ChiselProject/sbt/ChiselCompatibility/src/main; rm -f scala; ln -s ../../../../ChiselCompatibility scala
-	cd ChiselProject/sbt/ChiselDSP_Modules/src/main; rm -f scala; ln -s ../../../../ChiselDSP/Modules scala
-	cd ChiselProject/sbt/ChiselDSP_Overlay/src/main; rm -f scala; ln -s ../../../../ChiselDSP/Overlay scala
+	cd ChiselProject/sbt/ChiselCompatibility/src/main; rm -f scala; ln -s ../../../../../ChiselCompatibility scala
+	cd ChiselProject/sbt/ChiselDSP_Modules/src/main; rm -f scala; ln -s ../../../../../ChiselDSP/Modules scala
+	cd ChiselProject/sbt/ChiselDSP_Overlay/src/main; rm -f scala; ln -s ../../../../../ChiselDSP/Overlay scala
 	
 wash:
 	find . -name "*~" -type f -delete
@@ -18,14 +18,14 @@ PRJ = "FFT"
 # Syntax example: make vlsi PRJ="XXX"
 
 vlsi:
-	cd ChiselProject/sbt/src/main; rm -f scala; ln -s ../../../../ChiselPrj$(PRJ) scala; \
+	mkdir Verilog$(PRJ); cd ChiselProject/sbt/src/main; rm -f scala; ln -s ../../../../ChiselPrj$(PRJ) scala; \
 	cd ../..; sed -i -e 's/2.2.27/latest.release/g' build.sbt; \
-	cd ..; make vlsi
+	cd ..; rm vlsi/generated-src/*.v; make vlsi PRJ=$(PRJ)
 	
 vlsi_old:
-	cd ChiselProject/sbt/src/main; rm -f scala; ln -s ../../../../ChiselPrj$(PRJ) scala; \
+	mkdir Verilog$(PRJ); cd ChiselProject/sbt/src/main; rm -f scala; ln -s ../../../../ChiselPrj$(PRJ) scala; \
 	cd ../..; sed -i -e 's/latest.release/2.2.27/g' build.sbt; \
-	cd ..; make vlsi
+	cd ..; rm vlsi/generated-src/*.v; make vlsi PRJ=$(PRJ)
 	
 debug:
 	cd ChiselProject/sbt/src/main; rm -f scala; ln -s ../../../../ChiselPrj$(PRJ) scala; \

@@ -13,7 +13,7 @@ wash:
 	cd ChiselProject/sbt/src/main; rm -f scala
 	
 # Chisel source folders should be named ChiselPrjXXX where you should set PRJ = "XXX"
-PRJ = "FFT"   
+PRJ = "Demo"   
 
 # Syntax example: make vlsi PRJ="XXX"
 

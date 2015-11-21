@@ -51,7 +51,7 @@ case class CountParams (
 }
 
 /** Counter control signals (I --> O can be passed through chain of counters) */
-class CountCtrl (myParams: CountParams) extends Bundle {
+class CountCtrl (myParams: CountParams) extends IOBundle {
   /** Decide whether node should be connected to an input or tied to constant */
   def ctrlGen(loc: CtrlLoc) : MyBool = {
     loc match {
@@ -66,7 +66,7 @@ class CountCtrl (myParams: CountParams) extends Bundle {
 }
 
 /** Counter IO */
-class CountIO (myParams: CountParams) extends Bundle {
+class CountIO (myParams: CountParams) extends IOBundle {
   // Count up/down control signal
   val upDown = myParams.countType match {
     case UpDown => MyBool(INPUT)

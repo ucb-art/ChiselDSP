@@ -3,6 +3,7 @@ import Chisel._
 
 object NODIR extends IODirection{
   def apply() = null
+  override def toString = "NODIR"
 }
 
 /*

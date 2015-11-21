@@ -1,7 +1,10 @@
 /** Chisel Module Class Extension */
 
-package ChiselDSP
-import Chisel._
+// package ChiselDSP
+// import Chisel._
+
+package Chisel
+import ChiselDSP._
 
 /** Module that allows passing in a generic type for DSP. Allows the designer to seamlessly switch
   * between MyDbl and MyFixed implementations for functional testing vs. fixed-point
@@ -30,6 +33,9 @@ abstract class DSPModule[T <: Bits with MyNum[T]](gen : => T) extends MyModule {
 
 }
 
+/** Special bundle for IO */
+abstract class IOBundle (view: Seq[String] = Seq()) extends Bundle(view)
+
 /** Adds missing functionality to Chisel x.x.x version of Module */
 abstract class MyModule extends Module {
 
@@ -42,14 +48,36 @@ abstract class MyModule extends Module {
   /** Set module name missing in earlier versions of Chisel. Useful when the same module 
     * is repurposed for different tasks.
     */
-  def setModuleName(n : String) { moduleName = n }
+  // def setModuleName(n : String) { moduleName = n }
   
-  /** Convert list of potential IO pins to actual IO.  
+  /** Convert list of potential IO pins (must be in an IOBundle) to actual IO.  
     * Allows you to selectively set signals to be module IOs (with direction) or just constants (directionless).
-    * Name of IO pin = Aggregate name _ signal name
+    * Name of IO pin = IOBundleName _ direction _ signalName
     */
-  def createIO[T <: Bundle](m: => T): T = {
-    val ioName = m.getClass.getName.toString.split('.').last
+  def createIO[T <: IOBundle](m: => T): T = {
+  
+    /** Newer versions of Chisel have an addPin that doesn't work :( 
+      * Add a pin with a name to the module
+      * @param pin the I/O to add
+      * @param name A name for the pin
+      */
+    def addPin[T <: Data](pin: T, name: String = "") = {
+      val gen = pin
+      io match {
+        case b: Bundle => {
+          for ((n, io) <- gen.flatten) {
+            io.compOpt = Some(this)
+            io.isIo = true
+          }
+          if (name != "") gen nameIt (name, true)
+          b.elements += ((gen.name, gen))
+        }
+        case _ => // Is it possible?
+      }
+      gen
+    } 
+  
+    val ioName = m.getClass.getName.toString.split('.').last.split('$').last
     m.flatten.map( x => if (!x._2.isDirectionless) addPin(x._2, ioName + "_" + (if (x._2.dir == INPUT) "in" else "out") + "_" + x._1 ))
     m
   }

@@ -15,6 +15,7 @@ debug:
 clean:
 	rm -rf sbt/target sbt/project vlsi/generated-src/* test/generated-src/* sbt/console_out sbt/*.h sbt/*.cpp 
 	rm -rf target sbt/ChiselCompatibility/target sbt/ChiselDSP_Modules/target sbt/ChiselDSP_Overlay/target
+	rm -rf sbt/sim.start
 
 .PHONY: vlsi test
 

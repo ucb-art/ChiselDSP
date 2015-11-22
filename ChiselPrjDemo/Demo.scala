@@ -69,7 +69,7 @@ object Demo {
   }
 }
 
-class DemoTests[T <: Demo[_ <: Bits with MyNum[_]] ](c: T)  extends Tester(c) {
+class DemoTests[T <: Demo[_ <: Bits with MyNum[_]] ](c: T)  extends DSPTester(c) {
 
   poke(c.x.a,1)
   poke(c.x.b,4)

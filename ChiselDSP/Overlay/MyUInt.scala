@@ -96,7 +96,7 @@ class MyUInt extends Bits with MyNum[MyUInt] {
   private def updateLimits(x: BigInt): Unit = {
     maxBits = MyUInt.toMax(this.getWidth) 
     max = x.max(max)
-    if (max > maxBits) {Warn("Warning, possible MyUInt overflow. Signals down the chain may be wrong."); maxBits}  
+    if (max > maxBits) {Warn("Warning, possible MyUInt overflow. Signals down the chain may be wrong."); max = maxBits}  
   }
   
   private var noUpdate = false  

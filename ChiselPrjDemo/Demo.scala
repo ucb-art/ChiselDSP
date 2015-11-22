@@ -28,6 +28,7 @@ class Demo [ T <: Bits with MyNum[T] ](gen : => T, myParams: DemoParams) extends
     val i_imag = gen.asInput
     val o_real = gen.asOutput
     val o_imag = gen.asOutput
+    val x = Dbl(INPUT)
   }
   
   val y = new ComplexIO; createIO(y)
@@ -78,6 +79,7 @@ class DemoTests[T <: Demo[_ <: Bits with MyNum[_]] ](c: T)  extends Tester(c) {
   peek(c.x.d)
   peek(c.y.o_real)
   peek(c.y.o_imag)
+  poke(c.y.x,0.5)
 
 }
 

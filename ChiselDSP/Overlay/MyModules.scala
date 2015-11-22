@@ -78,7 +78,7 @@ abstract class MyModule extends Module {
     } 
   
     val ioName = m.getClass.getName.toString.split('.').last.split('$').last
-    m.flatten.map( x => if (!x._2.isDirectionless) addPin(x._2, ioName + "_" + (if (x._2.dir == INPUT) "in" else "out") + "_" + x._1 ))
+    m.flatten.map( x => if (!x._2.isDirectionless && !x._2.isLit) addPin(x._2, ioName + "_" + (if (x._2.dir == INPUT) "in" else "out") + "_" + x._1 ))
     m
   }
   

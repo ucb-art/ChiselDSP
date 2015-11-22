@@ -6,6 +6,7 @@ package ChiselDSP
 import Chisel._
 
 abstract trait MyNum[T <: Data] {
+
   def << (n: Int): T
   def >> (n: Int): T
   def << (n: MyUInt): T

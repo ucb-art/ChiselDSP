@@ -22,19 +22,9 @@ vlsi:
 	cd ../..; sed -i -e 's/2.2.27/latest.release/g' build.sbt; \
 	cd ..; rm vlsi/generated-src/*.v; make vlsi PRJ=$(PRJ)
 	
-vlsi_old:
-	mkdir Verilog$(PRJ); cd ChiselProject/sbt/src/main; rm -f scala; ln -s ../../../../ChiselPrj$(PRJ) scala; \
-	cd ../..; sed -i -e 's/latest.release/2.2.27/g' build.sbt; \
-	cd ..; rm vlsi/generated-src/*.v; make vlsi PRJ=$(PRJ)
-	
 debug:
 	cd ChiselProject/sbt/src/main; rm -f scala; ln -s ../../../../ChiselPrj$(PRJ) scala; \
 	cd ../..; sed -i -e 's/2.2.27/latest.release/g' build.sbt; \
-	cd ..; make debug
-	
-debug_old:
-	cd ChiselProject/sbt/src/main; rm -f scala; ln -s ../../../../ChiselPrj$(PRJ) scala; \
-	cd ../..; sed -i -e 's/latest.release/2.2.27/g' build.sbt; \
 	cd ..; make debug
 	
 clean:

@@ -28,10 +28,16 @@ class Demo [ T <: Bits with MyNum[T] ](gen : => T, myParams: DemoParams) extends
     val i_imag = gen.asInput
     val o_real = gen.asOutput
     val o_imag = gen.asOutput
+    val i = Vec(3,gen.asInput)
+    val o = Vec(3,gen.asOutput)
+    val ctrl = MyBool(INPUT)
     val x = Dbl(INPUT)
+    val ctrlO = MyBool(OUTPUT)
   }
   
   val y = new ComplexIO; createIO(y)
+  
+  y.o := MyPipe(y.i,5)
   
   x.c := x.a + x.b
   
@@ -39,8 +45,8 @@ class Demo [ T <: Bits with MyNum[T] ](gen : => T, myParams: DemoParams) extends
   val inner = x.a * x.b
   debug(inner)
   
-  y.o_imag := y.i_real * double2T(0.5)
-  y.o_real := y.i_imag * double2T(-1)
+  y.o_imag := MyMux(y.i_real,y.i_imag,y.ctrl) * double2T(0.5) + double2T(-2.3)
+  y.o_real := (y.i_imag >> 3) * double2T(-1) + double2T(3.3)
   
   val d = Vec.fill(3){MyUInt(OUTPUT,2*myParams.iMax)}
   
@@ -56,6 +62,11 @@ class Demo [ T <: Bits with MyNum[T] ](gen : => T, myParams: DemoParams) extends
 	}
 	
 	x.d := d
+	
+	val dblV2 = MyDbl(3.33); debug(dblV2)
+	val dblV1 = Dbl(3.44); debug(dblV1)
+	
+	y.ctrlO := MyBool(true)
   
 }
 
@@ -63,7 +74,7 @@ object Demo {
   def main(args: Array[String]): Unit = {
     val demoArgs = args.slice(1, args.length)
     val myParams = DemoParams(iMax = 20)    
-    chiselMainTest(demoArgs, () => MyModule( new Demo[MyDbl]({MyDbl()}, myParams) )) {
+    chiselMainTest(demoArgs, () => MyModule( new Demo({MyDbl()}, myParams) )) {
       c => new DemoTests(c) 
     }
   }
@@ -71,16 +82,21 @@ object Demo {
 
 class DemoTests[T <: Demo[_ <: Bits with MyNum[_]] ](c: T)  extends DSPTester(c) {
 
+  poke(c.y.i_real,0.5)
+  poke(c.y.i_imag,-.2)
   poke(c.x.a,1)
   poke(c.x.b,4)
   step(1)
-  peek(c.inner)
-  peek(c.x.c)
+  myPeek(c.inner)
+  myPeek(c.x.c)
   peek(c.x.d)
-  peek(c.y.o_real)
-  peek(c.y.o_imag)
+  myPeek(c.y.o_real)
+  myPeek(c.y.o_imag)
   poke(c.y.x,0.5)
-
+  myPeek(c.dblV1)
+  myPeek(c.dblV2)
+  myPeek(c.y.ctrlO)
+  
 }
 
 

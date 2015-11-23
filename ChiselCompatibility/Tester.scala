@@ -1,3 +1,5 @@
+/** Angie's modifications: process.destroy should be at the end of finish */
+
 /*
  Copyright (c) 2011, 2012, 2013, 2014 The Regents of the University of
  California (Regents). All Rights Reserved.  Redistribution and use in

@@ -1,7 +1,41 @@
 /* Fixed class customizations */
 
-package Chisel.DSP
+package ChiselDSP
 import Chisel._
+
+
+
+class MyFixed (private var fractionalWidth:Int = 0)  extends Bits with MyNum[MyFixed] {
+  override def >> (n:Int) : MyFixed = {this}
+  override def ? (n:MyBool) : MyFixed = {this}
+  def fromInt(x: Int):this.type = this
+  def /| (b: MyFixed) : MyFixed = this
+  def >> (b:MyUInt):MyFixed = this
+  def <<(b:MyUInt):MyFixed = this
+  def <<(n:Int):MyFixed = this
+  def pipe(n:Int):MyFixed = this
+  def / (b:MyFixed):MyFixed = this
+  def > (b:MyFixed):MyBool = MyBool(true)
+  def >= (b:MyFixed):MyBool =MyBool(true)
+  def < (b:MyFixed):MyBool= MyBool(true)
+  def <= (b:MyFixed):MyBool = MyBool(true)
+  def - (b:MyFixed):MyFixed = this
+  def % (b:MyFixed):MyFixed = this
+  def + (b:MyFixed):MyFixed = this
+  def * (b:MyFixed):MyFixed = this
+  def unary_-():MyFixed = this
+  def getFractionalWidth() : Int = 10
+}
+
+
+object MyFixed{
+
+def apply(x: Double, fixedParams: (Int,Int)) : MyFixed = new MyFixed(10)
+
+}
+
+
+/*
 
 object MyFixed{
 
@@ -62,7 +96,7 @@ class MyFixed (private var fractionalWidth:Int = 0) extends Bits with MyNum[MyFi
   // Convert a Node to a MyFixed data type with the same fractional width as this instantiation 
   override def fromNode(n : Node): this.type = MyFixed.apply_gen(OUTPUT,null,null).asTypeFor(n).asInstanceOf[this.type]
 
-  /** Create a MyFixed representation from an Int */
+  // Create a MyFixed representation from an Int 
   override def fromInt(x : Int) : this.type = MyFixed(x, (this.width, this.fractionalWidth)).asInstanceOf[this.type]
 
   // Convert an SInt to a MyFixed by reinterpreting the Bits - note that width in fixedParams should be worst case
@@ -141,7 +175,7 @@ class MyFixed (private var fractionalWidth:Int = 0) extends Bits with MyNum[MyFi
   
   def doNothing() : MyFixed = {this.used(); this}
   
-  /** Ensure two Fixed point data types have the same fractional width, Error if not */
+  // Ensure two Fixed point data types have the same fractional width, Error if not 
   private def checkAligned(b : Fixed) : Unit = {
     if (this.fractionalWidth != b.getFracWidth) throwException(" Fractional bits do not match ")
   }  
@@ -207,6 +241,8 @@ class MyFixed (private var fractionalWidth:Int = 0) extends Bits with MyNum[MyFi
   }
 
 
+
+*/
 
 
 // ad multiply w/ 1, 0 - optimize?
@@ -547,7 +583,7 @@ multiply saturate (if Q0.n notation) - separate into 2 functions
 note for multiply fractional always grows (need separate trim)
   
   match width, but not match frac width: should be wrong if frac widths don't match???
-
+}
 */
 
 
@@ -573,6 +609,5 @@ note for multiply fractional always grows (need separate trim)
  
   
 
-}
 
 

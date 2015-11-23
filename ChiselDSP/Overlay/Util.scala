@@ -2,7 +2,6 @@
 
 package ChiselDSP
 import Chisel._
-import scala.reflect.{ClassTag, classTag}
 
 /** Short [MyUInt] MyMod (x,n,[optional]dly)
   * Returns (x % n) for x <= 2n-1 
@@ -45,7 +44,7 @@ object MyMux {
   * Delay all signals in x by n cycles
   */
 object MyPipe {
-  def apply [T <: Bits with MyNum[T] : ClassTag] (x: Vec[_], n:Int) : Vec[_] = {
+  def apply [T <: Bits with MyNum[T]] (x: Vec[_], n:Int) : Vec[_] = {
     Vec(x.map(
       _ match {
         case t : T => t.pipe(n) 

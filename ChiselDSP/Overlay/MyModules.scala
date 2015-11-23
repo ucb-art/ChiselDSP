@@ -18,13 +18,11 @@ abstract class DSPModule[T <: Bits with MyNum[T]](gen : => T) extends MyModule {
   def double2T[A <: Bits with MyNum[A]](x: Double, fixedParams: (Int,Int) = null): T = {
     val default = (fixedParams == null)
     val out =  gen.asInstanceOf[A] match {
-      /*
       case f: MyFixed => {
-        val width = if (default) f.width else fixedParams._1
-        val fracWidth = if (default) f.fractionalWidth else fixedParams._2
+        val width = if (default) f.getWidth else fixedParams._1
+        val fracWidth = if (default) f.getFractionalWidth else fixedParams._2
         MyFixed(x, (width,fracWidth))
       }
-      */
       case d: MyDbl => MyDbl(x)
       case _ => throwException("Illegal type.")
     }

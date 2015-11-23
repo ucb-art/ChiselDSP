@@ -15,7 +15,7 @@ class DemoIO (myParams: DemoParams) extends IOBundle {
   val a = MyUInt(INPUT,myParams.iMax)
   val b = MyUInt(INPUT,myParams.iMax)
   val c = MyUInt(OUTPUT,2*myParams.iMax)
-  val d = Vec.fill(3){MyUInt(OUTPUT,2*myParams.iMax)}
+  val d = Vec(3,MyUInt(OUTPUT,2*myParams.iMax))
   val reset = if (myParams.includeReset) MyBool(INPUT) else MyBool(false) 
 }
 
@@ -48,7 +48,7 @@ class Demo [ T <: Bits with MyNum[T] ](gen : => T, myParams: DemoParams) extends
   y.o_imag := MyMux(y.i_real,y.i_imag,y.ctrl) * double2T(0.5) + double2T(-2.3)
   y.o_real := (y.i_imag >> 3) * double2T(-1) + double2T(3.3)
   
-  val d = Vec.fill(3){MyUInt(OUTPUT,2*myParams.iMax)}
+  val d = Vec(3,MyUInt(OUTPUT,2*myParams.iMax))
   
   val CounterTest = (0 until 3).map(x => ModCounter(10,4,"TestCounterName") )        
 	CounterTest.zipWithIndex.foreach{ case(r,i) => {
@@ -89,13 +89,15 @@ class DemoTests[T <: Demo[_ <: Bits with MyNum[_]] ](c: T)  extends DSPTester(c)
   step(1)
   myPeek(c.inner)
   myPeek(c.x.c)
-  peek(c.x.d)
+  //peek(c.x.d)
   myPeek(c.y.o_real)
   myPeek(c.y.o_imag)
   poke(c.y.x,0.5)
   myPeek(c.dblV1)
   myPeek(c.dblV2)
   myPeek(c.y.ctrlO)
+  //peek(c.y.i)
+  //peek(c.y.o)
   
 }
 

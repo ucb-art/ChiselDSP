@@ -18,19 +18,21 @@ class DSPTester[+T <: Module](c: T, var traceOn: Boolean = true, var hexOn: Bool
   }
   
   /** Sort nodes with generic types for peeking */
-  def myPeek (data: Bits) : Double = peek(data,true)
-  private def peek (data: Bits, display: Boolean) : Double = {
+  def myPeek (data: Bits) : Double = peek(data,true,true)
+  private def peek (data: Bits, display: Boolean, peek: Boolean) : Double = {
     val resBits = super.peek(data.asInstanceOf[Bits])
     val res = resBits.toDouble
     val resDbl = longBitsToDouble(resBits.toLong)
     val hexString = if (hexOn) "(0x%x)".format(resBits) else ""
     val name = dumpName(data)
+    val command = if (peek) "PEEK" else "POKE"
+    val beginning = "  %s %s -> ".format(command,name)
     val (s,out) =  data match {
-      case d1: Dbl => ("  PEEK %s -> %f".format(name,resDbl), resDbl)
-      case d2: MyDbl => ("  PEEK %s -> %f (%s)".format(name,resDbl,d2.printWidth()), resDbl)
-      case u1: UInt => ("  PEEK %s -> %d %s".format(name,resBits,hexString), res)
-      case u2: MyUInt => ("  PEEK %s -> %d %s %s".format(name,resBits,hexString,u2.printWidth()), res)
-      case _ => ("  PEEK %s -> %s (%d bit(s))".format(name,hexString,data.getWidth), res)
+      case d1: Dbl => ("%s%f".format(beginning,resDbl), resDbl)
+      case d2: MyDbl => ("%s%f (%s)".format(beginning,resDbl,d2.printWidth()), resDbl)
+      case u1: UInt => ("%s%d %s".format(beginning,resBits,hexString), res)
+      case u2: MyUInt => ("%s%d %s %s".format(beginning,resBits,hexString,u2.printWidth()), res)
+      case _ => ("%s%s (%d bit(s))".format(beginning,hexString,data.getWidth), res)
     }
     if (traceOn && display) println(s)
     out
@@ -40,15 +42,24 @@ class DSPTester[+T <: Module](c: T, var traceOn: Boolean = true, var hexOn: Bool
   
   
   
-  // Poke Dbl or Fixed
-  def poke(node:Bits with MyNum[_], x: Double, display:Boolean = true){
+  
+  
+  
+  override def poke(node: Bits, x: Int) : Unit = poke(node,x,true)
+  override def poke(node: Dbl, x: Double) : Unit = poke(node,x,true)
+  def poke(node: Bits, x: Double) : Unit = poke(node,x,true)
+  private def poke(node:Bits, x: Double, display:Boolean){
+    val nodeBits = node.asInstanceOf[Bits]
     node match {
-      //case f0: Fixed => poke(node.asInstanceOf[Bits], Fixed.toFixed(x,f0.getFractionalWidth()))
-      case d0: MyDbl => poke(node.asInstanceOf[Bits], BigInt(doubleToLongBits(x)))
-      //case _ => error(node)
+      case d1: Dbl => super.poke(d1,x)
+      case d2: MyDbl => super.poke(nodeBits, BigInt(doubleToLongBits(x)))
+      case u2: MyUInt => super.poke(nodeBits,x.toInt)
+      
     }
-    peek(node,display) 
+    peek(node,display,false) 
   }
+  
+ 
   
   override def step(n: Int) {
     super.step(n)

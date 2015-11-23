@@ -5,6 +5,7 @@
 
 package Chisel
 import ChiselDSP._
+import scala.collection.mutable.{Stack}
 
 /** Module that allows passing in a generic type for DSP. Allows the designer to seamlessly switch
   * between MyDbl and MyFixed implementations for functional testing vs. fixed-point
@@ -31,22 +32,24 @@ abstract class DSPModule[T <: Bits with MyNum[T]](gen : => T) extends MyModule {
 
 }
 
-/** Special bundle for IO */
-abstract class IOBundle (view: Seq[String] = Seq()) extends Bundle(view)
+/** Special bundle for IO - should only be used with MyModule and its child classes 
+  * Adds itself to the current MyModule's list of IOs to setup
+  */
+abstract class IOBundle (view: Seq[String] = Seq()) extends Bundle(view) {
+  Module.current.asInstanceOf[MyModule].ios.push(this)
+}
 
-/** Adds missing functionality to Chisel x.x.x version of Module */
+/** Adds functionality to Module */
 abstract class MyModule extends Module {
+
+  // Keeps track of IO bundles
+  private[Chisel] val ios = Stack[IOBundle]()
 
   // Fixed IO is blank -- use createIO with your custom bundles
   var io = new Bundle() {}
   
   /** Easily add elements of aggregates (Vecs, Complex, etc.) to the list of debug nodes */
   def debug(data: Aggregate) : Unit = data.flatten.map(x => x._2) map (debug(_)) 
-  
-  /** Set module name missing in earlier versions of Chisel. Useful when the same module 
-    * is repurposed for different tasks.
-    */
-  // def setModuleName(n : String) { moduleName = n }
   
   /** Convert list of potential IO pins (must be in an IOBundle) to actual IO.  
     * Allows you to selectively set signals to be module IOs (with direction) or just constants (directionless).
@@ -84,13 +87,17 @@ abstract class MyModule extends Module {
 
 object MyModule {
 
-  /** Instantiates module with detailed name (from class/object name + [optional] extension) */
+  /** Instantiates module with detailed name (from class/object name + [optional] extension) + adds IO pins as necessary */
   def apply[T <: MyModule](m: => T, nameExt: String = "")(implicit p: Parameters = params): T = {
     val thisModule = Module(m)(p)
     var currentName = thisModule.name
     if (currentName == "") currentName = thisModule.getClass.getName.toString.split('.').last
     val optName = if (nameExt == "") nameExt else "_" + nameExt
     thisModule.setModuleName(currentName + optName)
+    while (!thisModule.ios.isEmpty) {
+      val ioset = thisModule.ios.pop()
+      thisModule.createIO(ioset)
+    }    
     thisModule
   }
   

@@ -87,9 +87,9 @@ class CountIO (myParams: CountParams) extends IOBundle {
 /** Counter template */
 class Counter(myParams: CountParams) extends MyModule {
   
-  val x = new CountIO(myParams); createIO(x)
-  val iCtrl = new CountCtrl(myParams); createIO(iCtrl)
-  val oCtrl = new CountCtrl(myParams).flip; createIO(oCtrl)
+  val x = new CountIO(myParams)
+  val iCtrl = new CountCtrl(myParams)
+  val oCtrl = new CountCtrl(myParams).flip
   
   val eq0 = (x.out === MyUInt(0))
   val eqMax = (x.out === x.max)

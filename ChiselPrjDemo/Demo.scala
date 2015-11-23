@@ -37,9 +37,9 @@ class Demo [ T <: Bits with MyNum[T] ](gen : => T, myParams: DemoParams, demodPa
     val offsetOut = MyUInt(OUTPUT,demodParams.frameSize-1)                              // If demodOut comes out n cycles after current complexInn, offsetOut should be offsetIn delayed n clocks (use pipe)
     val llrOut = if (demodParams.soft) MyUInt(OUTPUT,demodParams.llrMax) else MyUInt(0) // Use for a soft demod. Don't use for hard demod.
   }
-  val demodIO = new DemodIO(); createIO(demodIO)
+  val demodIO = new DemodIO()
   
-  val x = new DemoIO(myParams); createIO(x)
+  val x = new DemoIO(myParams)
   
   class ComplexIO extends IOBundle {
     val myDblTest = MyDbl(INPUT)
@@ -52,9 +52,12 @@ class Demo [ T <: Bits with MyNum[T] ](gen : => T, myParams: DemoParams, demodPa
     val ctrl = MyBool(INPUT)
     val x = Dbl(INPUT)
     val ctrlO = MyBool(OUTPUT)
+    val r = gen.asOutput
+    val t = new DemodIO()
+    
   }
   
-  val y = new ComplexIO; createIO(y)
+  val y = new ComplexIO() 
   
   y.o := MyPipe(y.i,5)
   
@@ -80,6 +83,8 @@ class Demo [ T <: Bits with MyNum[T] ](gen : => T, myParams: DemoParams, demodPa
 	  }
 	}
 	
+	
+	
 	x.d := d
 	
 	val dblV2 = MyDbl(3.33) + y.myDblTest; debug(dblV2)
@@ -101,6 +106,8 @@ object Demo {
 }
 
 class DemoTests[T <: Demo[_ <: Bits with MyNum[_]] ](c: T)  extends DSPTester(c) {
+  poke(c.y.t.complexIn.real,1.5)
+  myPeek(c.y.t.demodOut)
   poke(c.demodIO.complexIn.real,1.5)
   poke(c.demodIO.complexIn.imag,-1)
   poke(c.y.myDblTest,0.5)

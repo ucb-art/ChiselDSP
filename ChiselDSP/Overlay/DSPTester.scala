@@ -91,7 +91,7 @@ class DSPTester[+T <: Module](c: T, var traceOn: Boolean = true, var hexOn: Bool
   
   
   // other tace
-  
+  // agrregate map to my properly
   
 //custom finifh (super)
   

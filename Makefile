@@ -30,6 +30,9 @@ debug:
 clean:
 	cd ChiselProject; make clean
 
+reset:
+	make clean; make wash; make setup
+
 .PHONY: vlsi debug clean 
 
 

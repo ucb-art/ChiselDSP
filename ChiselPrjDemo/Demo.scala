@@ -30,7 +30,7 @@ case class DemodParams (
 
 class DemodIO[Tin <: Bits with MyNum[Tin], Tout <: Bits with MyNum[Tout] ](genIn : => Tin, genOut : => Tout, demodParams : DemodParams = DemodParams()) extends IOBundle {
   // Should either by signed MyFixed or MyDbl, set by gen
-  val complexIn = MyComplex(genIn,genIn).asInput
+  val symbolIn = MyComplex(genIn,genIn).asInput
   // When llrMax is 1, this is a hard decoder- i.e. the output is either a 1 or 0
   // When llrMax is bigger, this is a soft decoder, i.e. a large positive number is a very confident 0
   // and a small positive number is a less confident 0, negative numbers for 1s
@@ -44,7 +44,7 @@ class DemodIO[Tin <: Bits with MyNum[Tin], Tout <: Bits with MyNum[Tout] ](genIn
 
   // Offset of input sample
   val offsetIn = MyUInt(INPUT,demodParams.frameSize-1)
-  // If demodOut comes out n cycles after current complexInn, offsetOut should be offsetIn delayed n clocks (use pipe)
+  // If demodOut comes out n cycles after current symbolInn, offsetOut should be offsetIn delayed n clocks (use pipe)
   val offsetOut = MyUInt(OUTPUT,demodParams.frameSize-1)
 }
 
@@ -114,11 +114,11 @@ object Demo {
 }
 
 class DemoTests[T <: Demo[_ <: Bits with MyNum[_]] ](c: T)  extends DSPTester(c) {
-  poke(c.y.t.complexIn.real,1.5)
+  poke(c.y.t.symbolIn.real,1.5)
   myPeek(c.y.t.demodOut(0))
   myPeek(c.y.t.demodOut(1))
-  poke(c.demodIO.complexIn.real,1.5)
-  poke(c.demodIO.complexIn.imag,-1)
+  poke(c.demodIO.symbolIn.real,1.5)
+  poke(c.demodIO.symbolIn.imag,-1)
   poke(c.y.myDblTest,0.5)
   poke(c.y.i_real,0.5)
   poke(c.y.i_imag,-.2)

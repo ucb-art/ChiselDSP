@@ -28,9 +28,9 @@ case class DemodParams (
   inNormalizeMax: Int = 1000    // Need some kind of normalization parameter for stuff more complicated than QPSK
 )
 
-class DemodIO[T <: Bits with MyNum[T] ](gen : => T, demodParams : DemodParams = DemodParams()) extends IOBundle {
+class DemodIO[Tin <: Bits with MyNum[Tin], Tout <: Bits with MyNum[Tout] ](genIn : => Tin, genOut : => Tout, demodParams : DemodParams = DemodParams()) extends IOBundle {
   // Should either by signed MyFixed or MyDbl, set by gen
-  val complexIn = MyComplex(gen,gen).asInput
+  val complexIn = MyComplex(genIn,genIn).asInput
   // When llrMax is 1, this is a hard decoder- i.e. the output is either a 1 or 0
   // When llrMax is bigger, this is a soft decoder, i.e. a large positive number is a very confident 0
   // and a small positive number is a less confident 0, negative numbers for 1s
@@ -40,7 +40,7 @@ class DemodIO[T <: Bits with MyNum[T] ](gen : => T, demodParams : DemodParams = 
   // one with a conventient interpretation in this context
   // Start with the hard decoder
   // For hard QPSK, QAM demodMax will be different -- essentially the logic performs successive quaternary search
-  val demodOut = Vec.fill(log2Up(demodParams.demodMax)) { MyBool(OUTPUT) } // only hard decisions, should really be a MyFixed with width = log2Up(demodParams.llrMax + 1)
+  val demodOut = Vec.fill(log2Up(demodParams.demodMax)) { genOut.asOutput }
 
   // Offset of input sample
   val offsetIn = MyUInt(INPUT,demodParams.frameSize-1)
@@ -49,7 +49,7 @@ class DemodIO[T <: Bits with MyNum[T] ](gen : => T, demodParams : DemodParams = 
 }
 
 class Demo [ T <: Bits with MyNum[T] ](gen : => T, myParams: DemoParams, demodParams: DemodParams) extends DSPModule (gen) {
-  val demodIO = new DemodIO(gen, demodParams)
+  val demodIO = new DemodIO(gen, MyDbl(), demodParams)
 
   val x = new DemoIO(myParams)
 
@@ -65,7 +65,7 @@ class Demo [ T <: Bits with MyNum[T] ](gen : => T, myParams: DemoParams, demodPa
     val x = Dbl(INPUT)
     val ctrlO = MyBool(OUTPUT)
     val r = gen.asOutput
-    val t = new DemodIO(gen, demodParams)
+    val t = new DemodIO(gen, MyDbl(), demodParams)
   }
 
   val y = new ComplexIO()

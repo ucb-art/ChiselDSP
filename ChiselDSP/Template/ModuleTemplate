@@ -2,11 +2,6 @@
 
 package Demo
 
-import org.json4s._
-import org.json4s.native.JsonMethods._
-
-
-
 import Chisel._
 //import ChiselDSP._
 
@@ -16,13 +11,6 @@ import ChiselDSP._
 case class DemoParams (
   iMax: Int = 10,
   includeReset: Boolean = false
-)
-
-
-
-case class JSONParams (
-  FFTSizes: List[Int],
-  Throughput: Double 
 )
 
 class DemoIO (myParams: DemoParams) extends IOBundle {
@@ -42,7 +30,7 @@ case class DemodParams (
   inNormalizeMax: Int = 1000    // Need some kind of normalization parameter for stuff more complicated than QPSK
 )
 
-class Demo [ T <: MyBits with MyNum[T] ](gen : => T, myParams: DemoParams, demodParams: DemodParams) extends DSPModule (gen, true) {
+class Demo [ T <: MyBits with MyNum[T] ](gen : => T, myParams: DemoParams, demodParams: DemodParams) extends DSPModule (gen) {
 
   class DemodIO extends IOBundle {
     val complexIn = MyComplex(gen,gen).asInput                                          // Should either by signed MyFixed or MyDbl passed in through gen
@@ -52,13 +40,12 @@ class Demo [ T <: MyBits with MyNum[T] ](gen : => T, myParams: DemoParams, demod
     val llrOut = if (demodParams.soft) MyUInt(OUTPUT,demodParams.llrMax) else MyUInt(0) // Use for a soft demod. Don't use for hard demod.
   }
   val demodIO = new DemodIO()
-  val demodIOo = new DemodIO().flip
   
   val x = new DemoIO(myParams)
   
   class ComplexIO extends IOBundle {
     val myDblTest = MyDbl(INPUT)
-    val i_real = T(INPUT,(20,20))
+    val i_real = gen.asInput
     val i_imag = gen.asInput
     val o_real = gen.asOutput
     val o_imag = gen.asOutput
@@ -68,31 +55,9 @@ class Demo [ T <: MyBits with MyNum[T] ](gen : => T, myParams: DemoParams, demod
     val x = Dbl(INPUT)
     val ctrlO = MyBool(OUTPUT)
     val r = gen.asOutput
-    //val t = new DemodIO()
-    
-    val n = SInt(INPUT,width=5)
-    val m = SInt(OUTPUT,width=5)
-    
+    val t = new DemodIO()
     
   }
-  
-  case class test (
-    var t:Int = 0,
-    var s:Int = 1
-  )
-  
-  var s = test(2,3)
-  s.t = 4
-  println(s)
-  
-  class xxx extends DSPBits[xxx] {
-    override def fromInt(x: Int): this.type = (new xxx).asInstanceOf[this.type]
-  }
-  val tttttt = new xxx
- 
-  
-  val jj = double2T(-2.3); debug(jj)
-
   
   val y = new ComplexIO() 
   
@@ -104,8 +69,8 @@ class Demo [ T <: MyBits with MyNum[T] ](gen : => T, myParams: DemoParams, demod
   val inner = x.a * x.b
   debug(inner)
   
-  y.o_imag := double2T(2.3) //MyMux(y.i_real,y.i_imag,y.ctrl) * double2T(0.5) + double2T(-2.3)
-  y.o_real := double2T(-2.3) //(y.i_imag >> 3) * double2T(-1) + double2T(3.3)
+  y.o_imag := MyMux(y.i_real,y.i_imag,y.ctrl) * double2T(0.5) + double2T(-2.3)
+  y.o_real := (y.i_imag >> 3) * double2T(-1) + double2T(3.3)
   
   val d = Vec(3,MyUInt(OUTPUT,2*myParams.iMax))
   
@@ -129,60 +94,39 @@ class Demo [ T <: MyBits with MyNum[T] ](gen : => T, myParams: DemoParams, demod
 	
 	y.ctrlO := MyBool(true)
   
-  y.m := y.n
-  
 }
 
 object Demo {
   def main(args: Array[String]): Unit = {
-  
-    implicit val formats = DefaultFormats 
-  
-
-    
-    val p = """-params_(.*)""".r.findFirstMatchIn(args(0))
-    println(p.get.group(1).toBoolean)
-    
-    val json = parse(scala.io.Source.fromFile("src/main/scala/Demo.json").getLines.mkString)
-    val ttt = json.extract[JSONParams]
-    println(ttt)
-  
-  
     val demoArgs = args.slice(1, args.length)
     val myParams = DemoParams(iMax = 20) 
     val demodParams = DemodParams()   
-    chiselMainTest(demoArgs, () => MyModule( new Demo({MyFixed(INPUT,(5,4))}, myParams, demodParams) )) {
+    chiselMainTest(demoArgs, () => MyModule( new Demo({MyDbl()}, myParams, demodParams) )) {
       c => new DemoTests(c) 
     }
   }
 }
 
 class DemoTests[T <: Demo[_ <: MyBits with MyNum[_]] ](c: T)  extends DSPTester(c) {
-  //poke(c.y.t.complexIn.real,1.5)
-  //peek(c.y.t.demodOut)
+  poke(c.y.t.complexIn.real,1.5)
+  myPeek(c.y.t.demodOut)
   poke(c.demodIO.complexIn.real,1.5)
   poke(c.demodIO.complexIn.imag,-1)
   poke(c.y.myDblTest,0.5)
-  poke(c.y.i_real,0.522232323)
-  poke(c.y.i_imag,-2.3)
+  poke(c.y.i_real,0.5)
+  poke(c.y.i_imag,-.2)
   poke(c.x.a,1)
   poke(c.x.b,4)
   step(1)
-  peek(c.inner)
-  peek(c.x.c)
+  myPeek(c.inner)
+  myPeek(c.x.c)
   //peek(c.x.d)
-  peek(c.y.o_real)
-  peek(c.y.o_imag)
+  myPeek(c.y.o_real)
+  myPeek(c.y.o_imag)
   poke(c.y.x,0.5)
-  peek(c.dblV1)
-  peek(c.dblV2)
-  peek(c.y.ctrlO)
-  peek(c.demodIOo.complexIn.real)
-  poke(c.y.n,-1)
-  peek(c.y.m)
-  peek(c.jj)
-  poke(c.decoupledI.ready,false)
-
+  myPeek(c.dblV1)
+  myPeek(c.dblV2)
+  myPeek(c.y.ctrlO)
 
   //peek(c.y.i)
   //peek(c.y.o)

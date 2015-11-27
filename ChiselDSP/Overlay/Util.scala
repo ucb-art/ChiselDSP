@@ -36,7 +36,7 @@ object MyMod {
   * s = (false,true) --> (a,b)
   */
 object MyMux {
-  def apply [T <: Bits with MyNum[T]] (a: T, b: T, sel: MyBool) : T = (a ? !sel) /| (b ? sel)
+  def apply [T <: MyBits with MyNum[T]] (a: T, b: T, sel: MyBool) : T = (a ? !sel) /| (b ? sel)
   def apply (a: MyBool, b: MyBool, sel: MyBool) : MyBool = (a ? !sel) /| (b ? sel)
 }
 
@@ -44,7 +44,7 @@ object MyMux {
   * Delay all signals in x by n cycles
   */
 object MyPipe {
-  def apply [T <: Bits with MyNum[T]] (x: Vec[_], n:Int) : Vec[_] = {
+  def apply [T <: MyBits with MyNum[T]] (x: Vec[_], n:Int) : Vec[_] = {
     Vec(x.map(
       _ match {
         case t : T => t.pipe(n) 

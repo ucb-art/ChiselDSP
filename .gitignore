@@ -3,4 +3,8 @@ ChiselPrj*/
 Verilog*/
 .nfs*
 !ChiselPrjDemo/
+*trc
+*dmp
+*phd
+javacore*
 

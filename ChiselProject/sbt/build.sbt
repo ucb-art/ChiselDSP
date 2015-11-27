@@ -1,4 +1,5 @@
 scalaVersion in ThisBuild := "2.11.7"
+scalacOptions += "-deprecation"
 
 lazy val ChiselCompatibility = Project(
   id = "chisel-compatibility", 
@@ -6,6 +7,7 @@ lazy val ChiselCompatibility = Project(
   settings = Project.defaultSettings ++ Seq(
     name := "chisel-compatibility",
     version := "1.0",
+    libraryDependencies += "org.json4s" %% "json4s-native" % "3.3.0",
     libraryDependencies += "edu.berkeley.cs" %% "chisel" % "latest.release",
     libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-compiler" % _ )
   )

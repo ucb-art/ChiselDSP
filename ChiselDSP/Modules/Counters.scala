@@ -159,7 +159,9 @@ class Counter(myParams: CountParams) extends MyModule {
   x.out := count.reg()
   
   // When counters are chained, subsequent counter increments when current counter wraps
-  oCtrl.change := wrap & iCtrl.change
+  if (myParams.changeCtrl == External) oCtrl.change := wrap & iCtrl.change
+  if (myParams.wrapCtrl == External) oCtrl.wrap := wrap
+  oCtrl.reset := iCtrl.reset
   
 }
 

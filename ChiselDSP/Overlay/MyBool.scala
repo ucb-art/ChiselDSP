@@ -29,7 +29,7 @@ object MyBool {
 
 }
 
-class MyBool extends Bits{
+class MyBool extends MyBits{
 
   /** Print MyBool width */
   def printWidth() : String = ("1-bit bool")
@@ -38,14 +38,6 @@ class MyBool extends Bits{
   
   /** Lit val is true */
   def isTrue: Boolean = litValue() == 1
-  
-  private var noUpdate = false  
-  
-  /** Marks the signal as being used to prevent future updates */
-  def used(): Unit = (noUpdate = true)   
-  
-  /** Returns the signal. Marks it as used */
-  def doNothing() : MyBool = {this.used(); this}
   
   /** Create a Bool from an Int */
   override def fromInt(x: Int): this.type = MyBool(x > 0).asInstanceOf[this.type]
@@ -57,30 +49,6 @@ class MyBool extends Bits{
   override protected def colonEquals(that: Bits): Unit = that match {
     case b: MyBool => super.colonEquals(b)
     case _ => illegalAssignment(that)
-  }
- 
-  /** Delay n clock cycles */
-  def pipe (n: Int): MyBool = {
-    this.used()
-    if (this.isLit) this
-    else ShiftRegister(this,n)
-  }
-  
-  /** Register */
-  def reg(): MyBool = {
-    this.used()
-    if (this.isLit) this
-    else Reg(next = this)
-  }
-  
-  /** Change INPUT to OUTPUT and OUTPUT to INPUT. NODIR stays the same. */
-  override def flip: this.type = {
-    dir match {
-      case INPUT => dir = OUTPUT
-      case OUTPUT => dir = INPUT
-      case NODIR => dir = NODIR
-    }
-    this
   }
   
   /** Bitwise and */

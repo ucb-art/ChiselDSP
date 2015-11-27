@@ -1,0 +1,5 @@
+{
+	"FFTSizes":[1024,2048,512],
+	"Throughput":1,
+	"DefaultBitWidth":16
+}

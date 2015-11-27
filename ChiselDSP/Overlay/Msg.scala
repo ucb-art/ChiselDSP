@@ -11,7 +11,7 @@ object Warn {
   def apply(msg: String, bold: Boolean = false): Unit = {
     val format = Console.RED + {if (bold) Console.BOLD else ""}
     println(format + msg + Console.RESET)
-    if (dumpStack) println(format + "@["); Thread.dumpStack(); println("]" + Console.RESET)
+    if (dumpStack) {println(format + "@["); Thread.dumpStack(); println("]" + Console.RESET)}
   }
 }
 

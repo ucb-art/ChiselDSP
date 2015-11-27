@@ -1,8 +1,5 @@
 /** Chisel Module Class Extension */
 
-// package ChiselDSP
-// import Chisel._
-
 package Chisel
 import ChiselDSP._
 import scala.collection.mutable.{Stack}
@@ -11,25 +8,40 @@ import scala.collection.mutable.{Stack}
   * between MyDbl and MyFixed implementations for functional testing vs. fixed-point
   * characterization and optimization.
   */ 
-abstract class DSPModule[T <: Bits with MyNum[T]](gen : => T) extends MyModule {
+abstract class DSPModule[T <: MyBits with MyNum[T]](gen : => T, decoupledIO: Boolean = false) extends MyModule(decoupledIO) {
 
   /** Converts a double value to a constant MyFixed (using [width,fracWidth] parameters) or MyDbl (ignoring parameters).
     * Note that both parameters should be specified at the same time.
     */
-  def double2T[A <: Bits with MyNum[A]](x: Double, fixedParams: (Int,Int) = null): T = {
+  def double2T[A <: MyBits with MyNum[A]](x: Double, fixedParams: (Int,Int) = null): T = {
     val default = (fixedParams == null)
     val out =  gen.asInstanceOf[A] match {
       case f: MyFixed => {
-        val width = if (default) f.getWidth else fixedParams._1
-        val fracWidth = if (default) f.getFractionalWidth else fixedParams._2
-        MyFixed(x, (width,fracWidth))
+        val intWidth = if (default) f.getIntWidth else fixedParams._1
+        val fracWidth = if (default) f.getFracWidth else fixedParams._2
+        MyFixed(x, (intWidth,fracWidth))
       }
       case d: MyDbl => MyDbl(x)
       case _ => throwException("Illegal type.")
     }
     out.asInstanceOf[T] 
   }
-
+  
+  /** Allows you to customize each T (MyFixed or MyDbl) for parameters like width and fractional width (in the MyFixed case) */
+  def T[A <: MyBits with MyNum[A]](dir: IODirection, fixedParams: (Int,Int) = null): T = {
+    val default = (fixedParams == null)
+    val out =  gen.asInstanceOf[A] match {
+      case f: MyFixed => {
+        val intWidth = if (default) f.getIntWidth else fixedParams._1
+        val fracWidth = if (default) f.getFracWidth else fixedParams._2
+        MyFixed(dir, (intWidth,fracWidth))
+      }
+      case d: MyDbl => MyDbl(dir)
+      case _ => throwException("Illegal type.")
+    }
+    out.asInstanceOf[T] 
+  }
+ 
 }
 
 /** Special bundle for IO - should only be used with MyModule and its child classes 
@@ -40,7 +52,16 @@ abstract class IOBundle (view: Seq[String] = Seq()) extends Bundle(view) {
 }
 
 /** Adds functionality to Module */
-abstract class MyModule extends Module {
+abstract class MyModule (decoupledIO: Boolean = false) extends Module {
+
+  // Optional I/O ready + valid
+  class DecoupledIO extends Bundle {
+    val ready = if (decoupledIO) MyBool(INPUT) else MyBool(true)
+    val valid = if (decoupledIO) MyBool(INPUT) else MyBool(true)
+  }
+  
+  val decoupledI = new DecoupledIO()
+  val decoupledO = new DecoupledIO().flip
 
   // Keeps track of IO bundles
   private[Chisel] val ios = Stack[IOBundle]()
@@ -55,7 +76,7 @@ abstract class MyModule extends Module {
     * Allows you to selectively set signals to be module IOs (with direction) or just constants (directionless).
     * Name of IO pin = IOBundleName _ direction _ signalName
     */
-  def createIO[T <: IOBundle](m: => T): T = {
+  private def createIO[T <: Bundle](m: => T): T = {
   
     /** Newer versions of Chisel have an addPin that doesn't work :( 
       * Add a pin with a name to the module
@@ -79,6 +100,7 @@ abstract class MyModule extends Module {
     } 
   
     val ioName = m.getClass.getName.toString.split('.').last.split('$').last
+       
     m.flatten.map( x => if (!x._2.isDirectionless && !x._2.isLit) addPin(x._2, ioName + "_" + (if (x._2.dir == INPUT) "in" else "out") + "_" + x._1 ))
     m
   }
@@ -97,7 +119,9 @@ object MyModule {
     while (!thisModule.ios.isEmpty) {
       val ioset = thisModule.ios.pop()
       thisModule.createIO(ioset)
-    }    
+    } 
+    thisModule.createIO(thisModule.decoupledI)
+    thisModule.createIO(thisModule.decoupledO)   
     thisModule
   }
   

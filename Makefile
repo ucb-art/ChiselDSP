@@ -14,6 +14,7 @@ wash:
 	
 # Chisel source folders should be named ChiselPrjXXX where you should set PRJ = "XXX"
 PRJ = "Demo"   
+FIXED = "false"
 
 # Syntax example: make vlsi PRJ="XXX"
 
@@ -25,7 +26,7 @@ vlsi:
 debug:
 	cd ChiselProject/sbt/src/main; rm -f scala; ln -s ../../../../ChiselPrj$(PRJ) scala; \
 	cd ../..; sed -i -e 's/2.2.27/latest.release/g' build.sbt; \
-	cd ..; make debug
+	cd ..; make debug PRJ=$(PRJ) FIXED=$(FIXED)
 	
 clean:
 	cd ChiselProject; make clean

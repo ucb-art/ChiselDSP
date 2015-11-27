@@ -5,7 +5,7 @@ import Chisel._
 
 
 
-class MyFixed (private var fractionalWidth:Int = 0)  extends Bits with MyNum[MyFixed] {
+class MyFixed (private var fractionalWidth:Int = 0)  extends MyBits with MyNum[MyFixed] {
   override def >> (n:Int) : MyFixed = {this}
   override def ? (n:MyBool) : MyFixed = {this}
   def fromInt(x: Int):this.type = this
@@ -13,7 +13,7 @@ class MyFixed (private var fractionalWidth:Int = 0)  extends Bits with MyNum[MyF
   def >> (b:MyUInt):MyFixed = this
   def <<(b:MyUInt):MyFixed = this
   def <<(n:Int):MyFixed = this
-  def pipe(n:Int):MyFixed = this
+  override def pipe(n:Int):this.type = this
   def / (b:MyFixed):MyFixed = this
   def > (b:MyFixed):MyBool = MyBool(true)
   def >= (b:MyFixed):MyBool =MyBool(true)
@@ -25,12 +25,95 @@ class MyFixed (private var fractionalWidth:Int = 0)  extends Bits with MyNum[MyF
   def * (b:MyFixed):MyFixed = this
   def unary_-():MyFixed = this
   def getFractionalWidth() : Int = 10
+  def printWidth() : String = ("+/-Q"+this.getIntWidth+"."+this.getFracWidth)
+  
+
+  
+  private def fromSInt(s: SInt, fracWidth:Int) : MyFixed = {
+    
+    val intWidth = s.getWidth - 1 -fracWidth
+    chiselCast(s){MyFixed.apply(s.dir,(intWidth,fracWidth))}
+  }
+  
+  override def fromNode(n: Node): this.type = {
+    val res = MyFixed.apply(OUTPUT,-1).asTypeFor(n).asInstanceOf[this.type]
+    n match {
+      case l: Literal =>
+        if (l.isZ && Driver.minimumCompatibility > "2") {
+          // Chisel3 compatibility - generic don't care UInts/Bits are deprecated.
+          ChiselError.warning("General don't care MyUInts are deprecated. Please use BitPat().")
+        }
+      case _ =>
+    }
+    res.fractionalWidth = this.fractionalWidth
+    res
+  }
+  
+    def getIntWidth() : Int = this.getWidth-this.fractionalWidth-1
+  
+  def getFracWidth() : Int = this.fractionalWidth
+  
+  override protected def colonEquals(that : Bits): Unit = {
+    that match {
+      case f: MyFixed => {
+        
+        
+        super.colonEquals(fromSInt(f.toSInt,f.getFracWidth))
+
+      }
+      case _ => illegalAssignment(that)
+    }
+  }
+  
+  
 }
 
 
 object MyFixed{
 
-def apply(x: Double, fixedParams: (Int,Int)) : MyFixed = new MyFixed(10)
+
+def toFixed(x: Double, fracWidth: Int) : BigInt = BigInt(math.round(x*math.pow(2,fracWidth)))
+
+
+def toDouble(x: BigInt, fracWidth: Int) : Double = x.doubleValue/math.pow(2,fracWidth)
+
+def apply(x: Double, fixedParams: (Int,Int)) : MyFixed = {
+ 
+ val width = fixedParams._1 + fixedParams._2 + 1
+ 
+ //println(fixedParams._1)
+ //println(fixedParams._2)
+ 
+val t = toFixed(x, fixedParams._2)
+val res = Lit(t, width){apply(NODIR,fixedParams)}
+    
+    res
+  }
+
+def apply(dir: IODirection, fixedParams: (Int,Int)) : MyFixed = {
+
+  val intWidth = fixedParams._1 
+    val fracWidth = fixedParams._2 
+    val width = intWidth + fracWidth + 1
+   
+    
+    
+  val res = new MyFixed(fracWidth)
+  res.create(dir, width)
+  res
+
+}
+
+
+def apply(dir: IODirection, width :Int) : MyFixed = {
+
+  val res = new MyFixed()
+  res.create(dir, width)
+  res
+
+}
+
+
 
 }
 
@@ -85,7 +168,7 @@ object MyFixed{
   
 }
 
-class MyFixed (private var fractionalWidth:Int = 0) extends Bits with MyNum[MyFixed] {
+class MyFixed (private var fractionalWidth:Int = 0) extends MyBits with MyNum[MyFixed] {
 
   type T = MyFixed
   

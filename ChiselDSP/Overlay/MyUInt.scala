@@ -49,7 +49,7 @@ object MyUInt {
 
 }
 
-class MyUInt extends Bits with MyNum[MyUInt] {
+class MyUInt extends MyBits with MyNum[MyUInt] {
 
   /** Print MyUInt width */
   def printWidth() : String = (this.getWidth + "-bit uint, max = " + this.getMax)
@@ -63,12 +63,10 @@ class MyUInt extends Bits with MyNum[MyUInt] {
     val res = MyUInt.apply_gen(OUTPUT,-1).asTypeFor(n).asInstanceOf[this.type]
     n match {
       case l: Literal =>
-        /* 
         if (l.isZ && Driver.minimumCompatibility > "2") {
           // Chisel3 compatibility - generic don't care UInts/Bits are deprecated.
           ChiselError.warning("General don't care MyUInts are deprecated. Please use BitPat().")
         }
-        */
       case _ =>
     }
     res
@@ -98,14 +96,6 @@ class MyUInt extends Bits with MyNum[MyUInt] {
     max = x.max(max)
     if (max > maxBits) {Warn("Warning, possible MyUInt overflow. Signals down the chain may be wrong."); max = maxBits}  
   }
-  
-  private var noUpdate = false  
-  
-  /** Marks the signal as being used to prevent future updates to its range.*/
-  def used(): Unit = (noUpdate = true)   
-  
-  /** Returns the signal. Marks it as used */
-  def doNothing() : MyUInt = {this.used(); this}
   
   /** Only allow a MyUInt to be updated if it hasn't been used or if the signal being assigned ot it
     * has a smaller range
@@ -189,16 +179,16 @@ class MyUInt extends Bits with MyNum[MyUInt] {
   }
   
   /** Delay n clock cycles */
-  def pipe (n: Int) : MyUInt = {
+  override def pipe (n: Int) : this.type = {
     this.used()
     if(this.isLit) this 
-    else toMyUInt(ShiftRegister(this,n),this.max,-1)
+    else toMyUInt(ShiftRegister(this,n),this.max,-1).asInstanceOf[this.type]
   }
   
   /** Register - for things like counters - no max override */
-  def reg(): MyUInt = {
+  override def reg(): this.type = {
     this.used()
-    if (this.isLit) this else toMyUInt(Reg(next = this),this.max,-1)
+    if (this.isLit) this else toMyUInt(Reg(next = this),this.max,-1).asInstanceOf[this.type]
   }
   
   /** Match operator widths */
@@ -290,7 +280,7 @@ class MyUInt extends Bits with MyNum[MyUInt] {
   /** Base operators required by Num[T], Bits */
   def / (b: MyUInt) : MyUInt = error ("/ not allowed.")
   def % (b: MyUInt) : MyUInt = error ("% not allowed.")
-  def unary_-() : MyUInt = error ("-this not allowed.")
+  def unary_-() : MyUInt = {this.used(); MyUInt(0)-this}
   def <  (b: MyUInt): MyBool = {this.used(); b.used(); MyBool(newLogicalOp(b, "<"))}
   def <= (b: MyUInt): MyBool = {this.used(); b.used(); MyBool(newLogicalOp(b, "<="))}
   def >  (b: MyUInt): MyBool = {this.used(); b.used(); b < this}
@@ -298,16 +288,6 @@ class MyUInt extends Bits with MyNum[MyUInt] {
   
   def === (b: MyUInt): MyBool = {this.used(); b.used(); MyBool(this.toBits === b.toBits)}
   def =/= (b: MyUInt): MyBool = {this.used(); b.used(); MyBool(this.toBits != b.toBits)}
-  
-  /** Change INPUT to OUTPUT and OUTPUT to INPUT. NODIR stays the same. */
-  override def flip: this.type = {
-    dir match {
-      case INPUT => dir = OUTPUT
-      case OUTPUT => dir = INPUT
-      case NODIR => dir = NODIR
-    }
-    this
-  }
  
   /** Bit extraction @ index _bit_ */
   def extract(bit:Int): MyBool = {this.used(); MyBool(Extract(this,bit){Bool()})}

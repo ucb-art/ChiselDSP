@@ -4,6 +4,7 @@ package Demo
 
 import org.json4s._
 import org.json4s.native.JsonMethods._
+import scala.collection.mutable.Map
 
 
 
@@ -85,11 +86,22 @@ class Demo [ T <: MyBits with MyNum[T] ](gen : => T, myParams: DemoParams, demod
   s.t = 4
   println(s)
   
-  class xxx extends DSPBits[xxx] {
+  var www = Map("a" -> 3)
+  www("a") = 10
+  println(www)
+  
+  /*class xxx extends DSPBits[xxx] {
     override def fromInt(x: Int): this.type = (new xxx).asInstanceOf[this.type]
-  }
-  val tttttt = new xxx
- 
+  }*/
+  val tttttt = DSPBool(true)
+  debug(tttttt)
+  val rrrrrr = DSPBool(false)
+  debug(rrrrrr)
+  val sd = rrrrrr ? tttttt
+  debug(sd)
+  
+  val r = DSPUInt(4) /| DSPUInt(5)
+  debug(sd)
   
   val jj = double2T(-2.3); debug(jj)
 

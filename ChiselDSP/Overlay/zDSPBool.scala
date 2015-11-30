@@ -1,6 +1,5 @@
-/** DSPBool class customizations
-  * TO DO: Support better pipeline parameterization.
-  */
+/** DSPBool class customizations */
+
 package ChiselDSP
 import Chisel._
 
@@ -8,15 +7,18 @@ object DSPBool {
 
   /** Creates a DSPBool object from a constant true/false */
   def apply(x: Boolean): DSPBool = {
-    val res = Lit(if(x) 1 else 0, 1){DSPBool()}
+    val res = Lit(if(x) 1 else 0, 1){apply()}
     res.asDirectionless
+    res.assign()
     res
   }
   
   /** Convert 1-bit Bits to a DSPBool */
   def apply(x: Bits): DSPBool = {
-    if (x.getWidth != 1) throwException("Node to be converted to DSPBool must have width = 1")
-    chiselCast(x){DSPBool(x.dir)}
+    if (x.getWidth != 1) Error("Node to be converted to DSPBool must have width = 1")
+    val res = chiselCast(x){apply(x.dir)}
+    res.assign()
+    res
   }
 
   /** DSPBool construction */
@@ -29,60 +31,83 @@ object DSPBool {
 
 }
 
-class DSPBool extends MyBits{
+class DSPBool extends DSPBits[DSPBool]{
 
-  /** Print DSPBool width */
-  def printWidth() : String = ("1-bit bool")
+  /** DSPBool info */
+  override def infoString() : String = ("bool")
 
   type T = DSPBool
   
   /** Lit val is true */
-  def isTrue: Boolean = litValue() == 1
+  def isTrue(): Boolean = (litValue() == 1)
   
   /** Create a Bool from an Int */
   override def fromInt(x: Int): this.type = DSPBool(x > 0).asInstanceOf[this.type]
   
-  /** Factory method to create and assign a *Bool* type to a Node *n*. */
+  /** Factory method to create and assign a bool type to a node n. */
   override def fromNode(n: Node): this.type = DSPBool(OUTPUT).asTypeFor(n).asInstanceOf[this.type]
  
   /** Implementation of := operator, assigns value to this DSPBool */
   override protected def colonEquals(that: Bits): Unit = that match {
-    case b: DSPBool => {that.used; super.colonEquals(b)}
+    case b: DSPBool => {
+      reassign(b)
+      super.colonEquals(b)
+    }
     case _ => illegalAssignment(that)
   }
   
   /** Bitwise and */
   def & (b: DSPBool): DSPBool = {
-    this.used(); b.used();
-    if (this.isLit) {if (this.isTrue) b else DSPBool(false)}
-    else if (b.isLit) {if (b.isTrue) this else DSPBool(false)}
-    else DSPBool(this.toBool & b.toBool)
+    val out = {
+      if (isLit) {if (isTrue) b else DSPBool(false)}
+      else if (b.isLit) {if (b.isTrue) this else DSPBool(false)}
+      else DSPBool(this.toBits & b.toBits)
+    }
+    out.pass2to1(this,b)
+    out
   }
   def ? (b: DSPBool): DSPBool = this & b
   
   /** Bitwise or */
   def | (b: DSPBool): DSPBool = {
-    this.used(); b.used()
-    if (this.isLit) {if (this.isTrue) DSPBool(true) else b}
-    else if (b.isLit) {if(b.isTrue) DSPBool(true) else this}
-    else DSPBool(this.toBool | b.toBool)  
+    val out = {
+      if (isLit) {if (isTrue) DSPBool(true) else b}
+      else if (b.isLit) {if(b.isTrue) DSPBool(true) else this}
+      else DSPBool(this.toBits | b.toBits)  
+    }
+    out.pass2to1(this,b)
+    out
   }
   def /| (b: DSPBool): DSPBool = this | b
   
   /** Invert */
   def unary_!(): DSPBool = {
-    this.used()
-    if (this.isLit) {DSPBool(!this.isTrue)}
-    else DSPBool(~(this.toBool))
+    val out = {
+      if (isLit) {DSPBool(!isTrue)}
+      else DSPBool(~(this.toBits))
+    }
+    out.passThrough(this)
+    out.passDelay(this)
+    out
   }
   
   /** Bitwise xor */
   def ^ (b: DSPBool): DSPBool = {
-    this.used(); b.used()
-    if (this.isLit && b.isLit) {DSPBool((this.litValue() ^ b.litValue()) > 0)}
-    else if (this.isLit) {if (this.isTrue) ~b else b}
-    else if (b.isLit) {if (b.isTrue) ~this else this}
-    else DSPBool(this.toBool ^ b.toBool)
+    val out = {
+      if (isLit && b.isLit) {DSPBool((litValue() ^ b.litValue()) > 0)}
+      else if (isLit) {if (isTrue) !b else b}
+      else if (b.isLit) {if (b.isTrue) !this else this}
+      else DSPBool(this.toBits ^ b.toBits)
+    }
+    out.pass2to1(this,b)
+    out
   }
+  
+  /** Bool range always [0,1] */
+  protected def updateLimits(range: (BigInt,BigInt)): Unit = {
+    setRangeBits(range)
+    setRange(range)
+  }
+  updateLimits((BigInt(0),BigInt(1)))
   
 }

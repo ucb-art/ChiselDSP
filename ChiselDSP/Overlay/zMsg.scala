@@ -1,6 +1,7 @@
 /** Useful console status shorthand */
 
 package ChiselDSP
+import Chisel._
 
 /** [optional] Bold, Red warning message on console with [optional] stack trace. Does not throw exception. */
 object Warn {
@@ -22,3 +23,18 @@ object Status {
     println(format + msg + Console.RESET)
   }
 }
+
+/** Red error message on console with [optional] stack trace. Throws exception. */
+object Error {
+
+  /** Turn on/off stack trace on error to better track problems */
+  var dumpStack = true
+  
+  def apply(msg: String): Unit = { 
+    if (dumpStack) {println(Console.RED + "@["); Thread.dumpStack(); println("]" + Console.RESET)}
+    throwException(Console.RED + msg + Console.RESET)
+  }
+  
+}
+
+

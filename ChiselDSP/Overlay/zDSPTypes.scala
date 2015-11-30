@@ -5,25 +5,26 @@ import Chisel._
 import scala.collection.mutable.Map
 
 /** Additional operations for Fixed in Qn.m notation (and therefore MyDbl) */
-abstract class Qnm[T <: Data] extends DSPNum[T] {
-  // Truncate, round, overflow handling
+abstract class Qnm[T <: DSPBits[_]] extends DSPNum[T] {
+  // TODO: Truncate, round, overflow handling
 }
 
-/** Allow numeric operators */
-abstract class DSPNum[T <: Data] extends DSPBits[T] {
+/** Allow numeric operations */
+abstract class DSPNum[T <: DSPBits[_]] extends DSPBits[T] {
 
-  /** Don't allow divides (not synthesizable on FPGA -- designer should think carefully!) */
-  def /  (b: T): T = error ("/ not allowed.").asInstanceOf[T]
-  def %  (b: T): T = error ("% not allowed.").asInstanceOf[T]
+  /** Don't allow non-2^n divides (not synthesizable on FPGA -- designer should think carefully!) */
+  final def /  (b: T): T = error("/ not allowed.").asInstanceOf[T]
+  final def %  (b: T): T = error("% not allowed.").asInstanceOf[T]
   
   /** Add + subtract and different flavors (to be overridden) */
   def +  (b: T): T                // determines optimal # bits
-  def +& (b: T): T = this + b     // (should) grow bit
-  def +% (b: T): T = this + b     // (should) wrap
-  def -  (b: T): T
-  def -& (b: T): T = this - b
-  def -% (b: T): T = this - b
-  def unary_-(): T 
+  def +& (b: T): T = this + b     // (should) grow bit (except for DSPDbl)
+  def +% (b: T): T = this + b     // (should) wrap (except for DSPDbl)
+  def -  (b: T): T                // determines optimal # bits
+  def -& (b: T): T = this - b     // (should) grow bit (except for DSPDbl)
+  def -% (b: T): T = this - b     // (should) wrap (except for DSPDbl)
+  
+  def unary_-(): T = error("-x not allowed.").asInstanceOf[T]
   
   def *  (b: T): T
   
@@ -39,10 +40,20 @@ abstract class DSPNum[T <: Data] extends DSPBits[T] {
   def >  (b: T): DSPBool
   def >= (b: T): DSPBool
   
+  /** Shorthand for getting MSB */
+  final def MSB(): DSPBool = {
+    val out = DSPBool(this(getWidth-1))
+    out.updateGeneric(this)
+    out
+  }
+  
+  /** Sign of signal (needs overriding for DSPUInt) */
+  def sign(): DSPBool = MSB()
+  
 }
 
 /** ChiselDSP type info (associated with each signal) 
-  * rangeBits = max range allowed by signal width
+  * rangeBits = max range allowed by signal bitwidth
   */
 case class Info (
   var range:Map[String,BigInt]  = Map("min" -> BigInt(0), "max" -> BigInt(0)),
@@ -52,23 +63,26 @@ case class Info (
   var dly:Int = 0
 )
 
-/** Bits */
-abstract class DSPBits [T <: Data] extends Bits {
+/** Custom Bits with type info */
+abstract class DSPBits [T <: DSPBits[_]] extends Bits {
 
-  /** Print width + other useful debug info */
-  def infoString(): String = (this.getWidth + " bits")
+  /** Width + other useful debug info */
+  def infoString(): String = (getWidth + " bits")
   
-  final protected def error(msg: String) : this.type = {throwException(msg); this}
+  /** Error out with message */
+  final protected def error(msg: String) : this.type = {Error(msg); this}
 
   /** Info associated with signal */
-  protected var info = Info()
+  private var info = Info()
   
   /** Marks the signal as being used to prevent invalid future updates */
-  final def used() {info.isUsed = true}  
+  final protected def use() {info.isUsed = true} 
+  final protected def isUsed() : Boolean = info.isUsed 
   /** Marks that node has been assigned */
-  final protected def assigned() {info.isAssigned = true}
+  final protected def assign() {info.isAssigned = true}
+  final def isAssigned() : Boolean = info.isAssigned
   /** Returns the signal. Marks it as used */
-  final def doNothing() : this.type = {this.used; this}
+  final def doNothing() : this.type = {use(); this}
  
   /** Change INPUT to OUTPUT and OUTPUT to INPUT. NODIR stays the same. */
   final override def flip: this.type = {
@@ -80,23 +94,28 @@ abstract class DSPBits [T <: Data] extends Bits {
     this
   }
   
-  /** Pass (range, etc.) info of input to output */
-  private def passThrough[T <: DSPBits[_]](in: T) {
-    in.used
+  /** Pass (range, etc.) info of input to output [this] -- DOES NOT PASS DELAY. */
+  final protected def passThrough[T <: DSPBits[_]](in: T) {
+    in.use()
     info.range = in.info.range
     info.rangeBits = in.info.rangeBits
-    this.assigned
+    assign()
+  }
+  
+  /** Pass delay of input + offset to output [this] -- input/output types don't need to match */
+  final protected def passDelay[U <: DSPBits[_]](in:U, offset: Int = 0){
+    info.dly = in.info.dly + offset
   }
   
   /** Delay n clock cycles */
   final def pipe (n: Int, en: DSPBool = DSPBool(true)): T = {
-    en.used
+    en.use()
     val res = {
-      if (this.isLit) this
+      if (isLit) this
       else {
-        val out = ShiftRegister(this,n,en.asInstanceOf[Bool])
+        val out = ShiftRegister(this,n,en.toBool)
         out.passThrough(this)
-        out.info.dly = info.dly + n
+        out.passDelay(this,n)
         out
       }
     }
@@ -106,61 +125,128 @@ abstract class DSPBits [T <: Data] extends Bits {
   /** Register that keeps track of additional info */
   final def reg(): T = {
     val res = {
-      if (this.isLit) this
+      if (isLit) this
       else {
         val out = Reg(next = this)
         out.passThrough(this)
-        out.info.dly = info.dly + 1
+        out.passDelay(this,1)
         out
       }
     }
     res.asInstanceOf[T]
   }
   
-  /** Pass info of input to output on comparison */
-  protected def passComparison[T <: DSPBits[_]](in1: T, in2: T) {
-    in1.used; in2.used
-    this.assigned
-    info.dly = in1.info.dly.max(in2.info.dly)
+  /** Pass info of input to output (2 inputs -> 1 output [this]) -- DOES NOT PASS RANGE */
+  final private[ChiselDSP] def pass2to1[U <: DSPBits[_],V <: DSPBits[_]](in1: U, in2: V) {
+    in1.use(); in2.use()
+    assign()
+    if (in1.info.dly != in2.info.dly) error("Operator inputs must have the same delay")
+    info.dly = in1.info.dly
+  }
+  
+  /** Pass info of input to output (3 inputs -> 1 output [this]) -- DOES NOT PASS RANGE */
+  final private[ChiselDSP] def pass3to1[U <: DSPBits[_],V <: DSPBits[_], W <: DSPBits[_]](in1: U, in2: V, in3: W) {
+    in1.use(); in2.use(); in3.use()
+    assign()
+    if (!(in1.info.dly == in2.info.dly && in2.info.dly == in3.info.dly)) 
+      error("Operator inputs must have the same delay")
+    info.dly = in1.info.dly
   }
    
   /** Equality check */
   final def === (b: T): DSPBool = {
-    val out = DSPBool(this.asInstanceOf[Bits] === b.asInstanceOf[Bits])
-    out.passComparison(this,b)
+    val out = DSPBool(this.toBits === b.toBits)
+    out.pass2to1(this,b)
     out
   }
   
   /** Inequality check */
   final def =/= (b: T): DSPBool = {
-    val out = DSPBool(this.asInstanceOf[Bits] != b.asInstanceOf[Bits])
-    out.passComparison(this,b)
+    val out = DSPBool(this.toBits != b.toBits)
+    out.pass2to1(this,b)
     out
   }
-  final def != (b: T): DSPBool = {this =/= b}
+  final def != (b: T): DSPBool = (this =/= b)
   
   /** Enforce that bitwise operations return bits to explicitly destroy info */
   
   private val warn = " Additional info like ranges, delays, etc. will be lost."
+  private val castMsg = "Please cast to Bits (x.toBits) before performing "
   
   /** Bitwise negate */
-  final override def unary_~(): this.type = error("Please cast to Bits (x.toBits) before performing bitwise negate." + warn)
+  final override def unary_~(): this.type = error(castMsg + "bitwise negate." + warn)
   /** Bitwise and */
-  final override def & (b: Bits): this.type = error("Please cast to Bits (x.toBits) before performing bitwise and. " + warn)
+  final override def & (b: Bits): this.type = error(castMsg + "bitwise and. " + warn)
   /** Bitwise or */
-  final override def | (b: Bits): this.type = error("Please cast to Bits (x.toBits) before performing bitwise or. " + warn)                                 
+  final override def | (b: Bits): this.type = error(castMsg + "bitwise or. " + warn)                                 
   /** Bitwise xor */
-  final override def ^ (b: Bits): this.type = error("Please cast to Bits (x.toBits) before performing bitwise xor. " + warn) 
+  final override def ^ (b: Bits): this.type = error(castMsg + "bitwise xor. " + warn) 
   /** Shift left (unsigned) */
-  final override def <<(b: UInt): this.type = error("Please use DSPUInt or Int for left shift amount." + warn)
+  final override def << (b: UInt): this.type = error("Please use DSPUInt or Int for left shift amount.")
   /** Cat bits */
-  final override def ##[T <: Data](right: T): this.type = error("Please cast to Bits (x.toBits) before performing bit concatenation. " + warn)
+  final override def ##[T <: Data](right: T): this.type = error(castMsg + "bit concatenation. " + warn)
   /** Set bit 'off' */
-  final override def bitSet(off: UInt, dat: UInt): this.type = error("Please cast to Bits (x.toBits) before manually setting bits. " + warn)
+  final override def bitSet(off: UInt, dat: UInt): this.type = error(castMsg + "manual bit sets. " + warn)
   
   /** Select function: s = true -> this; else 0 */
   def ? (s: DSPBool) : T
   /** Custom bitwise or for muxing on type T */
   def /| (b: T) : T
+  
+  /** Update ranging [min,max] -- subclasses need to compute rangeBits first */
+  final protected def setRange(range: (BigInt,BigInt)): Unit = {
+    if (range._1 > range._2) error("Range min must be <= max")
+    info.range("max") = if(isAssigned) range._2.max(info.range("max")) else range._2
+    info.range("min") = if(isAssigned) range._1.min(info.range("min")) else range._1
+    if (info.range("max") > info.rangeBits("max")) {
+      Warn("Warning, possible max > max bits overflow. Signals down the chain may be wrong.")
+      info.range("max") = info.rangeBits("max")
+    }
+    if (info.range("min") < info.rangeBits("min")) {
+      Warn("Warning, possible min < min bits overflow. Signals down the chain may be wrong.")
+      info.range("min") = info.rangeBits("min")
+    }
+    if (info.range("min") > info.rangeBits("max")) {
+      Warn("Warning, possible min > max bits overflow. Signals down the chain may be wrong.")
+      info.range("min") = info.rangeBits("max")
+    }
+    if (info.range("max") < info.rangeBits("min")) {
+      Warn("Warning, possible max < min bits overflow. Signals down the chain may be wrong.")
+      info.range("max") = info.rangeBits("min")
+    }
+  }
+  
+  /** Update ranging as determined by bitwidth + data type [min,max] */
+  final protected def setRangeBits(range: (BigInt,BigInt)): Unit = {
+    info.rangeBits("min") = range._1
+    info.rangeBits("max") = range._2
+  }
+  
+  /** Returns range [min,max] as string */
+  final protected def rangeString(fracWidth:Int = 0): String = ("[" + info.range("min") + "," + info.range("max") + "]")
+  
+  /** Handles how range is updated */
+  protected def updateLimits(range: (BigInt,BigInt)) : Unit
 
+  /** Get range */
+  final protected def getRange():List[BigInt] = List(info.range("min"),info.range("max"))
+
+  /** Performs checks and info updates with reassignment */
+  final protected def reassign(that: T) {
+    if (isAssigned && (info.dly != that.info.dly)) error("Delays of L,R in L := R should match if L was previously assigned.") 
+    if (isUsed && (that.getRange.max > getRange.max || that.getRange.min < getRange.min)){          
+      error("Previous lines of code have used L in L := R. To ensure range consistency, "
+            + "L cannot be updated with an R of wider range. Move := earlier in the code!")
+    }
+    updateLimits(List2Tuple(that.getRange))
+    updateGeneric(that)
+  }
+  
+  /** Updates info for single in -> out regardless of types i.e. bit extraction [no ranging info] */ 
+  final private[ChiselDSP] def updateGeneric[U <: DSPBits[_]](that: U) {
+    that.use()
+    assign()
+    passDelay(that)
+  }
+  
 }

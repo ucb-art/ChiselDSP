@@ -10,7 +10,6 @@ object DSPBool {
     val res = Lit(if(x) 1 else 0, 1){apply()}
     res.asDirectionless
     res.assign()
-    res
   }
   
   /** Convert 1-bit Bits to a DSPBool */
@@ -18,7 +17,6 @@ object DSPBool {
     if (x.getWidth != 1) Error("Node to be converted to DSPBool must have width = 1")
     val res = chiselCast(x){apply(x.dir)}
     res.assign()
-    res
   }
 
   /** DSPBool construction */
@@ -64,7 +62,6 @@ class DSPBool extends DSPBits[DSPBool]{
       else DSPBool(this.toBits & b.toBits)
     }
     out.pass2to1(this,b)
-    out
   }
   def ? (b: DSPBool): DSPBool = this & b
   
@@ -76,7 +73,6 @@ class DSPBool extends DSPBits[DSPBool]{
       else DSPBool(this.toBits | b.toBits)  
     }
     out.pass2to1(this,b)
-    out
   }
   def /| (b: DSPBool): DSPBool = this | b
   
@@ -88,7 +84,6 @@ class DSPBool extends DSPBits[DSPBool]{
     }
     out.passThrough(this)
     out.passDelay(this)
-    out
   }
   
   /** Bitwise xor */
@@ -100,7 +95,6 @@ class DSPBool extends DSPBits[DSPBool]{
       else DSPBool(this.toBits ^ b.toBits)
     }
     out.pass2to1(this,b)
-    out
   }
   
   /** Bool range always [0,1] */

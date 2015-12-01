@@ -14,7 +14,6 @@ object DSPUInt {
   def apply(x:Bits, range:(BigInt,BigInt)): DSPUInt = {
     val res = chiselCast(x){apply(x.dir,range)}
     res.assign()
-    res
   }
 
   /** Determine bitwidth needed for value x */
@@ -33,7 +32,6 @@ object DSPUInt {
     res.asDirectionless
     res.updateLimits(range)
     res.assign()
-    res
   }
   
   /** Create a DSPUInt obect with a specified IODirection and range */
@@ -134,7 +132,6 @@ class DSPUInt extends DSPNum[DSPUInt] {
       }
     }
     out.pass2to1(this,select)
-    out
   }
     
   /** Right shift n --> this/2^n */
@@ -151,7 +148,6 @@ class DSPUInt extends DSPNum[DSPUInt] {
       }
     }
     out.updateGeneric(this)
-    out
   }
   
   /** Left shift n --> this*2^n */
@@ -167,7 +163,6 @@ class DSPUInt extends DSPNum[DSPUInt] {
       }
     }
     out.updateGeneric(this)
-    out
   }
   
   /** Variable right shift this/2^n */
@@ -181,7 +176,6 @@ class DSPUInt extends DSPNum[DSPUInt] {
       }
     }
     out.pass2to1(this,n)
-    out
   }
   
   /** Variable left shift this*2^n */
@@ -195,7 +189,6 @@ class DSPUInt extends DSPNum[DSPUInt] {
       }
     }
     out.pass2to1(this,n)
-    out
   }
   
   /** Greater than */
@@ -203,7 +196,6 @@ class DSPUInt extends DSPNum[DSPUInt] {
     val (x,y) = matchWidth(b)
     val out = DSPBool(x.toUInt > y.toUInt)
     out.pass2to1(this,b)
-    out
   }
 
   /** Less than */
@@ -211,7 +203,6 @@ class DSPUInt extends DSPNum[DSPUInt] {
     val (x,y) = matchWidth(b)
     val out = DSPBool(x.toUInt < y.toUInt)
     out.pass2to1(this,b)
-    out
   }
 
   /** Greater than or equal to */
@@ -219,7 +210,6 @@ class DSPUInt extends DSPNum[DSPUInt] {
     val (x,y) = matchWidth(b)
     val out = DSPBool(x.toUInt >= y.toUInt)
     out.pass2to1(this,b)
-    out
   }
 
   /** Less than or equal to */
@@ -227,7 +217,6 @@ class DSPUInt extends DSPNum[DSPUInt] {
     val (x,y) = matchWidth(b)
     val out = DSPBool(x.toUInt <= y.toUInt)
     out.pass2to1(this,b)
-    out
   }
   
   /** Bitwise-OR with custom range inference */
@@ -243,7 +232,6 @@ class DSPUInt extends DSPNum[DSPUInt] {
       }
     }
     out.pass2to1(this,b)
-    out
   }
 
   /** Add overflow -> wrap to max(this.width,b.width) # of bits */
@@ -261,7 +249,6 @@ class DSPUInt extends DSPNum[DSPUInt] {
       }
     }
     out.pass2to1(this,b)
-    out
   }
   
   /** Explicit add with bit growth 
@@ -273,7 +260,6 @@ class DSPUInt extends DSPNum[DSPUInt] {
     val sum = Cat(sign.toBits,x)+Cat(sign.toBits,y)
     val out = toT(sum,(BigInt(0),DSPUInt.toMax(x.getWidth+1)))
     out.pass2to1(this,b)
-    out
   }
   
   /** Add that determines optimal sum range, bitwidth */
@@ -287,7 +273,6 @@ class DSPUInt extends DSPNum[DSPUInt] {
       }
     }
     out.pass2to1(this,b)
-    out
   }
   
   /** Subtract and wrap on negative result */
@@ -305,7 +290,6 @@ class DSPUInt extends DSPNum[DSPUInt] {
       }
     }
     out.pass2to1(this,b)
-    out
   }
   
   /** Multiply while determining optimal product bitwidth + range */
@@ -322,32 +306,23 @@ class DSPUInt extends DSPNum[DSPUInt] {
       }
     }
     out.pass2to1(this,b)
-    out
   }
-  
-  
-  
-  
-//-------------  
-  
-  
   
   /** Bit extraction @ index 'bit' */
   def extract(bit:Int): DSPBool = {
     val out = DSPBool(Extract(this,bit){Bool()})
     out.updateGeneric(this)
-    out
+
   }
   def extract(bit:DSPUInt): DSPBool = {
     val out = {
-      if (bit.isLit) DSPBool(Extract(this,bit.litValue().intValue){Bool()})
+      if (bit.isLit) extract(bit.litValue().intValue) 
       else DSPBool(Extract(this,bit.toUInt){Bool()})
     }
     out.pass2to1(this,bit)
-    out
   }
   
-  /** Extract range of bits, inclusive from hi to lo. optional range override (won't report invalid).*/
+  /** Extract range of bits, inclusive from hi to lo. Optional range override (won't report invalid).*/
   def extract(hi:Int, lo:Int): DSPUInt = extract(hi,lo,rangeOverride = null)
   def extract(hi:Int, lo:Int, maxOverride: BigInt):DSPUInt = extract(hi,lo,(BigInt(0),maxOverride))
   def extract(hi:Int, lo:Int, rangeOverride:(BigInt,BigInt)): DSPUInt = {
@@ -355,13 +330,12 @@ class DSPUInt extends DSPNum[DSPUInt] {
     val bitMax = DSPUInt.toMax(res.getWidth)
     val out = toT(res,(BigInt(0),bitMax),rangeOverride)
     out.updateGeneric(this)
-    out
   }
   def extract(hi:DSPUInt, lo:DSPUInt): DSPUInt = extract(hi,lo, rangeOverride = null)
   def extract(hi:DSPUInt, lo:DSPUInt, maxOverride:BigInt): DSPUInt = extract(hi,lo,(BigInt(0),maxOverride))
   def extract(hi:DSPUInt, lo:DSPUInt, rangeOverride:(BigInt,BigInt)): DSPUInt = { 
     val out = {
-      if (hi.isLit && lo.isLit) this.extract(hi.litValue().intValue,lo.litValue().intValue,rangeOverride)
+      if (hi.isLit && lo.isLit) extract(hi.litValue().intValue,lo.litValue().intValue,rangeOverride)
       else {
         val res = Extract(this,hi.toUInt,lo.toUInt){UInt()}
         val bitMax = DSPUInt.toMax(res.getWidth)
@@ -369,7 +343,6 @@ class DSPUInt extends DSPNum[DSPUInt] {
       }
     }
     out.pass3to1(this,hi,lo)
-    out
   }
   
   /** Shorten # of bits -- get rid of MSBs by forcing the generator to interpret a new (smaller, positive) max
@@ -379,12 +352,6 @@ class DSPUInt extends DSPNum[DSPUInt] {
     val newMin = getRange.min.min(newMax)
     val out = toT(this,List2Tuple(getRange),(newMin,newMax)) 
     out.updateGeneric(this) 
-    out
   }
-  
-
-
-  
-
   
 }

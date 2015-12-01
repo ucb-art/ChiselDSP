@@ -5,7 +5,7 @@ import Chisel._
 import scala.collection.mutable.Map
 
 /** Additional operations for Fixed in Qn.m notation (and therefore MyDbl) */
-abstract class Qnm[T <: DSPBits[_]] extends DSPNum[T] {
+abstract class DSPQnm[T <: DSPBits[_]] extends DSPNum[T] {
   // TODO: Truncate, round, overflow handling
 }
 
@@ -13,7 +13,7 @@ abstract class Qnm[T <: DSPBits[_]] extends DSPNum[T] {
 abstract class DSPNum[T <: DSPBits[_]] extends DSPBits[T] {
 
   /** Don't allow non-2^n divides (not synthesizable on FPGA -- designer should think carefully!) */
-  final def /  (b: T): T = error("/ not allowed.").asInstanceOf[T]
+  private[ChiselDSP] def /  (b: T): T = error("/ not allowed.").asInstanceOf[T]
   final def %  (b: T): T = error("% not allowed.").asInstanceOf[T]
   
   /** Add + subtract and different flavors (to be overridden) */
@@ -44,7 +44,6 @@ abstract class DSPNum[T <: DSPBits[_]] extends DSPBits[T] {
   final def MSB(): DSPBool = {
     val out = DSPBool(this(getWidth-1))
     out.updateGeneric(this)
-    out
   }
   
   /** Sign of signal (needs overriding for DSPUInt) */
@@ -79,7 +78,10 @@ abstract class DSPBits [T <: DSPBits[_]] extends Bits {
   final protected def use() {info.isUsed = true} 
   final protected def isUsed() : Boolean = info.isUsed 
   /** Marks that node has been assigned */
-  final protected def assign() {info.isAssigned = true}
+  final protected def assign(): T =  {
+    info.isAssigned = true
+    this.asInstanceOf[T]
+  }
   final def isAssigned() : Boolean = info.isAssigned
   /** Returns the signal. Marks it as used */
   final def doNothing() : this.type = {use(); this}
@@ -95,16 +97,18 @@ abstract class DSPBits [T <: DSPBits[_]] extends Bits {
   }
   
   /** Pass (range, etc.) info of input to output [this] -- DOES NOT PASS DELAY. */
-  final protected def passThrough[T <: DSPBits[_]](in: T) {
+  final protected def passThrough[T <: DSPBits[_]](in: T): T = {
     in.use()
     info.range = in.info.range
     info.rangeBits = in.info.rangeBits
     assign()
+    this.asInstanceOf[T]
   }
   
   /** Pass delay of input + offset to output [this] -- input/output types don't need to match */
-  final protected def passDelay[U <: DSPBits[_]](in:U, offset: Int = 0){
+  final protected def passDelay[U <: DSPBits[_]](in:U, offset: Int = 0): T = {
     info.dly = in.info.dly + offset
+    this.asInstanceOf[T]
   }
   
   /** Delay n clock cycles */
@@ -116,7 +120,6 @@ abstract class DSPBits [T <: DSPBits[_]] extends Bits {
         val out = ShiftRegister(this,n,en.toBool)
         out.passThrough(this)
         out.passDelay(this,n)
-        out
       }
     }
     res.asInstanceOf[T]
@@ -130,43 +133,42 @@ abstract class DSPBits [T <: DSPBits[_]] extends Bits {
         val out = Reg(next = this)
         out.passThrough(this)
         out.passDelay(this,1)
-        out
       }
     }
     res.asInstanceOf[T]
   }
   
   /** Pass info of input to output (2 inputs -> 1 output [this]) -- DOES NOT PASS RANGE */
-  final private[ChiselDSP] def pass2to1[U <: DSPBits[_],V <: DSPBits[_]](in1: U, in2: V) {
+  final private[ChiselDSP] def pass2to1[U <: DSPBits[_],V <: DSPBits[_]](in1: U, in2: V) : T = {
     in1.use(); in2.use()
     assign()
     if (in1.info.dly != in2.info.dly) error("Operator inputs must have the same delay")
     info.dly = in1.info.dly
+    this.asInstanceOf[T]
   }
   
   /** Pass info of input to output (3 inputs -> 1 output [this]) -- DOES NOT PASS RANGE */
-  final private[ChiselDSP] def pass3to1[U <: DSPBits[_],V <: DSPBits[_], W <: DSPBits[_]](in1: U, in2: V, in3: W) {
+  final private[ChiselDSP] def pass3to1[U <: DSPBits[_],V <: DSPBits[_], W <: DSPBits[_]](in1: U, in2: V, in3: W): T =  {
     in1.use(); in2.use(); in3.use()
     assign()
     if (!(in1.info.dly == in2.info.dly && in2.info.dly == in3.info.dly)) 
       error("Operator inputs must have the same delay")
     info.dly = in1.info.dly
+    this.asInstanceOf[T]
   }
    
   /** Equality check */
-  final def === (b: T): DSPBool = {
+  def === (b: T): DSPBool = {
     val out = DSPBool(this.toBits === b.toBits)
     out.pass2to1(this,b)
-    out
   }
   
   /** Inequality check */
-  final def =/= (b: T): DSPBool = {
+  def =/= (b: T): DSPBool = {
     val out = DSPBool(this.toBits != b.toBits)
     out.pass2to1(this,b)
-    out
   }
-  final def != (b: T): DSPBool = (this =/= b)
+  def != (b: T): DSPBool = (this =/= b)
   
   /** Enforce that bitwise operations return bits to explicitly destroy info */
   
@@ -229,11 +231,11 @@ abstract class DSPBits [T <: DSPBits[_]] extends Bits {
   protected def updateLimits(range: (BigInt,BigInt)) : Unit
 
   /** Get range */
-  final protected def getRange():List[BigInt] = List(info.range("min"),info.range("max"))
+  final private[ChiselDSP] def getRange():List[BigInt] = List(info.range("min"),info.range("max"))
 
   /** Performs checks and info updates with reassignment */
   final protected def reassign(that: T) {
-    if (isAssigned && (info.dly != that.info.dly)) error("Delays of L,R in L := R should match if L was previously assigned.") 
+    if (isAssigned && (info.dly != that.info.dly)) Warn("Delays of L,R in L := R should match if L was previously assigned.") 
     if (isUsed && (that.getRange.max > getRange.max || that.getRange.min < getRange.min)){          
       error("Previous lines of code have used L in L := R. To ensure range consistency, "
             + "L cannot be updated with an R of wider range. Move := earlier in the code!")
@@ -243,10 +245,11 @@ abstract class DSPBits [T <: DSPBits[_]] extends Bits {
   }
   
   /** Updates info for single in -> out regardless of types i.e. bit extraction [no ranging info] */ 
-  final private[ChiselDSP] def updateGeneric[U <: DSPBits[_]](that: U) {
+  final private[ChiselDSP] def updateGeneric[U <: DSPBits[_]](that: U): T = {
     that.use()
     assign()
     passDelay(that)
+    this.asInstanceOf[T]
   }
   
 }

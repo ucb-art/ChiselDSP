@@ -30,6 +30,7 @@ debug:
 	
 clean:
 	cd ChiselProject; make clean
+	rm -rf target
 
 reset:
 	make clean; make wash; make setup

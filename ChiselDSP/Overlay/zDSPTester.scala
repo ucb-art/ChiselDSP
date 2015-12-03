@@ -1,4 +1,9 @@
-/** Custom DSP tester -- shows values in Ints, Doubles instead of only hex */
+/** Custom DSP tester -- shows values in Ints, Doubles instead of only hex.
+  * Handles Chisel data types and ChiselDSP data types.  
+  * TODO: Aggregate peek/poke
+  * Handle isTrace for mem peek, etc.
+  * Custom finish. 
+  */
 
 package ChiselDSP
 import Chisel._
@@ -9,11 +14,12 @@ class DSPTester[+T <: Module](c: T, var traceOn: Boolean = true, var hexOn: Bool
   /** Differentiate treatment of signed, unsigned types -- Added ChiselDSP types */
   override def signed_fix(dtype: Bits, rv: BigInt): BigInt = {
     val w = dtype.needWidth()
+    val signrv = if(rv >= (BigInt(1) << w - 1)) (rv - (BigInt(1) << w)) else rv
     dtype match {
       /* Any "signed" node */
-      case _: SInt | _ : Flo | _: Dbl | _: MyDbl | _: MyFixed => (if(rv >= (BigInt(1) << w - 1)) (rv - (BigInt(1) << w)) else rv)
+      case _: SInt | _ : Flo | _: Dbl | _: DSPDbl | _: Fixed | _: DSPFixed => signrv
       /* anything else (i.e., UInt) */
-      case _ => (rv)
+      case _ => rv
     }
   }
   
@@ -116,46 +122,14 @@ class DSPTester[+T <: Module](c: T, var traceOn: Boolean = true, var hexOn: Bool
   
   
   
-  
 
   
   
- // bits
-   
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
  
   
  
   
   
-  
-  // other tace
-  // agrregate map to my properly
-  
-//custom finifh (super)
-  
-  
- /* 
-  def peek(data: MyFixed, display: Boolean) : Double = {
-    //println("ttt")
-    peek(data.asInstanceOf[Bits]).toDouble
-  }
- 
-  
-  */
-  
-  
-  
-//sint
   
 
   

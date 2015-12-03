@@ -50,7 +50,8 @@ class DSPDbl extends DSPQnm[DSPDbl] {
   /** Convert an Integer to DSPDbl representation */
   override def fromInt(x: Int): this.type = DSPDbl(x.toDouble).asInstanceOf[this.type]
   
-  /** Ops using Dbl backend */
+  /** Ops using Dbl backend --------------------- */
+  
   def + (b: DSPDbl): DSPDbl = {
     val out = newBinaryOp(b, "d+")
     out.pass2to1(this,b)
@@ -67,7 +68,8 @@ class DSPDbl extends DSPQnm[DSPDbl] {
   
   private[ChiselDSP] override def / (b: DSPDbl): DSPDbl = {newBinaryOp(b, "d/")}
   
-  /** Comparison operators */
+  /** Comparison operators --------------------- */
+  
   override def === (b: DSPDbl): DSPBool = {
     val out = DSPBool(newLogicalOp(b, "d=="))
     out.pass2to1(this,b)
@@ -93,19 +95,19 @@ class DSPDbl extends DSPQnm[DSPDbl] {
     out.pass2to1(this,b)
   }
 
-  /** Right shift n --> this/2^n */
+  /** ARITHMETIC Right shift n --> this/2^n */
   override def >> (n: Int) : DSPDbl = {
     val out = this/DSPDbl(math.pow(2,n))
     out.updateGeneric(this)
   }
     
-  /** Left shift n --> this*2^n */
+  /** ARITHMETIC Left shift n --> this*2^n */
   def << (n: Int) : DSPDbl = {
     val out = this*DSPDbl(math.pow(2,n))
     out.updateGeneric(this)
   }
   
-  /** Right shift variable n --> this/2^n */
+  /** ARITHMETIC Right shift variable n --> this/2^n */
   def >> (n: DSPUInt) : DSPDbl = {
     if (n.getRange.max > 64) error("Can't divide by more than 2^64")
     val shiftLUT = Vec((0 until 65).map( x => DSPDbl(math.pow(2,x))))
@@ -113,7 +115,7 @@ class DSPDbl extends DSPQnm[DSPDbl] {
     out.pass2to1(this,n)
   }
   
-  /** Left shift variable n --> this*2^n */
+  /** ARITHMETIC Left shift variable n --> this*2^n */
   def << (n: DSPUInt) : DSPDbl = {
     if (n.getRange.max > 64) error("Can't multiply by more than 2^64")
     val shiftLUT = Vec((0 until 65).map( x => DSPDbl(math.pow(2,x))))

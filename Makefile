@@ -13,10 +13,12 @@ wash:
 	cd ChiselProject/sbt/src/main; rm -f scala
 	
 # Chisel source folders should be named ChiselPrjXXX where you should set PRJ = "XXX"
+# FIXED = "true" implies running tests, generating Verilog for fixed point operations. Otherwise,
+# floating point simulation is performed. 
 PRJ = "Demo"   
 FIXED = "false"
 
-# Syntax example: make vlsi PRJ="XXX"
+# Syntax example: make vlsi PRJ="XXX" 
 
 vlsi:
 	mkdir Verilog$(PRJ); cd ChiselProject/sbt/src/main; rm -f scala; ln -s ../../../../ChiselPrj$(PRJ) scala; \

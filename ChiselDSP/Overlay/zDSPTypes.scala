@@ -49,6 +49,14 @@ abstract class DSPNum[T <: DSPBits[_]] extends DSPBits[T] {
   /** Sign of signal (needs overriding for DSPUInt) */
   def sign(): DSPBool = MSB()
   
+  /** Return the min of 2 numbers */
+  def min(b: T): T = Mux(this < b, this.asInstanceOf[T], b)
+  /** Return the max of 2 numbers */
+  def max(b: T): T = Mux(this < b, b, this.asInstanceOf[T])
+  
+  /** Return the absolute value of this # with the same type */
+  def abs() : T = Mux(sign(),-this.asInstanceOf[T],this.asInstanceOf[T])
+  
 }
 
 /** ChiselDSP type info (associated with each signal) 
@@ -132,7 +140,7 @@ abstract class DSPBits [T <: DSPBits[_]] extends Bits {
       else {
         val out = Reg(next = this)
         out.passThrough(this)
-        out.passDelay(this,1)
+        out.passDelay(this,0)                       // Delay = 0 because we only care about explicit pipe delays
       }
     }
     res.asInstanceOf[T]
@@ -142,17 +150,19 @@ abstract class DSPBits [T <: DSPBits[_]] extends Bits {
   final private[ChiselDSP] def pass2to1[U <: DSPBits[_],V <: DSPBits[_]](in1: U, in2: V) : T = {
     in1.use(); in2.use()
     assign()
-    if (in1.info.dly != in2.info.dly) error("Operator inputs must have the same delay")
+    if (in1.info.dly != in2.info.dly) 
+      error("Operator inputs must have the same delay. Delays are " + in1.info.dly + ", " + in2.info.dly)
     info.dly = in1.info.dly
     this.asInstanceOf[T]
   }
   
   /** Pass info of input to output (3 inputs -> 1 output [this]) -- DOES NOT PASS RANGE */
-  final private[ChiselDSP] def pass3to1[U <: DSPBits[_],V <: DSPBits[_], W <: DSPBits[_]](in1: U, in2: V, in3: W): T =  {
+  final private[ChiselDSP] def pass3to1[U <: DSPBits[_],V <: DSPBits[_], W <: DSPBits[_]](in1: U, in2: V, in3: W): T = {
     in1.use(); in2.use(); in3.use()
     assign()
     if (!(in1.info.dly == in2.info.dly && in2.info.dly == in3.info.dly)) 
-      error("Operator inputs must have the same delay")
+      error("Operator inputs must have the same delay. Delays are " + in1.info.dly + ", " + in2.info.dly
+      + ", " + in3.info.dly)
     info.dly = in1.info.dly
     this.asInstanceOf[T]
   }
@@ -198,23 +208,23 @@ abstract class DSPBits [T <: DSPBits[_]] extends Bits {
   /** Update ranging [min,max] -- subclasses need to compute rangeBits first */
   final protected def setRange(range: (BigInt,BigInt)): Unit = {
     if (range._1 > range._2) error("Range min must be <= max")
-    info.range("max") = if(isAssigned) range._2.max(info.range("max")) else range._2
-    info.range("min") = if(isAssigned) range._1.min(info.range("min")) else range._1
-    if (info.range("max") > info.rangeBits("max")) {
+    info.range("max") = if(isAssigned) range._2.max(info.range.max) else range._2
+    info.range("min") = if(isAssigned) range._1.min(info.range.min) else range._1
+    if (info.range.max > info.rangeBits.max) {
       Warn("Warning, possible max > max bits overflow. Signals down the chain may be wrong.")
-      info.range("max") = info.rangeBits("max")
+      info.range("max") = info.rangeBits.max
     }
-    if (info.range("min") < info.rangeBits("min")) {
+    if (info.range.min < info.rangeBits.min) {
       Warn("Warning, possible min < min bits overflow. Signals down the chain may be wrong.")
-      info.range("min") = info.rangeBits("min")
+      info.range("min") = info.rangeBits.min
     }
-    if (info.range("min") > info.rangeBits("max")) {
+    if (info.range.min > info.rangeBits.max) {
       Warn("Warning, possible min > max bits overflow. Signals down the chain may be wrong.")
-      info.range("min") = info.rangeBits("max")
+      info.range("min") = info.rangeBits.max
     }
-    if (info.range("max") < info.rangeBits("min")) {
+    if (info.range.max < info.rangeBits.min) {
       Warn("Warning, possible max < min bits overflow. Signals down the chain may be wrong.")
-      info.range("max") = info.rangeBits("min")
+      info.range("max") = info.rangeBits.min
     }
   }
   
@@ -225,17 +235,19 @@ abstract class DSPBits [T <: DSPBits[_]] extends Bits {
   }
   
   /** Returns range [min,max] as string */
-  final protected def rangeString(fracWidth:Int = 0): String = ("[" + info.range("min") + "," + info.range("max") + "]")
+  final protected def rangeString(fracWidth:Int = 0): String = ("[" + info.range.min + "," + info.range.max + "]")
   
   /** Handles how range is updated */
   protected def updateLimits(range: (BigInt,BigInt)) : Unit
 
   /** Get range */
-  final private[ChiselDSP] def getRange():List[BigInt] = List(info.range("min"),info.range("max"))
+  final def getRange():List[BigInt] = List(info.range.min,info.range.max)
 
   /** Performs checks and info updates with reassignment */
   final protected def reassign(that: T) {
-    if (isAssigned && (info.dly != that.info.dly)) Warn("Delays of L,R in L := R should match if L was previously assigned.") 
+    if ((isAssigned || isUsed) && (info.dly != that.info.dly)) 
+      error("Delays of L (" + info.dly + "), R (" + that.info.dly 
+            + ") in L := R should match if L was previously assigned or used.") 
     if (isUsed && (that.getRange.max > getRange.max || that.getRange.min < getRange.min)){          
       error("Previous lines of code have used L in L := R. To ensure range consistency, "
             + "L cannot be updated with an R of wider range. Move := earlier in the code!")

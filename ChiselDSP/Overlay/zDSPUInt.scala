@@ -354,4 +354,7 @@ class DSPUInt extends DSPNum[DSPUInt] {
     out.updateGeneric(this) 
   }
   
+  /** Absolute value is itself */
+  override def abs(): DSPUInt = this
+  
 }

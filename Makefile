@@ -31,6 +31,10 @@ debug:
 	cd ..; make debug PRJ=$(PRJ) FIXED=$(FIXED)
 	
 clean:
+	find . -name "*.phd" -type f -delete
+	find . -name "javacore*" -type f -delete
+	find . -name "*.trc" -type f -delete
+	find . -name "*.dmp" -type f -delete
 	cd ChiselProject; make clean
 	rm -rf target
 

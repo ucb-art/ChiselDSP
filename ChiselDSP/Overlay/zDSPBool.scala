@@ -31,13 +31,13 @@ object DSPBool {
 
 class DSPBool extends DSPBits[DSPBool]{
 
+  /** Lit val is true */
+  def isTrue(): Boolean = (litValue() == 1)
+
   /** DSPBool info */
   override def infoString() : String = ("bool")
 
   type T = DSPBool
-  
-  /** Lit val is true */
-  def isTrue(): Boolean = (litValue() == 1)
   
   /** Create a Bool from an Int */
   override def fromInt(x: Int): this.type = DSPBool(x > 0).asInstanceOf[this.type]

@@ -1,5 +1,7 @@
 {
-	"FFTSizes":[1024,2048,512],
-	"Throughput":1,
-	"DefaultBitWidth":16
+	"QAMn":[2,4,16,64,256],
+	"framSizes":[128,256,512,1024,2048],
+	"softDemod":true,
+	"iFixedIntBits":2,
+	"iFixedFracBits":13
 }

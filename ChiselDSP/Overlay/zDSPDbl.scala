@@ -25,17 +25,20 @@ object DSPDbl {
 
 class DSPDbl extends DSPQnm[DSPDbl] {
 
-  /** Print DSPDbl info */
-  override def infoString() : String = "64-bit double"
-
-  type T = DSPDbl
-  
   /** Convert Bits to a DSPDbl by reinterpreting the Bits */
   private def toT(x: Bits) : DSPDbl = {
     val res = chiselCast(x){DSPDbl(x.dir)}
     res.assign()
   }
 
+  /** Print DSPDbl info */
+  override def infoString() : String = "double"
+
+  type T = DSPDbl
+
+  /** Convert an Integer to DSPDbl representation */
+  override def fromInt(x: Int): this.type = DSPDbl(x.toDouble).asInstanceOf[this.type]
+  
   override def fromNode(n: Node) = DSPDbl(OUTPUT).asTypeFor(n).asInstanceOf[this.type]
   
   /** Reassign with ":=". Certain conditions must be enforced so delay is consistent */
@@ -46,9 +49,6 @@ class DSPDbl extends DSPQnm[DSPDbl] {
     }
     case _ => illegalAssignment(that)
   }
-  
-  /** Convert an Integer to DSPDbl representation */
-  override def fromInt(x: Int): this.type = DSPDbl(x.toDouble).asInstanceOf[this.type]
   
   /** Ops using Dbl backend --------------------- */
   

@@ -2,7 +2,8 @@
 
 package Chisel
 
-abstract class ModuleOverride extends Module {
+abstract class ModuleOverride(_clock: Option[Clock] = None, _reset: Option[Bool] = None) 
+                             extends Module(_clock,_reset) {
 
   /** Newer versions of Chisel have an addPin that clones the node.
     * We need one that doesn't for CreateIO to work (connect internal logic with new IO). 

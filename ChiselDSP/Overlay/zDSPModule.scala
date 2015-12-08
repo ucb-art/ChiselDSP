@@ -7,7 +7,9 @@ import scala.collection.mutable.{Stack}
   * between DSPDbl and DSPFixed implementations for functional testing vs. fixed-point
   * characterization and optimization.
   */ 
-abstract class GenDSPModule[T <: DSPQnm[_]](gen : => T, decoupledIO: Boolean = false) extends DSPModule(decoupledIO) {
+abstract class GenDSPModule[T <: DSPQnm[_]](gen : => T, decoupledIO: Boolean = false, 
+                                            _clock: Option[Clock] = None, _reset: Option[Bool] = None
+                                           ) extends DSPModule(decoupledIO, _clock, _reset) {
 
   /** Converts a double value to a constant DSPFixed (using [intWidth,fracWidth] parameters)
     * or DSPDbl (ignoring parameters). Note that both parameters should be specified at the same time.
@@ -54,8 +56,15 @@ abstract class IOBundle (view: Seq[String] = Seq()) extends Bundle(view) {
 }
 
 /** Adds functionality to Module */
-abstract class DSPModule (decoupledIO: Boolean = false) extends ModuleOverride {
+abstract class DSPModule (decoupledIO: Boolean = false, _clock: Option[Clock] = None, _reset: Option[Bool] = None)
+                         extends ModuleOverride(_clock,_reset) {
 
+  // Keeps track of IO bundles
+  private[ChiselDSP] val ios = Stack[IOBundle]()
+
+  // Fixed IO is blank -- use createIO with your custom bundles
+  var io = new Bundle
+  
   // Optional I/O ready + valid
   class DecoupledIO extends Bundle {
     val ready = if (decoupledIO) DSPBool(INPUT) else DSPBool(true)
@@ -64,12 +73,6 @@ abstract class DSPModule (decoupledIO: Boolean = false) extends ModuleOverride {
   
   val decoupledI = new DecoupledIO()
   val decoupledO = new DecoupledIO().flip
-
-  // Keeps track of IO bundles
-  private[ChiselDSP] val ios = Stack[IOBundle]()
-
-  // Fixed IO is blank -- use createIO with your custom bundles
-  var io = new Bundle
   
   /** Convert list of potential IO pins (must be in a Bundle) to actual IO.  
     * Allows you to selectively set signals to be module IOs (with direction) 

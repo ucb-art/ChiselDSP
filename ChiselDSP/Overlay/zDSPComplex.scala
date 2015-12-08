@@ -7,11 +7,6 @@
 package ChiselDSP
 import Chisel._
 
-class ScalaComplex (var real:Double, var imag:Double){
-  override def toString() = {real + (if (imag < 0) " - " + (-imag) else " + " + imag) + " i"}
-  def toList() = List(real,imag)
-}
-
 object Complex {
 
   /** Create a new Complex number: real + imag*i
@@ -22,6 +17,12 @@ object Complex {
   /** Creates non-Chisel complex class if real, imag inputs are type Scala Double */
   def apply(real:Double, imag:Double) : ScalaComplex = new ScalaComplex(real, imag)
   
+}
+
+/** Complex class for normal Scala */
+class ScalaComplex (var real:Double, var imag:Double){
+  override def toString() = {real + (if (imag < 0) " - " + (-imag) else " + " + imag) + " i"}
+  def toList() = List(real,imag)
 }
 
 /** Complex number representation */

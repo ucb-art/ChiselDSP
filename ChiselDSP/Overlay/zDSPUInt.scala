@@ -16,15 +16,6 @@ object DSPUInt {
     res.assign()
   }
 
-  /** Determine bitwidth needed for value x */
-  def toBitWidth(x: BigInt): Int = {
-    if (x == 0) 1
-    else x.bitLength
-  }
-	
-  /** Calculate signal max from bitwidth */
-  def toMax(w: Int): BigInt = (BigInt(2) << w) - 1 
-    
   /** Creates a DSPUInt object from a constant BigInt (or Int casted to BigInt) */
   def apply(x: BigInt): DSPUInt = {
     val range = (x,x)
@@ -52,18 +43,29 @@ object DSPUInt {
     if (updateBits) res.updateLimits(range)
     res
   }
+  
+  //-------------------------------------------------------
+  
+  /** Determine bitwidth needed for value x */
+  def toBitWidth(x: BigInt): Int = {
+    if (x == 0) 1
+    else x.bitLength
+  }
+	
+  /** Calculate signal max from bitwidth */
+  def toMax(w: Int): BigInt = (BigInt(2) << w) - 1 
 
 }
 
 class DSPUInt extends DSPNum[DSPUInt] {
 
+  /** Sign of UInt always 0 */
+  override def sign(): DSPBool = DSPBool(false)
+
   /** DSPUInt info */
   override def infoString() : String = (getWidth + "-bit uint, range = " + rangeString())
 
   type T = DSPUInt
-  
-  /** Sign of UInt always 0 */
-  override def sign(): DSPBool = DSPBool(false)
 
   /** Set the value of this DSPUInt */
   override def fromInt(x: Int): this.type = DSPUInt(x).asInstanceOf[this.type]
@@ -102,6 +104,14 @@ class DSPUInt extends DSPNum[DSPUInt] {
     setRange(range)
   }
   
+  /** Match operator widths */
+  private def matchWidth(y: DSPUInt) : Tuple2[Bits,Bits] = {
+    val diff = y.getWidth - getWidth
+    if (diff > 0) (Cat(Fill(diff,sign.toBits),this), y.toBits) 
+    else if (diff < 0) (this.toBits, Cat(Fill(-diff,y.sign.toBits),y)) 
+    else (this.toBits, y.toBits)
+  }
+  
   /** Reassign with ":=". Certain conditions must be enforced so delay + range are consistent */
   override protected def colonEquals(that : Bits): Unit = {
     that match {
@@ -114,24 +124,32 @@ class DSPUInt extends DSPNum[DSPUInt] {
     }
   }
   
-  /** Match operator widths */
-  private def matchWidth(y: DSPUInt) : Tuple2[Bits,Bits] = {
-    val diff = y.getWidth - getWidth
-    if (diff > 0) (Cat(Fill(diff,sign.toBits),this), y.toBits) 
-    else if (diff < 0) (this.toBits, Cat(Fill(-diff,y.sign.toBits),y)) 
-    else (this.toBits, y.toBits)
+  /** Greater than */
+  def > (b : DSPUInt) : DSPBool = {
+    val (x,y) = matchWidth(b)
+    val out = DSPBool(x.toUInt > y.toUInt)
+    out.pass2to1(this,b)
   }
-  
-  /** select ? this (true) : 0 (false) -- used for Mux */
-  def ? (select: DSPBool): DSPUInt = {
-    val out = {
-      if (select.isLit) {if (select.isTrue) this else DSPUInt(0)}
-      else{ 
-        val res = this & Fill(getWidth,select.toBits)
-        toT(res,List2Tuple(getRange))
-      }
-    }
-    out.pass2to1(this,select)
+
+  /** Less than */
+  def < (b : DSPUInt) : DSPBool = {
+    val (x,y) = matchWidth(b)
+    val out = DSPBool(x.toUInt < y.toUInt)
+    out.pass2to1(this,b)
+  }
+
+  /** Greater than or equal to */
+  def >= (b : DSPUInt) : DSPBool = {
+    val (x,y) = matchWidth(b)
+    val out = DSPBool(x.toUInt >= y.toUInt)
+    out.pass2to1(this,b)
+  }
+
+  /** Less than or equal to */
+  def <= (b : DSPUInt) : DSPBool = {
+    val (x,y) = matchWidth(b)
+    val out = DSPBool(x.toUInt <= y.toUInt)
+    out.pass2to1(this,b)
   }
     
   /** Right shift n --> this/2^n */
@@ -191,32 +209,16 @@ class DSPUInt extends DSPNum[DSPUInt] {
     out.pass2to1(this,n)
   }
   
-  /** Greater than */
-  def > (b : DSPUInt) : DSPBool = {
-    val (x,y) = matchWidth(b)
-    val out = DSPBool(x.toUInt > y.toUInt)
-    out.pass2to1(this,b)
-  }
-
-  /** Less than */
-  def < (b : DSPUInt) : DSPBool = {
-    val (x,y) = matchWidth(b)
-    val out = DSPBool(x.toUInt < y.toUInt)
-    out.pass2to1(this,b)
-  }
-
-  /** Greater than or equal to */
-  def >= (b : DSPUInt) : DSPBool = {
-    val (x,y) = matchWidth(b)
-    val out = DSPBool(x.toUInt >= y.toUInt)
-    out.pass2to1(this,b)
-  }
-
-  /** Less than or equal to */
-  def <= (b : DSPUInt) : DSPBool = {
-    val (x,y) = matchWidth(b)
-    val out = DSPBool(x.toUInt <= y.toUInt)
-    out.pass2to1(this,b)
+  /** select ? this (true) : 0 (false) -- used for Mux */
+  def ? (select: DSPBool): DSPUInt = {
+    val out = {
+      if (select.isLit) {if (select.isTrue) this else DSPUInt(0)}
+      else{ 
+        val res = this & Fill(getWidth,select.toBits)
+        toT(res,List2Tuple(getRange))
+      }
+    }
+    out.pass2to1(this,select)
   }
   
   /** Bitwise-OR with custom range inference */
@@ -308,6 +310,9 @@ class DSPUInt extends DSPNum[DSPUInt] {
     out.pass2to1(this,b)
   }
   
+  /** Absolute value is itself */
+  override def abs(): DSPUInt = this
+  
   /** Bit extraction @ index 'bit' */
   def extract(bit:Int): DSPBool = {
     val out = DSPBool(Extract(this,bit){Bool()})
@@ -353,8 +358,5 @@ class DSPUInt extends DSPNum[DSPUInt] {
     val out = toT(this,List2Tuple(getRange),(newMin,newMax)) 
     out.updateGeneric(this) 
   }
-  
-  /** Absolute value is itself */
-  override def abs(): DSPUInt = this
   
 }

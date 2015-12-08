@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="UTF-8">
+    <title>Chisel DSP Environment by shunshou</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+  </head>
+  <body>
+    <section class="page-header">
+      <h1 class="project-name">Chisel DSP Environment</h1>
+      <h2 class="project-tagline">Getting Started</h2>
+      <a href="https://github.com/shunshou/ChiselEnvironment" class="btn">View on GitHub</a>
+      <a href="https://github.com/shunshou/ChiselEnvironment/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/shunshou/ChiselEnvironment/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
+
+    <section class="main-content">
+      <h1>
+<a id="chiseldsp-development-environment" class="anchor" href="#chiseldsp-development-environment" aria-hidden="true"><span class="octicon octicon-link"></span></a>ChiselDSP Development Environment</h1>
+
+<p>This repository hopefully serves as a good starting point for making and easily testing your various Chisel DSP generators <em>(1 generator at a time)</em>.</p>
+
+<hr>
+
+<h1>
+<a id="getting-started" class="anchor" href="#getting-started" aria-hidden="true"><span class="octicon octicon-link"></span></a>Getting Started</h1>
+
+<ol>
+<li>Setup <strong>sbt</strong>
+</li>
+<li>Run <code>make setup</code> in the base <strong>ChiselEnvironment/</strong> directory. This creates symbolic links to <strong>ChiselEnvironment/ChiselDSP/</strong> files in the <strong>ChiselEnvironment/ChiselProject/sbt/</strong> directory, so that your project can be compiled using ChiselDSP!</li>
+<li>To get started on your project, in the base <strong>ChiselEnvironment/</strong> directory, type <code>mkdir ChiselPrjXXX</code> where XXX is your project name. All of your project <strong>scala</strong> files should be placed in <strong>ChiselPrjXXX</strong>.</li>
+<li>To compile your Chisel project into Verilog, run <code>make vlsi PRJ="XXX"</code> in the base <strong>ChiselEnvironment/</strong> directory. For convenience, you can setup <strong>XXX</strong> to be your default project by editing the line <code>PRJ="XXX"</code> in <strong>ChiselEnvironment/Makefile</strong>. Then you can simply run <code>make vlsi</code>. You can run Chisel in debug mode with <code>make debug PRJ="XXX"</code> or <code>make debug</code> on the default project. </li>
+<li>
+<p>Generated verilog will be located in <strong>ChiselEnvironment/VerilogXXX/</strong></p>
+
+<blockquote>
+<p><strong>Note #1</strong>: Source files in <strong>ChiselEnvironment/ChiselPrjXXX/</strong> are untracked in the <em>Chisel Environment</em> repository. Please start a new Git repo within your project source directory to track your project changes. </p>
+</blockquote>
+</li>
+</ol>
+
+<hr>
+
+<h1>
+<a id="submit-pull-requests" class="anchor" href="#submit-pull-requests" aria-hidden="true"><span class="octicon octicon-link"></span></a>Submit Pull Requests!</h1>
+
+<p>This is a (potentially buggy) work in progress. Please submit <strong>pull requests</strong> if you have a fix to my broken code,  a different/better way of doing something, or a new feature you want other people to be able to use. </p>
+
+<p>If you notice something is broken but you don't have a fix, would like a new feature, or want to have a discussion about doing something a different way (different directory structure, composition vs. inheritance for Chisel types), please create a new <strong>issue</strong>.</p>
+
+<p>We'd like to hear from <em>you</em>, the users, about how we can increase your coding productivity, so comment away! :)</p>
+
+<blockquote>
+<p><strong>Note #2</strong>: This setup currently doesn't support multi-project aggregates (designs consisting of multiple sub-projects stitched together via a top-level design specified by <code>PRJ="XXX"</code> in your Makefile). You can get a multi-project aggregate up and running by modifying  <strong>ChiselEnvironment/ChiselProject/sbt/build.sbt</strong> and adding the sub-project scala files to <strong>ChiselEnvironment/ChiselProject/sbt/YYY/src/main/scala</strong>. Alternatively, set .../scala as a symbolic link to your sub-project's <strong>ChiselEnvironment/ChiselPrjYYY</strong> directory. To add a sub-project <strong>YYY</strong> (depending on sub-project <strong>ZZZ</strong>) to your build.sbt, use <code>lazy val YYY = project.dependsOn(ZZZ)</code>. See <a href="http://www.scala-sbt.org/0.13/tutorial/Multi-Project.html" title="sbt docs">sbt docs</a> for more information. In build.sbt, you will also have to modify the dependencies of the <strong>root</strong> project to include the additional sub-projects. When you have multiple main classes, sbt will prompt you to choose one to run. </p>
+</blockquote>
+
+<hr>
+
+<h1>
+<a id="check-out-chiseldsp" class="anchor" href="#check-out-chiseldsp" aria-hidden="true"><span class="octicon octicon-link"></span></a>Check Out ChiselDSP!</h1>
+
+<p>Unfortunately, features I've built into ChiselDSP are not well documented outside of the code. <strong>ChiselEnvironment/ChiselDSP</strong> is broken up into 2 sub-directories. </p>
+
+<ul>
+<li>
+<strong>Overlay</strong>: Custom Chisel types specific to ChiselDSP and utility functions. Most of the custom types are modeled after pre-existing Chisel types. Therefore, the constructs are similar and most of the operators are retained. </li>
+<li>
+<strong>Modules</strong>: Useful <em>generalized</em> modules for DSP hardware generation</li>
+</ul>
+
+<blockquote>
+<p><strong>Note #3</strong>: Files in <strong>ChiselEnvironment/ChiselCompatibility/</strong> are only meant to remedy any compatibility issues between base Chisel and ChiselDSP.  </p>
+</blockquote>
+
+<h2>
+<a id="chiseldsp-types" class="anchor" href="#chiseldsp-types" aria-hidden="true"><span class="octicon octicon-link"></span></a>ChiselDSP Types</h2>
+
+<ul>
+<li>
+<strong>MyBool</strong>
+
+<ul>
+<li>
+<code>MyBool(IODirection)</code>, <code>MyBool(Boolean)</code>, <code>MyBool(Bits)</code> where the last construct is used for casting Chisel Bits to MyBool</li>
+<li>
+<code>x.pipe(n)</code> where n is # of delays</li>
+<li>
+<code>x.reg()</code> as an alternative to Reg(x)</li>
+<li>
+<code>&amp;</code>, <code>?</code> (alternative to <code>&amp;</code>), <code>|</code>, <code>/|</code> (alternative to <code>|</code>), <code>^</code> (XOR), <code>!</code> (invert)</li>
+</ul>
+</li>
+</ul>
+
+<p>To be continued...</p>
+
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/shunshou/ChiselEnvironment">Chisel DSP Environment</a> is maintained by <a href="https://github.com/shunshou">shunshou</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+      </footer>
+
+    </section>
+
+  
+  </body>
+</html>

@@ -5,26 +5,32 @@
 package ChiselDSP
 import Chisel._
 
-object DSPFixed{
+object DSPFixed {
 
   /** Creates a DSPFixed object from a constant Double. 
     * fixedParams = (intWidth,fracWidth) must be specified!
     * Qn.m --> n = intWidth, m = fracWidth, width = n + m + 1 (sign)
     */
-  def apply(x: Double, fixedParams: (Int,Int)) : DSPFixed = apply(toFixed(x, fixedParams._2), fixedParams)
- 
- /** Creates DSPFixed Literal after Double has been converted into a BigInt */
-  private def apply(x : BigInt, fixedParams: (Int, Int)) : DSPFixed =  { 
-    val width = toWidth(fixedParams)
-    val range = (x,x)
-    val res = Lit(x, width){apply(NODIR,fixedParams,range)}
+  def apply(x: Double, fixedParams: (Int, Int)): DSPFixed = apply(toFixed(x, fixedParams._2), fixedParams)
+  def apply(x: Double, fracWidth: Int): DSPFixed = {
+    val fixed = toFixed(x, fracWidth)
+    val intWidth = fixed.bitLength-fracWidth
+    apply(fixed,(intWidth,fracWidth))
+  }
+  /** Creates DSPFixed Literal after Double has been converted into a BigInt */
+  private def apply(x: BigInt, fixedParams: (Int, Int)): DSPFixed = {
+    val range = (x, x)
+    val litVal = apply(NODIR, fixedParams, range)
+    val res = Lit(x, litVal.getWidth) {litVal}
     res.asDirectionless
     res.updateLimits(range)
     res.assign()
   }
-  
+
   /** Creates a DSPFixed object with a specified IODirection, (intWidth,fracWidth) */
-  def apply(dir: IODirection, fixedParams:(Int,Int)) : DSPFixed = apply(dir,fixedParams,toRange(toWidth(fixedParams)))
+  def apply(dir: IODirection, fixedParams: (Int, Int)): DSPFixed = {
+    apply(dir, fixedParams, toRange(paramsToWidth(fixedParams)))
+  }
   /** Creates a DSPFixed object with a specified IODirection, (intWidth,fracWidth), 
     * and [optional] Double (min,max) range.
     */
@@ -33,7 +39,16 @@ object DSPFixed{
     val max = toFixed(range._2, fixedParams._2)
     apply(dir,fixedParams,(min,max))
   }
-  
+  def apply(dir: IODirection, fracWidth:Int, range: (Double,Double)) : DSPFixed = {
+    val min = toFixed(range._1, fracWidth)
+    val max = toFixed(range._2, fracWidth)
+    apply(dir,fracWidth,(min,max))
+  }
+
+  private def apply(dir: IODirection, fracWidth: Int, range: (BigInt,BigInt)): DSPFixed = {
+    val intWidth = rangeToWidth(range)-1-fracWidth
+    apply(dir, (intWidth, fracWidth), range)
+  }
   /** Intermediate apply function to check if range is null */
   private def apply(dir: IODirection, fixedParams:(Int,Int), range: (BigInt,BigInt)): DSPFixed = {
     if (range == null) Error("Range cannot be null.")
@@ -41,36 +56,23 @@ object DSPFixed{
   }
   
   /** Internally handles some edge cases i.e. when Chisel relies on node conversion,
-    * width/range is not defined up front
+    * width/range is not defined up front. Width determined by worst case of
+    * fixedParams and range.
     */
   private def apply_gen(dir : IODirection, fixedParams: (Int, Int), range: (BigInt,BigInt)) : DSPFixed = {
     val updateBits = (range != null)
+    val width = paramsToWidth(fixedParams)
+    val rangeWidth = if (updateBits) rangeToWidth(range) else width
     if (updateBits){ 
       if (fixedParams._1 < 0) Error("Fixed integer width must be non-negative.")
       if (fixedParams._2 < 0) Error("Fixed fractional width must be non-negative.")
-      
-      
-      
-      
+      if (rangeWidth > width) Error("Rounded range of Fixed value greater than range allowed by width.")
     }
     val res = new DSPFixed(fixedParams._2)
-    res.create(dir, if (updateBits) toWidth(fixedParams) else -1)
+    res.create(dir, if (updateBits) rangeWidth else -1)
     if (updateBits) res.updateLimits(range)
     res
   }
- 
- 
- 
- 
- 
-   w/ width range = toRange(w) if ((x < range._1) || (x > range._2)) throwException("Literal not in Fixed range")
-
- 
- 
- 
- 
- 
- 
  
   // --------- Helper functions
   
@@ -93,135 +95,131 @@ object DSPFixed{
   }
   
   /** Returns width from fixedParams (accounting for sign bit) */
-  def toWidth(fixedParams:(Int,Int)): Int = fixedParams._1 + fixedParams._2 + 1
-  
-  
-  
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
+  def paramsToWidth(fixedParams:(Int,Int)): Int = fixedParams._1 + fixedParams._2 + 1
 
-  
-  
-  
-  
-  
- 
- 
- 
- 
- 
- 
- 
-    
- 
-
- 
-
-  
-  
-  
-
-  
-  
-  
-
-  
-  
-  
-  
-  
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  /** Returns width from range */
+  def rangeToWidth(range:(BigInt,BigInt)): Int = range._1.bitLength.max(range._2.bitLength) + 1
 
 }
 
+class DSPFixed (private val fractionalWidth:Int = 0)  extends DSPQnm[DSPFixed] {
 
-// getfractionalwidth
-
-
-
-class DSPFixed (private var fractionalWidth:Int = 0)  extends MyBits with MyNum[MyFixed] {
-  override def >> (n:Int) : MyFixed = {this}
-  override def ? (n:MyBool) : MyFixed = {this}
-  def fromInt(x: Int):this.type = this
-  def /| (b: MyFixed) : MyFixed = this
-  def >> (b:MyUInt):MyFixed = this
-  def <<(b:MyUInt):MyFixed = this
-  def <<(n:Int):MyFixed = this
-  override def pipe(n:Int):this.type = this
-  def / (b:MyFixed):MyFixed = this
-  def > (b:MyFixed):MyBool = MyBool(true)
-  def >= (b:MyFixed):MyBool =MyBool(true)
-  def < (b:MyFixed):MyBool= MyBool(true)
-  def <= (b:MyFixed):MyBool = MyBool(true)
-  def - (b:MyFixed):MyFixed = this
-  def % (b:MyFixed):MyFixed = this
-  def + (b:MyFixed):MyFixed = this
-  def * (b:MyFixed):MyFixed = this
-  def unary_-():MyFixed = this
-  def getFractionalWidth() : Int = 10
-  def printWidth() : String = ("+/-Q"+this.getIntWidth+"."+this.getFracWidth)
-  
-
-  
-  private def fromSInt(s: SInt, fracWidth:Int) : MyFixed = {
-    
-    val intWidth = s.getWidth - 1 -fracWidth
-    chiselCast(s){MyFixed.apply(s.dir,(intWidth,fracWidth))}
+  /** Convert SInt to a DSPFixed by reinterpreting the Bits */
+  private def fromSInt(s: SInt, fracWidth:Int, opRange: (BigInt, BigInt)): DSPFixed = {
+    val res = chiselCast(s){DSPFixed(s.dir,fracWidth,opRange)}
+    res.assign()
   }
-  
-  override def fromNode(n: Node): this.type = {
-    val res = MyFixed.apply(OUTPUT,-1).asTypeFor(n).asInstanceOf[this.type]
-    n match {
-      case l: Literal =>
-        if (l.isZ && Driver.minimumCompatibility > "2") {
-          // Chisel3 compatibility - generic don't care UInts/Bits are deprecated.
-          ChiselError.warning("General don't care MyUInts are deprecated. Please use BitPat().")
-        }
-      case _ =>
-    }
-    res.fractionalWidth = this.fractionalWidth
-    res
+
+  /** Print DSPFixed info */
+  override def infoString() : String = "+/-Q"+getIntWidth+"."+getFracWidth+", range = " + rangeString(getFracWidth)
+
+  /** Get widths */
+  def getIntWidth(): Int = getWidth-getFracWidth-1
+  def getFracWidth(): Int = fractionalWidth
+  def getFractionalWidth(): Int = fractionalWidth
+
+  type T = DSPFixed
+
+  /** Create a DSPFixed representation from an Int */
+  override def fromInt(x : Int) : this.type = DSPFixed(x.toDouble, (getIntWidth,getFracWidth)).asInstanceOf[this.type]
+
+  override def fromNode(n : Node): this.type = {
+    // fixedParams mean nothing
+    DSPFixed.apply_gen(OUTPUT,(n.getWidth,0),null).asTypeFor(n).asInstanceOf[this.type]
   }
-  
-    def getIntWidth() : Int = this.getWidth-this.fractionalWidth-1
-  
-  def getFracWidth() : Int = this.fractionalWidth
-  
+
+  /** Update the range of this DSPFixed instance. Range can be expanded until it exceeds
+    * what is allowable by the DSPFixed bitwidth, which is fixed @ creation.
+    */
+  protected def updateLimits(range: (BigInt,BigInt)): Unit = {
+    setRangeBits(toRange(getWidth))
+    setRange(range)
+  }
+
+
+
+
+
+
+
+
+
+
+
+  /*
+  colonequals -- does match width change meaning? -- need to shift
+  matchwidth
+
+   */
+
+  /** Reassign with ":=". Certain conditions must be enforced so delay + range are consistent */
   override protected def colonEquals(that : Bits): Unit = {
     that match {
-      case f: MyFixed => {
-        
-        
-        super.colonEquals(fromSInt(f.toSInt,f.getFracWidth))
-
+      case u: DSPUInt => {
+        reassign(u)
+        val (x,y) = matchWidth(u)
+        super.colonEquals(toT(y,List2Tuple(u.getRange)))
       }
       case _ => illegalAssignment(that)
     }
   }
+
+  /** Shorten # of bits -- get rid of MSBs by forcing the generator to interpret a new (smaller, positive) max
+    * CAREFUL: could eliminate useful bits!!!
+    */
+  def shorten(newMax: BigInt): DSPUInt = {
+    val newMin = getRange.min.min(newMax)
+    val out = toT(this,List2Tuple(getRange),(newMin,newMax))
+    out.updateGeneric(this)
+  }
+
+  /** Match operator widths */
+  private def matchWidth(y: DSPUInt) : Tuple2[Bits,Bits] = {
+    val diff = y.getWidth - getWidth
+    if (diff > 0) (Cat(Fill(diff,sign.toBits),this), y.toBits)
+    else if (diff < 0) (this.toBits, Cat(Fill(-diff,y.sign.toBits),y))
+    else (this.toBits, y.toBits)
+  }
+
+
+
+
+  /** TODO: Implement */
+  def >> (n:Int) : DSPFixed = this
+  def >> (b:DSPUInt):DSPFixed = this
+  def <<(n:Int):DSPFixed = this
+  def <<(b:DSPUInt):DSPFixed = this
+  def > (b:DSPFixed):DSPBool = DSPBool(true)
+  def >= (b:DSPFixed):DSPBool =DSPBool(true)
+  def < (b:DSPFixed):DSPBool= DSPBool(true)
+  def <= (b:DSPFixed):DSPBool = DSPBool(true)
+  def + (b:DSPFixed):DSPFixed = this
+  override def +& (b:DSPFixed):DSPFixed = this
+  override def +% (b:DSPFixed):DSPFixed = this
+  def - (b:DSPFixed):DSPFixed = this
+  override def -& (b:DSPFixed):DSPFixed = this
+  override def -% (b:DSPFixed):DSPFixed = this
+  override def unary_-():DSPFixed = this
+  def * (b:DSPFixed):DSPFixed = this
+  def ? (n:DSPBool) : DSPFixed = this
+  def /| (b: DSPFixed) : DSPFixed = this
+
+
+
+
+
+
+
+
+
+
   
+
+  
+
+  
+
+
   
 }
 

@@ -121,7 +121,11 @@ abstract class DSPBits [T <: DSPBits[_]] extends Bits {
   final def getRange():List[BigInt] = List(info.range.min,info.range.max)
   
   /** Returns range [min,max] as string */
-  final protected def rangeString(fracWidth:Int = 0): String = ("[" + info.range.min + "," + info.range.max + "]")
+  final protected def rangeString(fracWidth:Int = 0): String = {
+    val (min,max) = (info.range.min,info.range.max)
+    if (fracWidth == 0) "[" + min + "," + max + "]"
+    else "[" + DSPFixed.toDouble(min,fracWidth) + "," + DSPFixed.toDouble(max,fracWidth) + "]"
+  }
   
   /** Update ranging as determined by bitwidth + data type [min,max] */
   final protected def setRangeBits(range: (BigInt,BigInt)): Unit = {

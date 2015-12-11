@@ -25,7 +25,7 @@ object DSPUInt {
     res.assign()
   }
   
-  /** Create a DSPUInt obect with a specified IODirection and range */
+  /** Create a DSPUInt object with a specified IODirection and range */
   def apply(dir: IODirection, max: BigInt): DSPUInt = apply(dir,(BigInt(0),max))
   def apply(dir: IODirection, range: (BigInt,BigInt)): DSPUInt = {
     if (range == null) Error("Range cannot be null.")

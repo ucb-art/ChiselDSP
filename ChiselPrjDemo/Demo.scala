@@ -1,9 +1,11 @@
 /** Demo using skeleton for QAM demod */
 
+// ------- Imports START -- DO NOT MODIFY
 import org.json4s._
 import org.json4s.native.JsonMethods._
 import Chisel._
 import ChiselDSP._
+// ------- Imports END -- OK TO MODIFY BELOW
 
 package Demo___
 
@@ -16,11 +18,11 @@ case class JSONParams (
   iFixedFracBits: Int = 14                  // Fixed in Qn.m notation --> m (# frational bits, determines LSB)
 )
 
-/** Bundle showing off data types and how to pass parameters (actual vals are meaningless) */
+/** IO Bundle showing off data types and how to pass parameters (actual vals are meaningless) */
 class DemoIO(jsonParams:JSONParams) extends IOBundle {
   // ChiselDSP types (preferred because they keep track of meta info + perform optimizations with them)
   val b2 = DSPBool(INPUT)
-  val u2 = DSPUInt(INPUT,(3,20))                    // (min,max) range
+  val u2 = DSPUInt(INPUT,(3,20))                    // (min,max) range; also: DSPUInt(DIR,max) -> assumes min = 0
   val d2 = DSPDbl(INPUT)
   val f2 = DSPFixed(INPUT,(1,15))                   // (int,frac) widths
   // Normal Chisel types
@@ -34,6 +36,9 @@ class DemoIO(jsonParams:JSONParams) extends IOBundle {
   
   // Demonstrates customizable IO --> IO pin is not generated if a Literal/constant is assigned 
   val optionalIO = if (jsonParams.softDemod) DSPUInt(0) else DSPUInt(INPUT,(3,jsonParams.frameSizes.max))
+  
+  // Example of how to create Complex
+  val complex0 = Complex(DSPDbl(INPUT),DSPDbl(INPUT))
 }
 
 /** Special way to create a module that uses a generic type to easily switch between Double/Fixed point testing.
@@ -43,7 +48,9 @@ class DemoIO(jsonParams:JSONParams) extends IOBundle {
 class Demo___ [T <: DSPQnm[_]](gen : => T, jsonParams: JSONParams) extends GenDSPModule (gen, true) {
 
   /** Inline IO Bundle allows module methods double2T (double --> literal)
-    * and T (customized Fixed widths) to be used */
+    * and T (customized Fixed widths) to be directly used.
+    * Note IO should be in IOBundle.
+    */
   class Demo___IO extends IOBundle {
     // Input either signed DSPFixed or DSPDbl, as set by gen
     val symbolIn = Complex(gen.gen).asInput      
@@ -111,31 +118,46 @@ class Demo___ [T <: DSPQnm[_]](gen : => T, jsonParams: JSONParams) extends GenDS
   // Shorthand to connect all DemoIO inputs to outputs
   i <> o
  
+  // You can reassign to nodes; last assignment takes precedence
+  // This is how you access individual [real, imag] components of complex
+  // Operator types should match (gen should match gen, DSPDbl should match DSPDbl)
+  // Arithmetic shift oeprations, normal +,-,* (no divide), Mux c ? tc : fc
+  o.complex0.imag := (i.complex0.real >> 3) + DSPDbl(3)
+  o.complex0.real := i.complex0.imag * DSPDbl(3) + Mux(i.b2,i.complex0.imag,i.complex0.real)
+
+  // You can make use of DecoupledIO (ready,valid), which you enabled in the Module creation
+  decoupledO.ready := decoupledI.ready
+  decoupledO.valid := decoupledI.valid
+
+
+
+
+
+
+
+
+
+
  
-
-
-
-
-
-
-
-
-
  
  
  
  
-  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ // Vec/complex [ either way]: reg, sla
+ //mem,lut
   // when
-  //decoupled
-  //try operations
-  //vec
 
-  
-  y.o_imag := double2T(2.3) //MyMux(y.i_real,y.i_imag,y.ctrl) * double2T(0.5) + double2T(-2.3)
-  y.o_real := double2T(-2.3) //(y.i_imag >> 3) * double2T(-1) + double2T(3.3)
-  
-
+// note modcounter is DSPModule, not GenDSPModule (no fixed type)
   
   val CounterTest = (0 until 3).map(x => ModCounter(10,4,"TestCounterName") )        
 	CounterTest.zipWithIndex.foreach{ case(r,i) => {
@@ -147,26 +169,8 @@ class Demo___ [T <: DSPQnm[_]](gen : => T, jsonParams: JSONParams) extends GenDS
 	  d(i) := r.x.out
 	  }
 	}
-	
-	
-
-
   
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 object Demo {
   def main(args: Array[String]): Unit = {
@@ -192,8 +196,15 @@ object Demo {
   }
 }
 
+//declaration
+
 class DemoTests[T <: Demo[_ <: MyBits with MyNum[_]] ](c: T)  extends DSPTester(c) {
 // peek bundle
+//peek bits, complex, vec
+//setp
+
+//reset
+//poke(complex, bits)
   
 }
 

@@ -4,9 +4,12 @@ package ChiselDSP
 import Chisel._
 import scala.collection.mutable.Map
 
-/** Additional operations for Fixed in Qn.m notation (and therefore MyDbl) */
+/** Additional operations for Fixed in Qn.m notation (and therefore DSPDbl) */
 abstract class DSPQnm[T <: DSPBits[_]] extends DSPNum[T] {
   // TODO: Truncate, round, overflow handling
+
+  /** Shorten fixed-point integer width to save hardware resources (doesn't act on DSPDbl) */
+  def shortenTo(intWidth: Int) = this.asInstanceOf[T]
 }
 
 /** Allow numeric operations */

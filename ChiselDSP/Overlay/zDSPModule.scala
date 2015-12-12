@@ -12,7 +12,7 @@ abstract class GenDSPModule[T <: DSPQnm[_]](gen : => T, decoupledIO: Boolean = f
                                            ) extends DSPModule(decoupledIO, _clock, _reset) {
 
   /** Converts a double value to a constant DSPFixed (using [intWidth,fracWidth] parameters)
-    * or DSPDbl (ignoring parameters). Note that both parameters should be specified at the same time.
+    * or DSPDbl (ignoring parameters).
     */
   def double2T[A <: DSPQnm[_]](x: Double, fixedParams: (Int,Int) = null): T = {
     val default = (fixedParams == null)
@@ -27,7 +27,12 @@ abstract class GenDSPModule[T <: DSPQnm[_]](gen : => T, decoupledIO: Boolean = f
     }
     out.asInstanceOf[T] 
   }
-  
+  def double2T[A <: DSPQnm[_]](x: Double, fracWidth: Int): T = {
+    val fixed = DSPFixed.toFixed(x, fracWidth)
+    val intWidth = fixed.bitLength-fracWidth
+    double2T(x,(intWidth,fracWidth))
+  }
+
   /** Allows you to customize each T (DSPFixed or DSPDbl) for parameters like 
     * integer width and fractional width (in the DSPFixed case) 
     */

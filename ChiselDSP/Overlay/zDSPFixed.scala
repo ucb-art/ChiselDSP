@@ -132,57 +132,73 @@ class DSPFixed (private val fractionalWidth:Int = 0)  extends DSPQnm[DSPFixed] {
     * what is allowable by the DSPFixed bitwidth, which is fixed @ creation.
     */
   protected def updateLimits(range: (BigInt,BigInt)): Unit = {
-    setRangeBits(toRange(getWidth))
+    setRangeBits(DSPFixed.toRange(getWidth))
     setRange(range)
   }
 
+  /** Adding (+n) /subtracting (-n) fractional bits --> adjust range */
+  private def adaptFracRange(n: Int): List[BigInt] = {
+    if (n >= 0) getRange map { _ << n }
+    else getRange map { _ >> n}                               // Signed
+  }
 
+  /** Match fractional widths of fixed point values and return (potentially) right-padded SInts
+    * (SInt a, SInt b, a New Range, b new Range, fracWidth)
+    * */
+  private def matchFracWidth (b: DSPFixed) : Tuple5[SInt,SInt,List[BigInt],List[BigInt],Int] = {
+    val fracWidth = getFracWidth.max(b.getFracWidth)
+    val fracDiff = getFracWidth - b.getFracWidth
+    val zro = Bits(0,1)
+    if (fracDiff > 0)
+      (this.toSInt,Cat(b,Fill(fracDiff,zro)).toSInt,getRange,b.adaptFracRange(fracDiff),fracWidth)
+    else if (fracDiff < 0)
+      (Cat(this,Fill(-fracDiff,zro)).toSInt,b.toSInt,adaptFracRange(-fracDiff),b.getRange,fracWidth)
+    else (this.toSInt,b.toSInt,getRange,b.getRange,fracWidth)
+  }
 
+  /** Sign extend this/b width if shorter than b/this width: Outputs width matched operands, updated ranges,
+    * and fracWidth used.
+    */
+  private def matchWidth(that: DSPFixed) : Tuple5[SInt,SInt,List[BigInt],List[BigInt],Int] = {
+    val (x,y,xrange,yrange,fracWidth) = matchFracWidth(that)
+    val widthDiff = y.getWidth - x.getWidth
+    val (a,b) = {
+      if (widthDiff > 0) (Cat(Fill(widthDiff,sign.toBits),x).toSInt, y)
+      else if (widthDiff < 0) (x, Cat(Fill(-widthDiff,that.sign.toBits),y).toSInt)
+      else (x, y)
+    }
+    (a,b,xrange,yrange,fracWidth)
+  }
 
+  /** Check fractional width alignment */
+  def checkAlign(f: DSPFixed): Unit = {
+    if (getFracWidth != f.getFracWidth) Error("Fractional widths should match.")
+  }
 
-
-
-
-
-
-
-  /*
-  colonequals -- does match width change meaning? -- need to shift
-  matchwidth
-
-   */
-
-  /** Reassign with ":=". Certain conditions must be enforced so delay + range are consistent */
+  /** Reassign with ":=". Certain conditions must be enforced so delay + range are consistent.
+    * Note that fracWidths of L,R in L := R should match.
+    */
   override protected def colonEquals(that : Bits): Unit = {
     that match {
-      case u: DSPUInt => {
-        reassign(u)
-        val (x,y) = matchWidth(u)
-        super.colonEquals(toT(y,List2Tuple(u.getRange)))
+      case f: DSPFixed => {
+        checkAlign(f)
+        reassign(f)
+        val (x,y,xrange,yrange,fracWidth) = matchWidth(f)
+        super.colonEquals(fromSInt(y,fracWidth,List2Tuple(yrange))
       }
       case _ => illegalAssignment(that)
     }
   }
 
-  /** Shorten # of bits -- get rid of MSBs by forcing the generator to interpret a new (smaller, positive) max
+  /** Shorten # of integer bits -- get rid of MSBs by forcing the generator to use a smaller width
     * CAREFUL: could eliminate useful bits!!!
     */
-  def shorten(newMax: BigInt): DSPUInt = {
-    val newMin = getRange.min.min(newMax)
-    val out = toT(this,List2Tuple(getRange),(newMin,newMax))
+  override def shortenTo(intWidth: Int): DSPFixed = {
+    val newWidth = DSPFixed.paramsToWidth((intWidth,getFracWidth))
+    if (newWidth > getWidth) Error("New width must be <= old Fixed width.")
+    val out = fromSInt(this.toSInt,getFracWidth,DSPFixed.toRange(newWidth))
     out.updateGeneric(this)
   }
-
-  /** Match operator widths */
-  private def matchWidth(y: DSPUInt) : Tuple2[Bits,Bits] = {
-    val diff = y.getWidth - getWidth
-    if (diff > 0) (Cat(Fill(diff,sign.toBits),this), y.toBits)
-    else if (diff < 0) (this.toBits, Cat(Fill(-diff,y.sign.toBits),y))
-    else (this.toBits, y.toBits)
-  }
-
-
-
 
   /** TODO: Implement */
   def >> (n:Int) : DSPFixed = this
@@ -204,26 +220,4 @@ class DSPFixed (private val fractionalWidth:Int = 0)  extends DSPQnm[DSPFixed] {
   def ? (n:DSPBool) : DSPFixed = this
   def /| (b: DSPFixed) : DSPFixed = this
 
-
-
-
-
-
-
-
-
-
-  
-
-  
-
-  
-
-
-  
 }
-
-
-
-
-

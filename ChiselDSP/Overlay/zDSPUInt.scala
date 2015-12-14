@@ -11,6 +11,7 @@ object DSPUInt {
 
   /** Convert Bits to a DSPUInt (upperbound specified w/ max) by reinterpreting the Bits */
   def apply(x: Bits, max: BigInt): DSPUInt = apply(x,(BigInt(0),max))
+  def apply(x: Bits, range: => (Int,Int)): DSPUInt = apply(x,(BigInt(range._1),BigInt(range._2)))
   def apply(x:Bits, range:(BigInt,BigInt)): DSPUInt = {
     val res = chiselCast(x){apply(x.dir,range)}
     res.assign()
@@ -27,6 +28,7 @@ object DSPUInt {
   
   /** Create a DSPUInt object with a specified IODirection and range */
   def apply(dir: IODirection, max: BigInt): DSPUInt = apply(dir,(BigInt(0),max))
+  def apply(dir:IODirection, range: => (Int,Int)): DSPUInt = apply(dir,(BigInt(range._1),BigInt(range._2)))
   def apply(dir: IODirection, range: (BigInt,BigInt)): DSPUInt = {
     if (range == null) Error("Range cannot be null.")
     if (range._1 < 0 || range._2 < 0) Error("DSPUInt must be non-negative!")
@@ -53,11 +55,17 @@ object DSPUInt {
   }
 	
   /** Calculate signal max from bitwidth */
-  def toMax(w: Int): BigInt = (BigInt(2) << w) - 1 
+  def toMax(w: Int): BigInt = (BigInt(1) << w) - 1
 
 }
 
 class DSPUInt extends DSPNum[DSPUInt] {
+
+  /** Clone this instantiation */
+  override def cloneType: this.type = {
+    val out = DSPUInt(dir,List2Tuple(getRange))
+    out.copyInfo(this).asInstanceOf[this.type]
+  }
 
   /** Sign of UInt always 0 */
   override def sign(): DSPBool = DSPBool(false)
@@ -214,7 +222,7 @@ class DSPUInt extends DSPNum[DSPUInt] {
     val out = {
       if (select.isLit) {if (select.isTrue) this else DSPUInt(0)}
       else{ 
-        val res = this & Fill(getWidth,select.toBits)
+        val res = this.toBits & Fill(getWidth,select.toBits)
         toT(res,List2Tuple(getRange))
       }
     }
@@ -357,6 +365,13 @@ class DSPUInt extends DSPNum[DSPUInt] {
     val newMin = getRange.min.min(newMax)
     val out = toT(this,List2Tuple(getRange),(newMin,newMax)) 
     out.updateGeneric(this) 
+  }
+
+  /** Lengthen # of bits by setting larger maximum */
+  def lengthen(newMax: BigInt): DSPUInt = {
+    if (newMax < getRange.max) Error ("When lengthning a DSPUInt, the new maximum must be >= the old one.")
+    val out = toT(this,(getRange.min,newMax))
+    out.updateGeneric(this)
   }
   
 }

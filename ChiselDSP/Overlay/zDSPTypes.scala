@@ -4,13 +4,16 @@ package ChiselDSP
 import Chisel._
 import scala.collection.mutable.Map
 
-/** Additional operations for Fixed in Qn.m notation (and therefore MyDbl) */
-abstract class DSPQnm[T <: DSPBits[_]] extends DSPNum[T] {
+/** Additional operations for Fixed in Qn.m notation (and therefore DSPDbl) */
+abstract class DSPQnm[T <: DSPBits[T]] extends DSPNum[T] {
   // TODO: Truncate, round, overflow handling
+
+  /** Shorten fixed-point integer width to save hardware resources (doesn't act on DSPDbl) */
+  def shortenTo(intWidth: Int) = this.asInstanceOf[T]
 }
 
 /** Allow numeric operations */
-abstract class DSPNum[T <: DSPBits[_]] extends DSPBits[T] {
+abstract class DSPNum[T <: DSPBits[T]] extends DSPBits[T] {
 
   /** Don't allow non-2^n divides (not synthesizable on FPGA -- designer should think carefully!) */
   private[ChiselDSP] def /  (b: T): T = error("/ not allowed.").asInstanceOf[T]
@@ -50,7 +53,7 @@ abstract class DSPNum[T <: DSPBits[_]] extends DSPBits[T] {
   def sign(): DSPBool = MSB()
   
   /** Return the absolute value of this # with the same type */
-  def abs() : T = Mux(sign(),-this.asInstanceOf[T],this.asInstanceOf[T])
+  def abs() : T = Mux(sign(),(-this).asInstanceOf[T],this.asInstanceOf[T])
   
   /** Return the min of 2 numbers */
   def min(b: T): T = Mux(this < b, this.asInstanceOf[T], b)
@@ -71,10 +74,10 @@ case class Info (
 )
 
 /** Custom Bits with type info */
-abstract class DSPBits [T <: DSPBits[_]] extends Bits {
+abstract class DSPBits [T <: DSPBits[T]] extends Bits {
 
   /** Error out with message */
-  final protected def error(msg: String) : this.type = {Error(msg); this}
+  final def error(msg: String) : this.type = {Error(msg); this}
 
   /** Width + other useful debug info */
   def infoString(): String = (getWidth + " bits")
@@ -97,36 +100,49 @@ abstract class DSPBits [T <: DSPBits[_]] extends Bits {
   /** Update ranging [min,max] -- subclasses need to compute rangeBits first */
   final protected def setRange(range: (BigInt,BigInt)): Unit = {
     if (range._1 > range._2) error("Range min must be <= max")
-    info.range("max") = if(isAssigned) range._2.max(info.range.max) else range._2
-    info.range("min") = if(isAssigned) range._1.min(info.range.min) else range._1
-    if (info.range.max > info.rangeBits.max) {
+    info.range("max") = if(isAssigned) range._2.max(info.range("max")) else range._2
+    info.range("min") = if(isAssigned) range._1.min(info.range("min")) else range._1
+    if (info.range("max") > info.rangeBits("max")) {
       Warn("Warning, possible max > max bits overflow. Signals down the chain may be wrong.")
-      info.range("max") = info.rangeBits.max
+      info.range("max") = info.rangeBits("max")
     }
-    if (info.range.min < info.rangeBits.min) {
+    if (info.range("min") < info.rangeBits("min")) {
       Warn("Warning, possible min < min bits overflow. Signals down the chain may be wrong.")
-      info.range("min") = info.rangeBits.min
+      info.range("min") = info.rangeBits("min")
     }
-    if (info.range.min > info.rangeBits.max) {
+    if (info.range("min") > info.rangeBits("max")) {
       Warn("Warning, possible min > max bits overflow. Signals down the chain may be wrong.")
-      info.range("min") = info.rangeBits.max
+      info.range("min") = info.rangeBits("max")
     }
-    if (info.range.max < info.rangeBits.min) {
+    if (info.range("max") < info.rangeBits("min")) {
       Warn("Warning, possible max < min bits overflow. Signals down the chain may be wrong.")
-      info.range("max") = info.rangeBits.min
+      info.range("max") = info.rangeBits("min")
     }
   }
   
   /** Get range */
-  final def getRange():List[BigInt] = List(info.range.min,info.range.max)
+  final def getRange():List[BigInt] = List(info.range("min"),info.range("max"))
   
   /** Returns range [min,max] as string */
-  final protected def rangeString(fracWidth:Int = 0): String = ("[" + info.range.min + "," + info.range.max + "]")
+  final protected def rangeString(fracWidth:Int = 0): String = {
+    val (min,max) = (info.range("min"),info.range("max"))
+    if (fracWidth == 0) "[" + min + "," + max + "]"
+    else "[" + DSPFixed.toDouble(min,fracWidth) + "," + DSPFixed.toDouble(max,fracWidth) + "]"
+  }
   
   /** Update ranging as determined by bitwidth + data type [min,max] */
   final protected def setRangeBits(range: (BigInt,BigInt)): Unit = {
     info.rangeBits("min") = range._1
     info.rangeBits("max") = range._2
+  }
+
+  /** Get all meta info */
+  final def getInfo(): Info = info
+
+  /** Copy info */
+  final private[ChiselDSP] def copyInfo (that: T) : T = {
+    info = that.getInfo
+    this.asInstanceOf[T]
   }
   
   /** Pass (range, etc.) info of input to output [this] -- DOES NOT PASS DELAY. */
@@ -163,7 +179,7 @@ abstract class DSPBits [T <: DSPBits[_]] extends Bits {
   }
   
   /** Pass info of input to output (3 inputs -> 1 output [this]) -- DOES NOT PASS RANGE */
-  final private[ChiselDSP] def pass3to1[U <: DSPBits[_],V <: DSPBits[_], W <: DSPBits[_]](in1: U, in2: V, in3: W): T = 
+  final private[ChiselDSP] def pass3to1[U <: DSPBits[_],V <: DSPBits[_], W <: DSPBits[_]](in1: U, in2: V, in3: W): T =
   {
     in1.use(); in2.use(); in3.use()
     assign()
@@ -219,7 +235,7 @@ abstract class DSPBits [T <: DSPBits[_]] extends Bits {
     val res = {
       if (isLit) this
       else {
-        val out = Reg(next = this)
+        val out = RegNext(this)
         out.passThrough(this)
         out.passDelay(this,0)                       // Delay = 0 because we only care about explicit pipe delays
       }

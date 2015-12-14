@@ -12,7 +12,7 @@ object Complex {
   /** Create a new Complex number: real + imag*i
     * @tparam T the type to represent the complex number with, eg DSPFixed, DSPDbl
     */
-  def apply[T <: DSPQnm[_]](real: T, imag: T) : Complex[T] = new Complex(real, imag)
+  def apply[T <: DSPQnm[T]](real: T, imag: T) : Complex[T] = new Complex(real, imag)
   
   /** Creates non-Chisel complex class if real, imag inputs are type Scala Double */
   def apply(real:Double, imag:Double) : ScalaComplex = new ScalaComplex(real, imag)
@@ -26,7 +26,21 @@ class ScalaComplex (var real:Double, var imag:Double){
 }
 
 /** Complex number representation */
-class Complex[T <: DSPQnm[_]](val real: T, val imag: T) extends Bundle {
+class Complex[T <: DSPQnm[T]](val real: T, val imag: T) extends Bundle {
+
+  /** Check that 'name' is a valid component of Complex, ie. real or imag. Any methods with
+    * 0 arguments should be added to this list to prevent Chisel from stack overflowing... :(
+    */
+  override protected def checkPort(obj : Any, name : String) : Boolean = name match {
+    case "real" => true
+    case "imag" => true
+    case _      => false
+  }
+
+  /** Clone a complex instantiation */
+  override def cloneType() = {
+    new Complex(real.cloneType, imag.cloneType).asInstanceOf[this.type]
+  }
 
   /** Pipe (n, [optional] en)
   * Delay complex by n cycles (optional enable en)
@@ -40,7 +54,7 @@ class Complex[T <: DSPQnm[_]](val real: T, val imag: T) extends Bundle {
   def ? (s: DSPBool) : Complex[T] = Complex(real ? s, imag ? s)
   
   /** Custom bitwise or for muxing */
-  def /| [U <: Complex[T]](b: U) : U = Complex(real /| b.real, imag /| b.imag)
+  def /| (b: Complex[T]) : Complex[T] = Complex(real /| b.real, imag /| b.imag)
   
   /** ARITHMETIC Right shift n */
   def >> (n: Int) : Complex[T] = Complex( real >> n, imag >> n)

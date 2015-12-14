@@ -2,24 +2,25 @@
 
 package ChiselDSP
 import scala.collection.mutable.{Stack}
+import Chisel._
 
 /** Module that allows passing in a generic type for DSP. Allows the designer to seamlessly switch
   * between DSPDbl and DSPFixed implementations for functional testing vs. fixed-point
   * characterization and optimization.
   */ 
-abstract class GenDSPModule[T <: DSPQnm[_]](gen : => T, decoupledIO: Boolean = false, 
+abstract class GenDSPModule[T <: DSPQnm[T]](gen : => T, decoupledIO: Boolean = false,
                                             _clock: Option[Clock] = None, _reset: Option[Bool] = None
                                            ) extends DSPModule(decoupledIO, _clock, _reset) {
 
   /** Converts a double value to a constant DSPFixed (using [intWidth,fracWidth] parameters)
-    * or DSPDbl (ignoring parameters). Note that both parameters should be specified at the same time.
+    * or DSPDbl (ignoring parameters).
     */
-  def double2T[A <: DSPQnm[_]](x: Double, fixedParams: (Int,Int) = null): T = {
+  def double2T[A <: DSPQnm[A]](x: Double, fixedParams: (Int,Int) = null): T = {
     val default = (fixedParams == null)
-    val out =  gen.asInstanceOf[A] match {
+    val out = gen.asInstanceOf[A] match {
       case f: DSPFixed => {
-        val intWidth = if (default) f.intWidth else fixedParams._1
-        val fracWidth = if (default) f.fracWidth else fixedParams._2
+        val intWidth = if (default) f.getIntWidth else fixedParams._1
+        val fracWidth = if (default) f.getFracWidth else fixedParams._2
         DSPFixed(x, (intWidth,fracWidth))
       }
       case d: DSPDbl => DSPDbl(x)
@@ -27,16 +28,21 @@ abstract class GenDSPModule[T <: DSPQnm[_]](gen : => T, decoupledIO: Boolean = f
     }
     out.asInstanceOf[T] 
   }
-  
+  def double2T[A <: DSPQnm[A]](x: Double, fracWidth: Int): T = {
+    val fixed = DSPFixed.toFixed(x, fracWidth)
+    val intWidth = fixed.bitLength-fracWidth
+    double2T(x,(intWidth,fracWidth))
+  }
+
   /** Allows you to customize each T (DSPFixed or DSPDbl) for parameters like 
     * integer width and fractional width (in the DSPFixed case) 
     */
-  def T[A <: DSPQnm[_]](dir: IODirection, fixedParams: (Int,Int) = null): T = {
+  def T[A <: DSPQnm[A]](dir: IODirection, fixedParams: (Int,Int) = null): T = {
     val default = (fixedParams == null)
     val out =  gen.asInstanceOf[A] match {
       case f: DSPFixed => {
-        val intWidth = if (default) f.intWidth else fixedParams._1
-        val fracWidth = if (default) f.fracWidth else fixedParams._2
+        val intWidth = if (default) f.getIntWidth else fixedParams._1
+        val fracWidth = if (default) f.getFracWidth else fixedParams._2
         DSPFixed(dir, (intWidth,fracWidth))
       }
       case d: DSPDbl => DSPDbl(dir)

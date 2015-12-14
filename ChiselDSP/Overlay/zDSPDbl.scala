@@ -25,6 +25,12 @@ object DSPDbl {
 
 class DSPDbl extends DSPQnm[DSPDbl] {
 
+  /** Clone this instantiation */
+  override def cloneType: this.type = {
+    val out = DSPDbl(dir)
+    out.copyInfo(this).asInstanceOf[this.type]
+  }
+
   /** Convert Bits to a DSPDbl by reinterpreting the Bits */
   private def toT(x: Bits) : DSPDbl = {
     val res = chiselCast(x){DSPDbl(x.dir)}
@@ -125,7 +131,7 @@ class DSPDbl extends DSPQnm[DSPDbl] {
 
   /** select ? this (true) : 0 (false) -- used for Mux */
   def ? (select: DSPBool) : DSPDbl = {
-    val out = toT(this & Fill(64,select.toBool))
+    val out = toT(this.toBits & Fill(64,select.toBool))
     out.pass2to1(this,select)
   }
   

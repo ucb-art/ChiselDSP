@@ -31,6 +31,12 @@ object DSPBool {
 
 class DSPBool extends DSPBits[DSPBool]{
 
+  /** Clone this instantiation */
+  override def cloneType: this.type = {
+    val out = DSPBool(dir)
+    out.copyInfo(this).asInstanceOf[this.type]
+  }
+
   /** Lit val is true */
   def isTrue(): Boolean = (litValue() == 1)
 

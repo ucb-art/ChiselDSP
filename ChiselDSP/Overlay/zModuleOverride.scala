@@ -23,10 +23,7 @@ abstract class ModuleOverride(_clock: Option[Clock] = None, _reset: Option[Bool]
       }
       case _ => 
     }
-  } 
-  
-  /** Easily add elements of aggregates (Vecs, Complex, etc.) to the list of debug nodes */
-  def debug(data: Aggregate) : Unit = data.flatten map (x => debug(x._2))  
+  }
 
 }
 

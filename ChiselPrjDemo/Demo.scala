@@ -1,21 +1,22 @@
 /** Demo using skeleton for QAM demod */
 
+package DemoXXX
+
 // ------- Imports START -- DO NOT MODIFY BELOW
 import org.json4s._
 import org.json4s.native.JsonMethods._
-import Chisel._
+import org.json4s.JsonDSL._
+import Chisel.{Complex => _, Mux => _, _}
 import ChiselDSP._
 // ------- Imports END -- OK TO MODIFY BELOW
 
-package Demo___
-
-/** Parameters externally passed via JSON file (but with defaults) */
+/** Parameters externally passed via JSON file (can add defaults) */
 case class JSONParams (
-  QAMn: List[Int] = List(4,16,64),          // List of supported n-QAM i.e. 4-QAM (QPSK), 16-QAM, 64-QAM, etc.
-  frameSizes: List[Int] = List(128,1024),   // Supported frame sizes (see FFT sizes needed) 
-  softDemod: Boolean = false                // If true, should do LLR calc, otherwise hard demod
-  intBits: Int = 1                          // Fixed in Qn.m notation --> n (# of integer bits, not including sign)
-  fracBits: Int = 14                        // Fixed in Qn.m notation --> m (# frational bits, determines LSB)
+  QAMn: List[Int],            // List of supported n-QAM i.e. 4-QAM (QPSK), 16-QAM, 64-QAM, etc.
+  frameSizes: List[Int],      // Supported frame sizes (see FFT sizes needed)
+  softDemod: Boolean,         // If true, should do LLR calc, otherwise hard demod
+  intBits: Int,               // Fixed in Qn.m notation --> n (# of integer bits, not including sign)
+  fracBits: Int               // Fixed in Qn.m notation --> m (# frational bits, determines LSB)
 )
 
 /** IO Bundle showing off data types and how to pass parameters (actual vals are meaningless) */
@@ -45,13 +46,13 @@ class DemoIO(jsonParams:JSONParams) extends IOBundle {
   * The correct type 'gen' must be passed in main. The second argument (true) @ GenDSPModule(gen,true) indicates
   * DecoupledIO is desired.
   */
-class Demo___ [T <: DSPQnm[_]](gen : => T, jsonParams: JSONParams) extends GenDSPModule (gen, true) {
+class DemoXXX [T <: DSPQnm[T]](gen : => T, jsonParams: JSONParams) extends GenDSPModule (gen, true) {
 
   /** Inline IO Bundle allows module methods double2T (double --> literal)
     * and T (customized Fixed widths) to be directly used.
     * Note IO should be in IOBundle.
     */
-  class Demo___IO extends IOBundle {
+  class DemoXXXIO extends IOBundle {
     // Input either signed DSPFixed or DSPDbl, as set by gen
     val symbolIn = Complex(gen,gen).asInput
     // # of "hard" bits required is set by the maximum n-QAM supported 
@@ -61,7 +62,7 @@ class Demo___ [T <: DSPQnm[_]](gen : => T, jsonParams: JSONParams) extends GenDS
     // When performing hard decoding, n,m = 0, so each element of the vec should
     // only be 1 bit wide (using the sign bit)
     // When performing hard decoding, n = 0, m = ??? -- you should determine what ??? is (15 is a placeholder)
-    val m = if (jsonParams.soft) 15 else 0
+    val m = if (jsonParams.softDemod) 15 else 0
     val demodOut = Vec(DSPUInt.toBitWidth(jsonParams.QAMn.max-1), T(OUTPUT,(0,m)))
     // If the bits of demodOut are interpreted as signed BigInt rather than fixed (i.e. renormalize wrt LSB), 
     // a large positive number is a very confident 0, and a small positive number is a less confident 0.
@@ -77,14 +78,14 @@ class Demo___ [T <: DSPQnm[_]](gen : => T, jsonParams: JSONParams) extends GenDS
   }
 
   // Instantiate IO objects
-  val demoIO = new Demo___IO
-  val i = new DemoIO
+  val demoIO = new DemoXXXIO
+  val i = new DemoIO(jsonParams)
   // Creates a new instance of DemoIO with port directions flipped (i.e. to output)
-  val o = new DemoIO.flip
+  val o = new DemoIO(jsonParams).flip
 
   // Delay offset by how long it takes to finish computation (n)
   // Note: Instead of doing Reg(x) or Pipe(x,n) do x.reg() or x.pipe(n) to keep meta info
-  val demoIO.offsetOut := demoIO.offsetIn.pipe(5)
+  demoIO.offsetOut := demoIO.offsetIn.pipe(5)
   
   class LitBundle extends Bundle {
     // Create literals (that can be peeked)
@@ -118,7 +119,7 @@ class Demo___ [T <: DSPQnm[_]](gen : => T, jsonParams: JSONParams) extends GenDS
   debug(lits)
   
   // Shorthand to connect all DemoIO inputs to outputs
-  i <> o
+  //i <> o
  
   // You can reassign to nodes; last assignment takes precedence
   // This is how you access individual [real, imag] components of complex
@@ -143,18 +144,20 @@ class Demo___ [T <: DSPQnm[_]](gen : => T, jsonParams: JSONParams) extends GenDS
   val CounterTest = (0 until 3).map(x => ModCounter(10,4,"YourCounterName") )
   // Alternative to for loop: e = element, i = index of element
   // Mapping signals to ports
-  CounterTest.zipWithIndex.foreach{ case(e,i) => {
-    e.x.inc := DSPUInt(2)
-    e.x.modN := DSPUInt(3)
-    e.iCtrl.change := DSPBool(true)
-    e.iCtrl.reset := DSPBool(demoIO.reset)
-    e.iCtrl.wrap := DSPBool(false)
-    testIO.countOut(i) := e.x.out
+  CounterTest.zipWithIndex.foreach{
+    case(e,i) => {
+      e.x.inc := DSPUInt(2)
+      e.x.modN := DSPUInt(3)
+      e.iCtrl.change := DSPBool(true)
+      e.iCtrl.reset := DSPBool(demoIO.reset)
+      e.iCtrl.wrap := DSPBool(false)
+      testIO.countOut(i) := e.x.out
+    }
   }
 
 }
 
-object Demo___ {
+object DemoXXX {
 
   def main(args: Array[String]): Unit = {
 
@@ -164,28 +167,34 @@ object Demo___ {
     // To see how to set case class parameters without a JSON file, check out
     // ChiselDSP/Modules/Counters.scala
     implicit val formats = DefaultFormats
-    val json = parse(scala.io.Source.fromFile("src/main/scala/Demo.json").getLines.mkString)
-    val paramsDemo___ = json.extract[JSONParams]
-    Status("User parameters: " + paramsDemo___)
+    val jsonContents = scala.io.Source.fromFile("src/main/scala/Demo.json").getLines.mkString
+    val json = parse(jsonContents)
+    val paramsDemoXXX = json.extract[JSONParams]
+    Status("User parameters: " + jsonContents.replace("\t","\n").replace("{","").replace("}",""))
 
     // SBT parameters (used to set Fixed/Dbl)
     val paramsSBT = """-params_(.*)""".r.findFirstMatchIn(args(0))
     val isFixed = paramsSBT.get.group(1).toBoolean
     val mode = if (isFixed) "fixed point" else "double precision floating point"
-    Status("Compiling ___ in " + mode + " mode")
+    Status("Compiling XXX in " + mode + " mode")
 
     // Setup module + tester
-    val gen = if (isFixed) DSPFixed((paramsDemo___.intBits,paramsDemo___.fracBits)) else DSPDbl()
-    val topModule = new Demo___({gen}, paramsDemo___)
+    /*val gen = if (isFixed) DSPFixed((paramsDemoXXX.intBits,paramsDemoXXX.fracBits)) else DSPDbl()
+    val topModule = new DemoXXX({gen}, paramsDemoXXX)
     chiselMainTest(demoArgs, () => DSPModule(topModule)) {
-        c => new Demo___Tests(c)
+        c => new DemoXXXTests(c)
+    }*/
+
+    chiselMainTest(demoArgs, () => DSPModule(new DemoXXX({DSPFixed(INPUT,(paramsDemoXXX.intBits,paramsDemoXXX.fracBits))}, paramsDemoXXX))) {
+      c => new DemoXXXTests(c)
     }
+
   }
 
 }
 
 /** Special way to test a module that uses a generic type to easily switch between Double/Fixed point testing. */
-class Demo___Tests[T <: Demo___[U <: DSPQnm[_]] ](c: T)  extends DSPTester(c) {
+class DemoXXXTests[T <: DemoXXX[_ <: DSPQnm[_]]](c: T) extends DSPTester(c) {
   reset(5)      // Hold reset for 5 cycles (reset is default Chisel reset; unused in Demo module)
   step(5)       // Step 5 cycles
   peek(c.lits)  // Peek elements of a bundle

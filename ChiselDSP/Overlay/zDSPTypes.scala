@@ -5,7 +5,7 @@ import Chisel._
 import scala.collection.mutable.Map
 
 /** Additional operations for Fixed in Qn.m notation (and therefore DSPDbl) */
-abstract class DSPQnm[T <: DSPBits[_]] extends DSPNum[T] {
+abstract class DSPQnm[T <: DSPBits[T]] extends DSPNum[T] {
   // TODO: Truncate, round, overflow handling
 
   /** Shorten fixed-point integer width to save hardware resources (doesn't act on DSPDbl) */
@@ -13,7 +13,7 @@ abstract class DSPQnm[T <: DSPBits[_]] extends DSPNum[T] {
 }
 
 /** Allow numeric operations */
-abstract class DSPNum[T <: DSPBits[_]] extends DSPBits[T] {
+abstract class DSPNum[T <: DSPBits[T]] extends DSPBits[T] {
 
   /** Don't allow non-2^n divides (not synthesizable on FPGA -- designer should think carefully!) */
   private[ChiselDSP] def /  (b: T): T = error("/ not allowed.").asInstanceOf[T]
@@ -74,7 +74,7 @@ case class Info (
 )
 
 /** Custom Bits with type info */
-abstract class DSPBits [T <: DSPBits[_]] extends Bits {
+abstract class DSPBits [T <: DSPBits[T]] extends Bits {
 
   /** Error out with message */
   final def error(msg: String) : this.type = {Error(msg); this}
@@ -135,6 +135,15 @@ abstract class DSPBits [T <: DSPBits[_]] extends Bits {
     info.rangeBits("min") = range._1
     info.rangeBits("max") = range._2
   }
+
+  /** Get all meta info */
+  final def getInfo(): Info = info
+
+  /** Copy info */
+  final private[ChiselDSP] def copyInfo (that: T) : T = {
+    info = that.getInfo
+    this.asInstanceOf[T]
+  }
   
   /** Pass (range, etc.) info of input to output [this] -- DOES NOT PASS DELAY. */
   final protected def passThrough[T <: DSPBits[_]](in: T): T = {
@@ -170,7 +179,7 @@ abstract class DSPBits [T <: DSPBits[_]] extends Bits {
   }
   
   /** Pass info of input to output (3 inputs -> 1 output [this]) -- DOES NOT PASS RANGE */
-  final private[ChiselDSP] def pass3to1[U <: DSPBits[_],V <: DSPBits[_], W <: DSPBits[_]](in1: U, in2: V, in3: W): T = 
+  final private[ChiselDSP] def pass3to1[U <: DSPBits[_],V <: DSPBits[_], W <: DSPBits[_]](in1: U, in2: V, in3: W): T =
   {
     in1.use(); in2.use(); in3.use()
     assign()

@@ -5,15 +5,14 @@ import Chisel._
 
 /** Register that keeps track of additional info */
 object Reg {
-  def apply [T <: DSPBits[_], V <: Vec[_], C <: Complex[_]] (x: V) : V = {
-    Vec(x.map(
-      _ match {
-        case t : T => t.reg() 
-        case v : V => apply(v)
-        case c : C => c.reg()
-        case _ => Error("Incompatible Vec element type for Reg.")
-      }
-    )).asInstanceOf[V]
+  def apply [T <: Data](x: T) : T = {
+    val out = x match {
+      case v: Vec[_] => Vec(v.map(apply(_)))
+      case t: DSPBits[_] => t.reg()
+      case c: Complex[_] => c.reg()
+      case _ => Error("Incompatible Vec element type for Reg.")
+    }
+    out.asInstanceOf[T]
   }
 }
 
@@ -21,15 +20,14 @@ object Reg {
   * Delay all signals in x by n cycles (optional enable en)
   */
 object Pipe {
-  def apply [T <: DSPBits[_], V <: Vec[_], C <: Complex[_]] (x: V, n:Int, en: DSPBool = DSPBool(true)) : V = {
-    Vec(x.map( y =>
-      y match {
-        case t : T => t.pipe(n,en) 
-        case v : V => apply(v,n,en)
-        case c : C => c.pipe(n,en)
-        case _ => {Error("Incompatible Vec element type for Pipe."); y }
-      }
-    )).asInstanceOf[V]
+  def apply[T <: Data](x: T, n: Int, en: DSPBool = DSPBool(true)): T = {
+    val out = x match {
+      case v: Vec[_] => Vec(v.map(apply(_, n, en)))
+      case t: DSPBits[_] => t.pipe(n, en)
+      case c: Complex[_] => c.pipe(n, en)
+      case _ => Error("Incompatible Vec element type for Pipe.")
+    }
+    out.asInstanceOf[T]
   }
 }
 
@@ -37,49 +35,45 @@ object Pipe {
 
 /** Shift all elements left (arithmetically) by amount n*/
 object SLA {
-  def apply [T <: DSPBits[_], V <: Vec[_], C <: Complex[_]] (x: V, n:Int) : V = {
-    Vec(x.map( y =>
-      y match {
-        case t : T => t << n
-        case v : V => apply(v,n)
-        case c : C => c << n
-        case _ => {Error("Incompatible Vec element type for SLA."); y }
-      }
-    )).asInstanceOf[V]
+  def apply [T <: Data](x: T, n:Int) : T = {
+    val out = x match {
+      case v: Vec[_] => Vec(v.map(apply(_,n)))
+      case t: DSPNum[_] => t << n
+      case c: Complex[_] => c << n
+      case _ => Error("Incompatible Vec element type for SLA.")
+    }
+    out.asInstanceOf[T]
   }
-  def apply [T <: DSPBits[_], V <: Vec[_], C <: Complex[_]] (x: V, n:DSPUInt) : V = {
-    Vec(x.map( y =>
-      y match {
-        case t : T => t << n
-        case v : V => apply(v,n)
-        case c : C => c << n
-        case _ => {Error("Incompatible Vec element type for SLA."); y }
-      }
-    )).asInstanceOf[V]
+  def apply [T <: Data](x: T, n:DSPUInt) : T = {
+    val out = x match {
+      case v: Vec[_] => Vec(v.map(apply(_,n)))
+      case t: DSPNum[_] => t << n
+      case c: Complex[_] => c << n
+      case _ => Error("Incompatible Vec element type for SLA.")
+    }
+    out.asInstanceOf[T]
   }
 }
 
 /** Shift all elements right (arithmetically) by amount n*/
 object SRA {
-  def apply [T <: DSPBits[_], V <: Vec[_], C <: Complex[_]] (x: V, n:Int) : V = {
-    Vec(x.map( y =>
-      y match {
-        case t : T => t >> n
-        case v : V => apply(v,n)
-        case c : C => c >> n
-        case _ => {Error("Incompatible Vec element type for SRA."); y }
-      }
-    )).asInstanceOf[V]
+  def apply [T <: Data](x: T, n:Int) : T = {
+    val out = x match {
+      case v: Vec[_] => Vec(v.map(apply(_,n)))
+      case t: DSPNum[_] => t >> n
+      case c: Complex[_] => c >> n
+      case _ => Error("Incompatible Vec element type for SRA.")
+    }
+    out.asInstanceOf[T]
   }
-  def apply [T <: DSPBits[_], V <: Vec[_], C <: Complex[_]] (x: V, n:DSPUInt) : V = {
-    Vec(x.map( y =>
-      y match {
-        case t : T => t >> n
-        case v : V => apply(v,n)
-        case c : C => c >> n
-        case _ => {Error("Incompatible Vec element type for SRA."); y }
-      }
-    )).asInstanceOf[V]
+  def apply [T <: Data](x: T, n:DSPUInt) : T = {
+    val out = x match {
+      case v: Vec[_] => Vec(v.map(apply(_,n)))
+      case t: DSPNum[_] => t >> n
+      case c: Complex[_] => c >> n
+      case _ => Error("Incompatible Vec element type for SRA.")
+    }
+    out.asInstanceOf[T]
   }
 }
 
@@ -89,8 +83,8 @@ object SRA {
   * sel = (false,true) --> (fc,tc)
   */
 object Mux {
-  def apply [T <: DSPBits[_]] (sel: DSPBool, tc: T, fc: T) : T = {(fc ? (!sel)) /| (tc ? sel)}
-  //def apply [T <: Complex[_]] (sel: DSPBool, tc: T, fc: T) : T = {(fc ? (!sel)) /| (tc ? sel)}
+  def apply [T <: DSPBits[T]] (sel: DSPBool, tc: T, fc: T) : T = (fc ? (!sel)) /| (tc ? sel)
+  def apply [T <: DSPQnm[T]] (sel: DSPBool, tc: Complex[T], fc: Complex[T]) : Complex[T] = (fc ? (!sel)) /| (tc ? sel)
 }
 
 /** Short [DSPUInt] Mod (x,n,[optional] dly)
@@ -114,8 +108,8 @@ object Mod {
     else {
       val newx = x.lengthen(xValidMax)
       val diff = (newx - n).pipe(dly)                                         // No FPGA retiming issue @ carry chain
-      if (diff.getWidth != newx.getWidth) 
-        Error ("Sign bit location after subtraction is unexpected in Mod.")
+      //if (diff.getWidth != newx.getWidth)
+      //  Error ("Sign bit location after subtraction is unexpected in Mod.")
       val nOF  = diff.extract(newx.getWidth-1)                                // x >= n -> mod = x-n; else mod = x
       val mod = Mux(nOF,x.pipe(dly),diff) 
       (mod.shorten(nmax-1),!nOF)

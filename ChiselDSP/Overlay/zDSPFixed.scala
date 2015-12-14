@@ -28,18 +28,21 @@ object DSPFixed {
   }
 
   /** Creates a DSPFixed object with a specified IODirection, (intWidth,fracWidth) */
+  def apply(fixedParams: (Int,Int)): DSPFixed = apply(NODIR,fixedParams)
   def apply(dir: IODirection, fixedParams: (Int, Int)): DSPFixed = {
     apply(dir, fixedParams, toRange(paramsToWidth(fixedParams)))
   }
   /** Creates a DSPFixed object with a specified IODirection, (intWidth,fracWidth), 
     * and [optional] Double (min,max) range.
     */
+  def apply(fixedParams:(Int,Int), range: (Double,Double)) : DSPFixed = apply(NODIR,fixedParams,range)
   def apply(dir: IODirection, fixedParams:(Int,Int), range: (Double,Double)) : DSPFixed = {
     val min = toFixed(range._1, fixedParams._2)
     val max = toFixed(range._2, fixedParams._2)
     apply(dir,fixedParams,(min,max))
   }
-  def apply(dir: IODirection, fracWidth:Int, range: (Double,Double)) : DSPFixed = {
+  def apply(fracWidth:Int, range: (Double,Double)) : DSPFixed = apply(NODIR,fracWidth,range)
+  def apply(dir: IODirection = NODIR, fracWidth:Int, range: (Double,Double)) : DSPFixed = {
     val min = toFixed(range._1, fracWidth)
     val max = toFixed(range._2, fracWidth)
     apply(dir,fracWidth,(min,max))
@@ -50,7 +53,7 @@ object DSPFixed {
     apply(dir, (intWidth, fracWidth), range)
   }
   /** Intermediate apply function to check if range is null */
-  private def apply(dir: IODirection, fixedParams:(Int,Int), range: (BigInt,BigInt)): DSPFixed = {
+  private def apply(dir: IODirection, fixedParams:(Int,Int), range: => (BigInt,BigInt)): DSPFixed = {
     if (range == null) Error("Range cannot be null.")
     apply_gen(dir,fixedParams,range)
   }
@@ -66,7 +69,9 @@ object DSPFixed {
     if (updateBits){ 
       if (fixedParams._1 < 0) Error("Fixed integer width must be non-negative.")
       if (fixedParams._2 < 0) Error("Fixed fractional width must be non-negative.")
-      if (rangeWidth > width) Error("Rounded range of Fixed value greater than range allowed by width.")
+      if (rangeWidth > width) Error("Rounded range [" + range._1 + "," + range._2 +
+        "] of Fixed value greater than range allowed by fixed parameters ["
+        + fixedParams._1 + "," + fixedParams._2 + "]")
     }
     val res = new DSPFixed(fixedParams._2)
     res.create(dir, if (updateBits) rangeWidth else -1)
@@ -88,7 +93,7 @@ object DSPFixed {
   def toRange(w: Int) : Tuple2[BigInt,BigInt] = {
     // Don't include sign bit in range calculations.
     val dataBits = w-1
-    val absRange = (BigInt(2) << dataBits)
+    val absRange = (BigInt(1) << dataBits)
     val max = absRange -1
     val min = -1 * absRange
     (min,max)
@@ -103,6 +108,12 @@ object DSPFixed {
 }
 
 class DSPFixed (private val fractionalWidth:Int = 0)  extends DSPQnm[DSPFixed] {
+
+  /** Clone this instantiation */
+  override def cloneType: this.type = {
+    val out = DSPFixed(dir,(getIntWidth,getFracWidth))
+    out.copyInfo(this).asInstanceOf[this.type]
+  }
 
   /** Convert SInt to a DSPFixed by reinterpreting the Bits */
   private def fromSInt(s: SInt, fracWidth:Int, opRange: (BigInt, BigInt)): DSPFixed = {

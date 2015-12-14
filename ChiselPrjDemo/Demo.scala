@@ -5,7 +5,6 @@ package DemoXXX
 // ------- Imports START -- DO NOT MODIFY BELOW
 import org.json4s._
 import org.json4s.native.JsonMethods._
-import org.json4s.JsonDSL._
 import Chisel.{Complex => _, Mux => _, _}
 import ChiselDSP._
 // ------- Imports END -- OK TO MODIFY BELOW

@@ -11,7 +11,7 @@ object Reg {
         case t : T => t.reg() 
         case v : V => apply(v)
         case c : C => c.reg()
-        case _ => {Error("Incompatible Vec element type for Reg."); _ }
+        case _ => Error("Incompatible Vec element type for Reg.")
       }
     )).asInstanceOf[V]
   }
@@ -22,12 +22,12 @@ object Reg {
   */
 object Pipe {
   def apply [T <: DSPBits[_], V <: Vec[_], C <: Complex[_]] (x: V, n:Int, en: DSPBool = DSPBool(true)) : V = {
-    Vec(x.map(
-      _ match {
+    Vec(x.map( y =>
+      y match {
         case t : T => t.pipe(n,en) 
         case v : V => apply(v,n,en)
         case c : C => c.pipe(n,en)
-        case _ => {Error("Incompatible Vec element type for Pipe."); _ }
+        case _ => {Error("Incompatible Vec element type for Pipe."); y }
       }
     )).asInstanceOf[V]
   }
@@ -38,22 +38,22 @@ object Pipe {
 /** Shift all elements left (arithmetically) by amount n*/
 object SLA {
   def apply [T <: DSPBits[_], V <: Vec[_], C <: Complex[_]] (x: V, n:Int) : V = {
-    Vec(x.map(
-      _ match {
+    Vec(x.map( y =>
+      y match {
         case t : T => t << n
         case v : V => apply(v,n)
         case c : C => c << n
-        case _ => {Error("Incompatible Vec element type for SLA."); _ }
+        case _ => {Error("Incompatible Vec element type for SLA."); y }
       }
     )).asInstanceOf[V]
   }
   def apply [T <: DSPBits[_], V <: Vec[_], C <: Complex[_]] (x: V, n:DSPUInt) : V = {
-    Vec(x.map(
-      _ match {
+    Vec(x.map( y =>
+      y match {
         case t : T => t << n
         case v : V => apply(v,n)
         case c : C => c << n
-        case _ => {Error("Incompatible Vec element type for SLA."); _ }
+        case _ => {Error("Incompatible Vec element type for SLA."); y }
       }
     )).asInstanceOf[V]
   }
@@ -62,22 +62,22 @@ object SLA {
 /** Shift all elements right (arithmetically) by amount n*/
 object SRA {
   def apply [T <: DSPBits[_], V <: Vec[_], C <: Complex[_]] (x: V, n:Int) : V = {
-    Vec(x.map(
-      _ match {
+    Vec(x.map( y =>
+      y match {
         case t : T => t >> n
         case v : V => apply(v,n)
         case c : C => c >> n
-        case _ => {Error("Incompatible Vec element type for SRA."); _ }
+        case _ => {Error("Incompatible Vec element type for SRA."); y }
       }
     )).asInstanceOf[V]
   }
   def apply [T <: DSPBits[_], V <: Vec[_], C <: Complex[_]] (x: V, n:DSPUInt) : V = {
-    Vec(x.map(
-      _ match {
+    Vec(x.map( y =>
+      y match {
         case t : T => t >> n
         case v : V => apply(v,n)
         case c : C => c >> n
-        case _ => {Error("Incompatible Vec element type for SRA."); _ }
+        case _ => {Error("Incompatible Vec element type for SRA."); y }
       }
     )).asInstanceOf[V]
   }
@@ -85,12 +85,12 @@ object SRA {
 
 //----------------------------------------------------
 
-/** Mux (s,tc,fc)
-  * s = (false,true) --> (fc,tc)
+/** Mux (sel,tc,fc)
+  * sel = (false,true) --> (fc,tc)
   */
 object Mux {
-  def apply [T <: DSPBits[_]] (s: DSPBool, tc: T, fc: T) : T = (fc ? !sel) /| (tc ? sel)
-  def apply [T <: Complex[_]] (s: DSPBool, tc: T, fc: T) : T = (fc ? !sel) /| (tc ? sel)
+  def apply [T <: DSPBits[_]] (sel: DSPBool, tc: T, fc: T) : T = {(fc ? (!sel)) /| (tc ? sel)}
+  //def apply [T <: Complex[_]] (sel: DSPBool, tc: T, fc: T) : T = {(fc ? (!sel)) /| (tc ? sel)}
 }
 
 /** Short [DSPUInt] Mod (x,n,[optional] dly)
@@ -112,13 +112,13 @@ object Mod {
       (x.pipe(dly),DSPBool(false))                                            // No mod needed when x < n
     }    
     else {
-      val newx = DSPUInt(x,(x.getRange.min, xValidMax))
+      val newx = x.lengthen(xValidMax)
       val diff = (newx - n).pipe(dly)                                         // No FPGA retiming issue @ carry chain
       if (diff.getWidth != newx.getWidth) 
         Error ("Sign bit location after subtraction is unexpected in Mod.")
       val nOF  = diff.extract(newx.getWidth-1)                                // x >= n -> mod = x-n; else mod = x
       val mod = Mux(nOF,x.pipe(dly),diff) 
-      (DSPUInt(mod,nmax-1),!nOF)
+      (mod.shorten(nmax-1),!nOF)
     } 
   }
 }

@@ -53,7 +53,7 @@ abstract class DSPNum[T <: DSPBits[_]] extends DSPBits[T] {
   def sign(): DSPBool = MSB()
   
   /** Return the absolute value of this # with the same type */
-  def abs() : T = Mux(sign(),-this.asInstanceOf[T],this.asInstanceOf[T])
+  def abs() : T = Mux(sign(),(-this).asInstanceOf[T],this.asInstanceOf[T])
   
   /** Return the min of 2 numbers */
   def min(b: T): T = Mux(this < b, this.asInstanceOf[T], b)
@@ -77,7 +77,7 @@ case class Info (
 abstract class DSPBits [T <: DSPBits[_]] extends Bits {
 
   /** Error out with message */
-  final protected def error(msg: String) : this.type = {Error(msg); this}
+  final def error(msg: String) : this.type = {Error(msg); this}
 
   /** Width + other useful debug info */
   def infoString(): String = (getWidth + " bits")
@@ -100,32 +100,32 @@ abstract class DSPBits [T <: DSPBits[_]] extends Bits {
   /** Update ranging [min,max] -- subclasses need to compute rangeBits first */
   final protected def setRange(range: (BigInt,BigInt)): Unit = {
     if (range._1 > range._2) error("Range min must be <= max")
-    info.range("max") = if(isAssigned) range._2.max(info.range.max) else range._2
-    info.range("min") = if(isAssigned) range._1.min(info.range.min) else range._1
-    if (info.range.max > info.rangeBits.max) {
+    info.range("max") = if(isAssigned) range._2.max(info.range("max")) else range._2
+    info.range("min") = if(isAssigned) range._1.min(info.range("min")) else range._1
+    if (info.range("max") > info.rangeBits("max")) {
       Warn("Warning, possible max > max bits overflow. Signals down the chain may be wrong.")
-      info.range("max") = info.rangeBits.max
+      info.range("max") = info.rangeBits("max")
     }
-    if (info.range.min < info.rangeBits.min) {
+    if (info.range("min") < info.rangeBits("min")) {
       Warn("Warning, possible min < min bits overflow. Signals down the chain may be wrong.")
-      info.range("min") = info.rangeBits.min
+      info.range("min") = info.rangeBits("min")
     }
-    if (info.range.min > info.rangeBits.max) {
+    if (info.range("min") > info.rangeBits("max")) {
       Warn("Warning, possible min > max bits overflow. Signals down the chain may be wrong.")
-      info.range("min") = info.rangeBits.max
+      info.range("min") = info.rangeBits("max")
     }
-    if (info.range.max < info.rangeBits.min) {
+    if (info.range("max") < info.rangeBits("min")) {
       Warn("Warning, possible max < min bits overflow. Signals down the chain may be wrong.")
-      info.range("max") = info.rangeBits.min
+      info.range("max") = info.rangeBits("min")
     }
   }
   
   /** Get range */
-  final def getRange():List[BigInt] = List(info.range.min,info.range.max)
+  final def getRange():List[BigInt] = List(info.range("min"),info.range("max"))
   
   /** Returns range [min,max] as string */
   final protected def rangeString(fracWidth:Int = 0): String = {
-    val (min,max) = (info.range.min,info.range.max)
+    val (min,max) = (info.range("min"),info.range("max"))
     if (fracWidth == 0) "[" + min + "," + max + "]"
     else "[" + DSPFixed.toDouble(min,fracWidth) + "," + DSPFixed.toDouble(max,fracWidth) + "]"
   }
@@ -226,7 +226,7 @@ abstract class DSPBits [T <: DSPBits[_]] extends Bits {
     val res = {
       if (isLit) this
       else {
-        val out = Reg(next = this)
+        val out = RegNext(this)
         out.passThrough(this)
         out.passDelay(this,0)                       // Delay = 0 because we only care about explicit pipe delays
       }

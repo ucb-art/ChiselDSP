@@ -2,6 +2,7 @@
 
 package ChiselDSP
 import scala.collection.mutable.{Stack}
+import Chisel._
 
 /** Module that allows passing in a generic type for DSP. Allows the designer to seamlessly switch
   * between DSPDbl and DSPFixed implementations for functional testing vs. fixed-point
@@ -16,10 +17,10 @@ abstract class GenDSPModule[T <: DSPQnm[_]](gen : => T, decoupledIO: Boolean = f
     */
   def double2T[A <: DSPQnm[_]](x: Double, fixedParams: (Int,Int) = null): T = {
     val default = (fixedParams == null)
-    val out =  gen.asInstanceOf[A] match {
+    val out = gen.asInstanceOf[A] match {
       case f: DSPFixed => {
-        val intWidth = if (default) f.intWidth else fixedParams._1
-        val fracWidth = if (default) f.fracWidth else fixedParams._2
+        val intWidth = if (default) f.getIntWidth else fixedParams._1
+        val fracWidth = if (default) f.getFracWidth else fixedParams._2
         DSPFixed(x, (intWidth,fracWidth))
       }
       case d: DSPDbl => DSPDbl(x)
@@ -40,8 +41,8 @@ abstract class GenDSPModule[T <: DSPQnm[_]](gen : => T, decoupledIO: Boolean = f
     val default = (fixedParams == null)
     val out =  gen.asInstanceOf[A] match {
       case f: DSPFixed => {
-        val intWidth = if (default) f.intWidth else fixedParams._1
-        val fracWidth = if (default) f.fracWidth else fixedParams._2
+        val intWidth = if (default) f.getIntWidth else fixedParams._1
+        val fracWidth = if (default) f.getFracWidth else fixedParams._2
         DSPFixed(dir, (intWidth,fracWidth))
       }
       case d: DSPDbl => DSPDbl(dir)

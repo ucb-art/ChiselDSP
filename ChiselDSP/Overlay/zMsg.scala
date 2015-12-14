@@ -9,9 +9,10 @@ object Error {
   /** Turn on/off stack trace on error to better track problems */
   var dumpStack = true
   
-  def apply(msg: String): Unit = { 
+  def apply(msg: String): Bool = {
     if (dumpStack) {println(Console.RED + "@["); Thread.dumpStack(); println("]" + Console.RESET)}
     throwException(Console.RED + msg + Console.RESET)
+    Bool(false)
   }
   
 }

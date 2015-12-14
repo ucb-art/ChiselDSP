@@ -116,7 +116,6 @@ class DSPFixed (private val fractionalWidth:Int = 0)  extends DSPQnm[DSPFixed] {
   /** Get widths */
   def getIntWidth(): Int = getWidth-getFracWidth-1
   def getFracWidth(): Int = fractionalWidth
-  def getFractionalWidth(): Int = fractionalWidth
 
   type T = DSPFixed
 
@@ -171,7 +170,7 @@ class DSPFixed (private val fractionalWidth:Int = 0)  extends DSPQnm[DSPFixed] {
   }
 
   /** Check fractional width alignment */
-  def checkAlign(f: DSPFixed): Unit = {
+  private def checkAlign(f: DSPFixed): Unit = {
     if (getFracWidth != f.getFracWidth) Error("Fractional widths should match.")
   }
 
@@ -184,7 +183,7 @@ class DSPFixed (private val fractionalWidth:Int = 0)  extends DSPQnm[DSPFixed] {
         checkAlign(f)
         reassign(f)
         val (x,y,xrange,yrange,fracWidth) = matchWidth(f)
-        super.colonEquals(fromSInt(y,fracWidth,List2Tuple(yrange))
+        super.colonEquals(fromSInt(y,fracWidth,List2Tuple(yrange)))
       }
       case _ => illegalAssignment(that)
     }

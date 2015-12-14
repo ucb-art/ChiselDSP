@@ -36,7 +36,10 @@ class DSPTester[+T <: Module](c: T, var traceOn: Boolean = true, var hexOn: Bool
   override def peek(data: Flo): Float = peek(data,true,true)._1.floatValue
   def peek(data: Fixed): Double = peek(data,true,true)._1
   override def peek(data: Bits): BigInt = peek(data,true,true)._2
-  
+
+  /** Peek bundle elements */
+  def peek(data: Bundle): Unit = data.flatten map (x => peek(x._2,true,true))
+
   /** Cluster some peek-specific processing */
   private def peekInit(data: Bits, peek: Boolean): Tuple2[BigInt,String] = {
     val res = super.peek(data)
@@ -70,11 +73,10 @@ class DSPTester[+T <: Module](c: T, var traceOn: Boolean = true, var hexOn: Bool
         }
         ("%d %s".format(resBits,hexString) + ext,0.0)
       }
-      case _: Fixed | _DSPFixed => {                                                // Double value unused
-        val resDbl = DSPFixed.toDouble(resBits.longValue,_.getFractionalWidth)
-        val ext = data match {
-          case f2: DSPFixed => " %s".format(f2.infoString)
-          case _ => ""
+      case _: Fixed | _: DSPFixed => {                                              // Double value unused
+        val (resDbl,ext) = data match {
+          case f2: DSPFixed => (DSPFixed.toDouble(resBits.longValue, f2.getFracWidth) ," %s".format(f2.infoString))
+          case f1: Fixed => (DSPFixed.toDouble(resBits.longValue, f1.getFractionalWidth),"")
         }
         ("%f %s".format(resDbl,hexString) + ext,resDbl)
       }
@@ -108,7 +110,8 @@ class DSPTester[+T <: Module](c: T, var traceOn: Boolean = true, var hexOn: Bool
       case d1: Dbl => super.poke(d1,x)
       case d2: DSPDbl => super.poke(node, BigInt(doubleToLongBits(x)))
       case f0: Flo => super.poke(f0,x.floatValue)
-      case _: DSPFixed | _: Fixed => super.poke(node, DSPFixed.toFixed(x,_.getFractionalWidth))
+      case f1: Fixed => super.poke(node, DSPFixed.toFixed(x,f1.getFractionalWidth))
+      case f2: DSPFixed => super.poke(node, DSPFixed.toFixed(x,f2.getFracWidth))
     }
     peek(node,display,false)._1
   }
@@ -137,7 +140,7 @@ class DSPTester[+T <: Module](c: T, var traceOn: Boolean = true, var hexOn: Bool
   }
   
   /** Step through tester n steps */
-  def step() = step(1)
+  def step() : Unit = step(1)
   override def step(n: Int) {
     val newN = t + n
     if (traceOn) println(s"STEP ${n} -> ${newN}")

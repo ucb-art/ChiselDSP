@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ScalaSbtSettings">
+    <option name="linkedExternalProjectsSettings">
+      <SbtProjectSettings>
+        <option name="externalProjectPath" value="$PROJECT_DIR$/ChiselProject/sbt" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$/ChiselProject/sbt" />
+            <option value="$PROJECT_DIR$/ChiselProject/sbt/ChiselCompatibility" />
+            <option value="$PROJECT_DIR$/ChiselProject/sbt/ChiselCompatibility/project" />
+            <option value="$PROJECT_DIR$/ChiselProject/sbt/ChiselDSP_Modules" />
+            <option value="$PROJECT_DIR$/ChiselProject/sbt/ChiselDSP_Modules/project" />
+            <option value="$PROJECT_DIR$/ChiselProject/sbt/ChiselDSP_Overlay" />
+            <option value="$PROJECT_DIR$/ChiselProject/sbt/ChiselDSP_Overlay/project" />
+            <option value="$PROJECT_DIR$/ChiselProject/sbt/project" />
+          </set>
+        </option>
+        <option name="sbtVersion" value="0.13.8" />
+        <option name="useAutoImport" value="true" />
+        <option name="useOurOwnAutoImport" value="true" />
+        <option name="myModules">
+          <set>
+            <option value="$PROJECT_DIR$/ChiselProject/sbt" />
+            <option value="$PROJECT_DIR$/ChiselProject/sbt/ChiselCompatibility" />
+            <option value="$PROJECT_DIR$/ChiselProject/sbt/ChiselCompatibility/project" />
+            <option value="$PROJECT_DIR$/ChiselProject/sbt/ChiselDSP_Modules" />
+            <option value="$PROJECT_DIR$/ChiselProject/sbt/ChiselDSP_Modules/project" />
+            <option value="$PROJECT_DIR$/ChiselProject/sbt/ChiselDSP_Overlay" />
+            <option value="$PROJECT_DIR$/ChiselProject/sbt/ChiselDSP_Overlay/project" />
+            <option value="$PROJECT_DIR$/ChiselProject/sbt/project" />
+          </set>
+        </option>
+      </SbtProjectSettings>
+    </option>
+  </component>
+</project>

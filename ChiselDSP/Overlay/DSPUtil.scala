@@ -108,8 +108,8 @@ object Mod {
     else {
       val newx = x.lengthen(xValidMax)
       val diff = (newx - n).pipe(dly)                                         // No FPGA retiming issue @ carry chain
-      //if (diff.getWidth != newx.getWidth)
-      //  Error ("Sign bit location after subtraction is unexpected in Mod.")
+      if (diff.getWidth != newx.getWidth)
+        Error ("Sign bit location after subtraction is unexpected in Mod.")
       val nOF  = diff.extract(newx.getWidth-1)                                // x >= n -> mod = x-n; else mod = x
       val mod = Mux(nOF,x.pipe(dly),diff) 
       (mod.shorten(nmax-1),!nOF)

@@ -68,13 +68,13 @@ abstract class DSPModule (decoupledIO: Boolean = false, _clock: Option[Clock] = 
   // Keeps track of IO bundles
   private[ChiselDSP] val ios = Stack[IOBundle]()
 
-  // Fixed IO is blank -- use createIO with your custom bundles
-  var io = new Bundle
+  // Fixed IO is blank -- use createIO with your custom bundles or override io
+  val io = new Bundle
   
   // Optional I/O ready + valid
   class DecoupledIO extends Bundle {
-    val ready = if (decoupledIO) DSPBool(INPUT) else DSPBool(true)
-    val valid = if (decoupledIO) DSPBool(INPUT) else DSPBool(true)
+    val ready = if (decoupledIO) Some(DSPBool(INPUT)) else None
+    val valid = if (decoupledIO) Some(DSPBool(INPUT)) else None
   }
   
   val decoupledI = new DecoupledIO()
@@ -87,9 +87,10 @@ abstract class DSPModule (decoupledIO: Boolean = false, _clock: Option[Clock] = 
     */
   private def createIO[T <: Bundle](m: => T): this.type = {
     val ioName = m.getClass.getName.toString.split('.').last.split('$').last
-    m.flatten.map( x => 
-      if (!x._2.isDirectionless && !x._2.isLit) 
-        addPin(x._2, ioName + "_" + (if (x._2.dir == INPUT) "in" else "out") + "_" + x._1 )
+    m.flatten.map( x =>
+      if (!x._2.isDirectionless && !x._2.isLit)
+        addPinChiselDSP(x._2, ioName + "_" + (if (x._2.dir == INPUT) "in" else "out") + "_" + x._1 )
+      else Error("Directionless Lit should not be in an IO Bundle. You can use Option-able bundles.")
     )
     this
   }

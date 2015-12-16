@@ -5,7 +5,7 @@ package DemoXXX
 // ------- Imports START -- DO NOT MODIFY BELOW
 import org.json4s._
 import org.json4s.native.JsonMethods._
-import Chisel.{Complex => _, Mux => _, _}
+import Chisel.{Complex => _, Mux => _, Reg => _, RegNext => _, RegInit => _, Pipe => _, when => _, _}
 import ChiselDSP._
 // ------- Imports END -- OK TO MODIFY BELOW
 
@@ -24,7 +24,7 @@ class DemoIO(jsonParams:JSONParams) extends IOBundle {
   val b2 = DSPBool(INPUT)
   val u2 = DSPUInt(INPUT,(3,20))                    // (min,max) range; also: DSPUInt(DIR,max) -> assumes min = 0
   val d2 = DSPDbl(INPUT)
-  val f2 = DSPFixed(INPUT,(1,15))                   // (int,frac) widths
+  val f2 = DSPFixed(INPUT,(1,14))                   // (int,frac) widths
   // Normal Chisel types
   val b0 = Bits(INPUT,width=5)
   val b1 = Bool(INPUT)
@@ -34,8 +34,8 @@ class DemoIO(jsonParams:JSONParams) extends IOBundle {
   val d1 = Dbl(INPUT)
   val f0 = Flo(INPUT)
   
-  // Demonstrates customizable IO --> IO pin is not generated if a Literal/constant is assigned 
-  val optionalIO = if (jsonParams.softDemod) DSPUInt(0) else DSPUInt(INPUT,(3,jsonParams.frameSizes.max))
+  // Demonstrates customizable IO
+  val optionalIO = if (jsonParams.softDemod) Some(DSPUInt(INPUT,(3,jsonParams.frameSizes.max))) else None
   
   // Example of how to create Complex
   val complex0 = Complex(DSPDbl(INPUT),DSPDbl(INPUT))
@@ -109,16 +109,20 @@ class DemoXXX [T <: DSPQnm[T]](gen : => T, jsonParams: JSONParams) extends GenDS
     // default fixed intWidth, fracWidth by doing double2T(#,(intWidth,fracWidth))
     // or double2T(#,fracWidth) which determines # of integer bits needed for #
     val gena = double2T(-1.3)
-    val genb = double2T(1.3)
+    val genb = double2T(3.3)
   }
   val lits = new LitBundle
   // Easily debug internal signals that aren't connected to output ports 
   // Can wrap signals in an aggregate (Vec, Bundle) to just do debug(aggregateName) OR
   // can just debug(signalName) i.e. debug(b2) if it wasn't in LitBundle
   debug(lits)
+
+  // Trim MSBs of Fixed so that you have n integer bits
+  val testFixed = i.f2.shortenTo(0)
+  debug(testFixed)
   
   // Shorthand to connect all DemoIO inputs to outputs
-  //i <> o
+  i <> o
  
   // You can reassign to nodes; last assignment takes precedence
   // This is how you access individual [real, imag] components of complex
@@ -128,8 +132,9 @@ class DemoXXX [T <: DSPQnm[T]](gen : => T, jsonParams: JSONParams) extends GenDS
   o.complex0.real := i.complex0.imag * DSPDbl(3) + Mux(i.b2,i.complex0.imag,i.complex0.real)
 
   // You can make use of DecoupledIO (ready,valid), which you enabled in the Module creation
-  decoupledO.ready := decoupledI.ready
-  decoupledO.valid := decoupledI.valid
+  // Note that optional IO requires ".get" or ".getOrElse(yourAlternative)"
+  decoupledO.ready.get := decoupledI.ready.get
+  decoupledO.valid.get := decoupledI.valid.get
 
   /** Miscellaneous test IO */
   class TestIO extends IOBundle {
@@ -145,16 +150,44 @@ class DemoXXX [T <: DSPQnm[T]](gen : => T, jsonParams: JSONParams) extends GenDS
   // Mapping signals to ports
   CounterTest.zipWithIndex.foreach{
     case(e,i) => {
-      e.x.inc := DSPUInt(2)
-      e.x.modN := DSPUInt(3)
-      e.iCtrl.change := DSPBool(true)
+      e.x.inc.get := DSPUInt(2)
+      e.x.modN.get := DSPUInt(3)
+      e.iCtrl.change.get := DSPBool(true)
       e.iCtrl.reset := DSPBool(demoIO.reset)
-      e.iCtrl.wrap := DSPBool(false)
+      e.iCtrl.wrap.get := DSPBool(false)
       testIO.countOut(i) := e.x.out
     }
   }
 
+  // Math tests
+  val x = i.u2 * DSPUInt(2)
+  debug(x)
+
+
+
+
+
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 object DemoXXX {
 
@@ -194,7 +227,21 @@ object DemoXXX {
 
 /** Special way to test a module that uses a generic type to easily switch between Double/Fixed point testing. */
 class DemoXXXTests[T <: DemoXXX[_ <: DSPQnm[_]]](c: T) extends DSPTester(c) {
-  reset(5)      // Hold reset for 5 cycles (reset is default Chisel reset; unused in Demo module)
-  step(5)       // Step 5 cycles
-  peek(c.lits)  // Peek elements of a bundle
+  reset(5)              // Hold reset for 5 cycles (reset is default Chisel reset; unused in Demo module)
+  step(5)               // Step 5 cycles
+  peek(c.lits)          // Peek elements of a bundle
+
+  peek(c.testFixed)     // Peek internal Fixed value
+
+  for (x <- 0 until 5) {step; peek(c.testIO)}
+
+  poke(c.i.u2,5)
+  peek(c.i.u2)
+  peek(c.x)
+
+  peek(c.o)             // Peek bundle of outputs
+  poke(c.i.b2,true)
+  peek(c.i.b2)             // Peek bundle of inputs
+  peek(c.CounterTest(0).x)
+  //peek(c.demoIO)        // Peek bundle of anythings
 }

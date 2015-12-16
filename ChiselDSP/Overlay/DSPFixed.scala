@@ -8,8 +8,11 @@ import Chisel._
 object DSPFixed {
 
   /** Creates a DSPFixed object from a constant Double. 
-    * fixedParams = (intWidth,fracWidth) must be specified!
-    * Qn.m --> n = intWidth, m = fracWidth, width = n + m + 1 (sign)
+    * fixedParams = (intWidth,fracWidth), or alternatively, fracWidth, must be specified!
+    * Qn.m --> n = intWidth, m = fracWidth, width = n + m + 1 (sign).
+    * Note that for Lits, the intWidth serves as a guide for maximum # of
+    * integer bits needed. If the Lit can be represented in fewer bits,
+    * the smaller # is used.
     */
   def apply(x: Double, fixedParams: (Int, Int)): DSPFixed = apply(toFixed(x, fixedParams._2), fixedParams)
   def apply(x: Double, fracWidth: Int): DSPFixed = {
@@ -22,6 +25,7 @@ object DSPFixed {
     val range = (x, x)
     val litVal = apply(NODIR, fixedParams, range)
     val res = Lit(x, litVal.getWidth) {litVal}
+    res.fractionalWidth = fixedParams._2
     res.asDirectionless
     res.updateLimits(range)
     res.assign()
@@ -69,7 +73,7 @@ object DSPFixed {
     if (updateBits){ 
       if (fixedParams._1 < 0) Error("Fixed integer width must be non-negative.")
       if (fixedParams._2 < 0) Error("Fixed fractional width must be non-negative.")
-      if (rangeWidth > width) Error("Rounded range [" + range._1 + "," + range._2 +
+      if (rangeWidth > width) Error("Rounded + normalized to LSB range [" + range._1 + "," + range._2 +
         "] of Fixed value greater than range allowed by fixed parameters ["
         + fixedParams._1 + "," + fixedParams._2 + "]")
     }
@@ -107,7 +111,7 @@ object DSPFixed {
 
 }
 
-class DSPFixed (private val fractionalWidth:Int = 0)  extends DSPQnm[DSPFixed] {
+class DSPFixed (private var fractionalWidth:Int = 0)  extends DSPQnm[DSPFixed] {
 
   /** Clone this instantiation */
   override def cloneType: this.type = {

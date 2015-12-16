@@ -45,7 +45,8 @@ class DSPTester[+T <: Module](c: T, var traceOn: Boolean = true, var hexOn: Bool
     val res = super.peek(data)
     val resBits = if (data.isLit || (data.dir == INPUT && data.isTopLevelIO)) signed_fix(data, res) else res
     val command = if (peek) "PEEK" else "POKE"
-    val infoStart = "  %s %s -> ".format(command,dumpName(data))
+    val name = if (data.isLit) "*Lit*" else dumpName(data)
+    val infoStart = "  %s %s -> ".format(command,name)
     (resBits, infoStart)
   }
   
@@ -152,5 +153,5 @@ class DSPTester[+T <: Module](c: T, var traceOn: Boolean = true, var hexOn: Bool
     if (traceOn) println(s"RESET ${n}")
     super.reset(n)
   }
-  
+
 }

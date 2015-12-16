@@ -292,7 +292,7 @@ class DSPUInt extends DSPNum[DSPUInt] {
       else{
         val (x,y) = matchWidth(b)
         val diff = x.toUInt-y.toUInt
-        val newRange = (getRange, b.getRange.reverse).zipped.map( _ + _ )
+        val newRange = (getRange, b.getRange.reverse).zipped.map( _ - _ )
         if (newRange.min < 0) Warn("Possible DSPUInt subtraction negative result will wrap.")
         val opMin = newRange.min.max(BigInt(0))
         val opMax = if (opMin != newRange.min) DSPUInt.toMax(x.getWidth) else newRange.max

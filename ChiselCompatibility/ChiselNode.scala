@@ -1,3 +1,5 @@
+/** Changed equals method for option support */
+
 /*
  Copyright (c) 2011, 2012, 2013, 2014 The Regents of the University of
  California (Regents). All Rights Reserved.  Redistribution and use in
@@ -464,11 +466,19 @@ abstract class Node extends Nameable {
     */
   override def equals(that: Any): Boolean = that match {
     case n: Node => this eq n
-    case _ => {
-      // Comparison against null is legal and returns false.
-      if (that != null) {
-        ChiselError.error("can't compare Node " + this + " and non-Node " + that)
+    case n2: Option[_] => {
+      n2.getOrElse(None) match {
+        case d: Node => this eq d
+        case m: Module => false       // Catch ??
+        case x: Any => {
+          if (x != null && x != None) ChiselError.error("can't compare Node " + this + " and non-Node " + x)
+          false
+        }
       }
+    }
+    case _ => {
+      // Comparison against null + None is legal and returns false.
+      if (that != null && that != None) ChiselError.error("can't compare Node " + this + " and non-Node " + that)
       false
     }
   }

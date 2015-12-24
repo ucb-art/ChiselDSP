@@ -1,4 +1,4 @@
-/** Changed: calcElements to support Optionable Bundles (Chisel3 Compatibility) */
+/** Changed: calcElements method to support Optionable Bundles (Chisel3 Compatibility) */
 
 /*
  Copyright (c) 2011, 2012, 2013, 2014 The Regents of the University of
@@ -69,10 +69,6 @@ class Bundle(val view: Seq[String] = Seq()) extends Aggregate {
       val types = m.getParameterTypes
 
       val rtype = m.getReturnType
-
-
-
-
       val isInterface = classOf[Data].isAssignableFrom(rtype) || classOf[Option[_]].isAssignableFrom(rtype)
 
       // TODO: SPLIT THIS OUT TO TOP LEVEL LIST
@@ -82,34 +78,19 @@ class Bundle(val view: Seq[String] = Seq()) extends Aggregate {
         // Fetch the actual object
         val obj = m invoke this
         if(!(seen contains obj)) {
-
-
-
-
-          // -- BEGIN MODIFICATIONS
           obj match {
             case d: Data => {elts(name) = d; seen += obj}
-            case o: Option[_] =>
+            case o: Option[_] => {
               o.getOrElse(None) match {
                 case d: Data => {
-
-
-                  if (elts contains name) {
-                    require(elts(name) eq d)
-                  } else if (!seen(d)) {
-                    elts(name) = d; seen += d
-                  }
-
-
-                  //elts(name) = d
+                  if (elts contains name) require(elts(name) eq d)
+                  else if (!seen(d)) {elts(name) = d; seen += d}
                 }
-                case _ =>
+                case any =>
               }
-            case _ =>
+            }
+            case any =>
           }
-          //seen += obj
-          // -- END MODIFICATIONS
-
         }
       }
     }
@@ -158,12 +139,18 @@ class Bundle(val view: Seq[String] = Seq()) extends Aggregate {
     res
   }
 
-
-
-
-
-
-
+  /** Name the bundle, do not use directly, use [[Chisel.Node.setName setName]] instead */
+  override def nameIt (path: String, isNamingIo: Boolean) {
+    if( !named && (name.isEmpty || (!path.isEmpty && name != path)) ) {
+      name = path
+      val prefix = if (name.length > 0) name + "_" else ""
+      for ((n, i) <- elements) {
+        i.nameIt(prefix + n, isNamingIo)
+      }
+    } else {
+      /* We are trying to rename a Bundle that has a fixed name. */
+    }
+  }
 
   /** Create a new Bundle with all the elements of both */
   def +(other: Bundle): Bundle = {
@@ -175,8 +162,7 @@ class Bundle(val view: Seq[String] = Seq()) extends Aggregate {
 
   /** Change all INPUT to OUTPUT and visa versa for all elements in this Bundle */
   override def flip(): this.type = {
-
-    elements foreach ( _._2.flip)
+    elements foreach (_._2.flip)
     this
   }
 
@@ -217,13 +203,10 @@ class Bundle(val view: Seq[String] = Seq()) extends Aggregate {
   }
 
   override def flatten: Array[(String, Bits)] = {
-
     val sortedElems = elements.toArray sortWith (_._2._id < _._2._id)
     (sortedElems foldLeft Array[(String, Bits)]()){(res, x) =>
       val (n, i) = x
-      println("nnn "+n + "_" + x._1)
       res ++ (if (i.name != "") i.flatten else i match {
-        //case o: Option[_] => Array((n, o.get))
         case b: Bits => Array((n, b))
         case _ => i.flatten map (x => (n + "_" + x._1, x._2))
       })
@@ -238,17 +221,4 @@ class Bundle(val view: Seq[String] = Seq()) extends Aggregate {
   override def setIsTypeNode { isTypeNode = true ; elements foreach (_._2.setIsTypeNode) }
   // Chisel3 - type-only nodes (no data - initialization or assignment) - used for verifying Wire() wrapping
   override def isTypeOnly: Boolean = { elements.forall(_._2.isTypeOnly) }
-
-  /** Name the bundle, do not use directly, use [[Chisel.Node.setName setName]] instead */
-  override def nameIt (path: String, isNamingIo: Boolean) {
-    if( !named && (name.isEmpty || (!path.isEmpty && name != path)) ) {
-      name = path
-      val prefix = if (name.length > 0) name + "_" else ""
-      for ((n, i) <- elements) {
-        i.nameIt(prefix + n, isNamingIo)
-      }
-    } else {
-      /* We are trying to rename a Bundle that has a fixed name. */
-    }
-  }
 }

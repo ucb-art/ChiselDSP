@@ -251,7 +251,7 @@ abstract class DSPBits [T <: DSPBits[T]] extends Bits {
   
   /** Inequality check */
   def =/= (b: T): DSPBool = {
-    val out = DSPBool(this.toBits != b.toBits)
+    val out = DSPBool(this.toBits =/= b.toBits)
     out.pass2to1(this,b)
   }
   def != (b: T): DSPBool = (this =/= b)

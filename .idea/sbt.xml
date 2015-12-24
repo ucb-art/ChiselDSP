@@ -6,14 +6,8 @@
         <option name="externalProjectPath" value="$PROJECT_DIR$/ChiselProject/sbt" />
         <option name="modules">
           <set>
-            <option value="$PROJECT_DIR$/ChiselProject/sbt" />
-            <option value="$PROJECT_DIR$/ChiselProject/sbt/ChiselCompatibility" />
-            <option value="$PROJECT_DIR$/ChiselProject/sbt/ChiselCompatibility/project" />
-            <option value="$PROJECT_DIR$/ChiselProject/sbt/ChiselDSP_Modules" />
-            <option value="$PROJECT_DIR$/ChiselProject/sbt/ChiselDSP_Modules/project" />
-            <option value="$PROJECT_DIR$/ChiselProject/sbt/ChiselDSP_Overlay" />
-            <option value="$PROJECT_DIR$/ChiselProject/sbt/ChiselDSP_Overlay/project" />
-            <option value="$PROJECT_DIR$/ChiselProject/sbt/project" />
+            <option value="$PROJECT_DIR$/ChiselProject/sbt/project/project/project/project/project" />
+            <option value="$PROJECT_DIR$/ChiselProject/sbt/project/project/project/project/project/project" />
           </set>
         </option>
         <option name="sbtVersion" value="0.13.8" />
@@ -21,14 +15,8 @@
         <option name="useOurOwnAutoImport" value="true" />
         <option name="myModules">
           <set>
-            <option value="$PROJECT_DIR$/ChiselProject/sbt" />
-            <option value="$PROJECT_DIR$/ChiselProject/sbt/ChiselCompatibility" />
-            <option value="$PROJECT_DIR$/ChiselProject/sbt/ChiselCompatibility/project" />
-            <option value="$PROJECT_DIR$/ChiselProject/sbt/ChiselDSP_Modules" />
-            <option value="$PROJECT_DIR$/ChiselProject/sbt/ChiselDSP_Modules/project" />
-            <option value="$PROJECT_DIR$/ChiselProject/sbt/ChiselDSP_Overlay" />
-            <option value="$PROJECT_DIR$/ChiselProject/sbt/ChiselDSP_Overlay/project" />
-            <option value="$PROJECT_DIR$/ChiselProject/sbt/project" />
+            <option value="$PROJECT_DIR$/ChiselProject/sbt/project/project/project/project/project" />
+            <option value="$PROJECT_DIR$/ChiselProject/sbt/project/project/project/project/project/project" />
           </set>
         </option>
       </SbtProjectSettings>

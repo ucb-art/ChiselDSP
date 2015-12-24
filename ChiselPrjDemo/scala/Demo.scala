@@ -235,7 +235,7 @@ object DemoXXX {
     // To see how to set case class parameters without a JSON file, check out
     // ChiselDSP/Modules/Counters.scala
     implicit val formats = DefaultFormats
-    val jsonContents = scala.io.Source.fromFile("src/main/scala/Demo.json").getLines.mkString
+    val jsonContents = scala.io.Source.fromFile("src/main/resources/Demo.json").getLines.mkString
     val json = parse(jsonContents)
     val paramsDemoXXX = json.extract[JSONParams]
     Status("User parameters: " + jsonContents.replace("\t","\n").replace("{","").replace("}",""))

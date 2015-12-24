@@ -11,6 +11,8 @@
       <module fileurl="file://$PROJECT_DIR$/ChiselProject/sbt/.idea/modules/chisel-dsp-overlay-build.iml" filepath="$PROJECT_DIR$/ChiselProject/sbt/.idea/modules/chisel-dsp-overlay-build.iml" />
       <module fileurl="file://$PROJECT_DIR$/ChiselProject/sbt/.idea/modules/chisel-project.iml" filepath="$PROJECT_DIR$/ChiselProject/sbt/.idea/modules/chisel-project.iml" />
       <module fileurl="file://$PROJECT_DIR$/ChiselProject/sbt/.idea/modules/chisel-project-build.iml" filepath="$PROJECT_DIR$/ChiselProject/sbt/.idea/modules/chisel-project-build.iml" />
+      <module fileurl="file://$PROJECT_DIR$/ChiselProject/sbt/project/.idea/modules/project.iml" filepath="$PROJECT_DIR$/ChiselProject/sbt/project/.idea/modules/project.iml" />
+      <module fileurl="file://$PROJECT_DIR$/ChiselProject/sbt/project/.idea/modules/project-build.iml" filepath="$PROJECT_DIR$/ChiselProject/sbt/project/.idea/modules/project-build.iml" />
     </modules>
   </component>
 </project>

@@ -25,8 +25,7 @@ class DSPTester[+T <: Module](c: T, var traceOn: Boolean = true, var hexOn: Bool
   /** Peek ChiselDSP types */
   def peek(data: DSPBool): Boolean = if (peek(data,true,true)._2 > 0) true else false
   def peek(data: DSPUInt): BigInt = peek(data,true,true)._2
-  def peek(data: DSPDbl): Double = peek(data,true,true)._1
-  def peek(data: DSPFixed): Double = peek(data,true,true)._1
+  def peek(data: DSPQnm[_]): Double = peek(data,true,true)._1
   
   /** Peek Chisel types */
   def peek(data: Bool): Boolean = if (peek(data,true,true)._2 > 0) true else false
@@ -53,7 +52,8 @@ class DSPTester[+T <: Module](c: T, var traceOn: Boolean = true, var hexOn: Bool
   /** More general handling of peek for all possible data types */
   private def peek (data: Bits, display: Boolean, peek: Boolean) : Tuple2[Double,BigInt] = {
     val (resBits, infoStart) = peekInit(data,peek)
-    val hexString = if (hexOn) "(0x%x) ".format(resBits) else ""
+    val s = if (resBits < 0) "-" else ""
+    val hexString = if (hexOn) "(" + s + "0x%x) ".format(resBits.abs) else ""
     val (info,outDbl) =  data match {
       case f0: Flo => {
         val resFlo = intBitsToFloat(resBits.toInt)
@@ -93,8 +93,7 @@ class DSPTester[+T <: Module](c: T, var traceOn: Boolean = true, var hexOn: Bool
     if (pokeRet > 0) true else false
   }
   def poke(node: DSPUInt, x: BigInt): BigInt = poke(node, x, true)
-  def poke(node: DSPDbl, x: Double): Double = poke(node, x, true)
-  def poke(node: DSPFixed, x: Double): Double = poke(node, x, true)
+  def poke(node: DSPQnm[_], x: Double): Double = poke(node, x, true)
   def poke(node: Fixed, x: Double): Double = poke(node, x, true)
   
   /** Poke Chisel types */

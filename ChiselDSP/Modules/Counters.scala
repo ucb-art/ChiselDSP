@@ -78,26 +78,26 @@ class CountIO (countParams: CountParams) extends IOBundle {
 }
 
 /** Counter template */
-class Counter(countParams: CountParams) extends DSPModule {
+abstract class Counter(countParams: CountParams) extends DSPModule {
   
-  val x = new CountIO(countParams)
+  override val io = new CountIO(countParams)
   val iCtrl = new CountCtrl(countParams)
   val oCtrl = new CountCtrl(countParams).flip
 
-  val inc = x.inc.getOrElse(DSPUInt(1))
-  val max = x.max.getOrElse(DSPUInt(countParams.countMax))
+  val inc = io.inc.getOrElse(DSPUInt(1))
+  val max = io.max.getOrElse(DSPUInt(countParams.countMax))
 
-  val eq0 = (x.out === DSPUInt(0))
-  val eqMax = (x.out === max)
+  val eq0 = (io.out === DSPUInt(0))
+  val eqMax = (io.out === max)
   
-  val (upCustom, upCustomWrap) = Mod(x.out + inc, max + DSPUInt(1))
-  val (modOut,overflow) = Mod(x.out + inc,x.modN.getOrElse(DSPUInt(0)))
+  val (upCustom, upCustomWrap) = Mod(io.out + inc, max + DSPUInt(1))
+  val (modOut,overflow) = Mod(io.out + inc,io.modN.getOrElse(DSPUInt(0)))
   
   // Adapt wrap condition based off of type of counter if it isn't retrieved externally
   val wrap = countParams.wrapCtrl match {
     case Internal => {
       countParams.countType match {
-        case UpDown => Mux(x.upDown.get, eq0, eqMax)
+        case UpDown => Mux(io.upDown.get, eq0, eqMax)
         case Down => eq0
         case Up => {
           // For >1 increments, custom wrap indicated by sum overflow on next count
@@ -114,9 +114,9 @@ class Counter(countParams: CountParams) extends DSPModule {
  
   // Adapt wrap to value based off of type of counter if it isn't retrieved externally
   val wrapTo = {
-    x.wrapTo.getOrElse(
+    io.wrapTo.getOrElse(
       countParams.countType match {
-        case UpDown => Mux(x.upDown.get,max, DSPUInt(0))
+        case UpDown => Mux(io.upDown.get,max, DSPUInt(0))
         case Down => max
         case _ => DSPUInt(0)
       }
@@ -127,14 +127,14 @@ class Counter(countParams: CountParams) extends DSPModule {
   // But if incrementing by >1 and using internal wrap signals, do add mod (max + 1)
   val up = {
     if (countParams.incMax == 1 || (countParams.wrapCtrl == External && countParams.customWrap))
-      (x.out + inc).shorten(countParams.countMax)
+      (io.out + inc).shorten(countParams.countMax)
     else upCustom
   }
   
-  val down = x.out - inc
+  val down = io.out - inc
   
   val nextInSeq = countParams.countType match {
-    case UpDown => Mux(x.upDown.get,down,up)
+    case UpDown => Mux(io.upDown.get,down,up)
     case Up => up
     case Down => down
     case UpMod => modOut
@@ -150,12 +150,12 @@ class Counter(countParams: CountParams) extends DSPModule {
 
   // Conditionally update (hold until update) or always update
   val newOnClk = countParams.changeCtrl match {
-    case External => Mux(iCtrl.change.get,nextCount,x.out)
+    case External => Mux(iCtrl.change.get,nextCount,io.out)
     case TieTrue => nextCount
   }
 
   val count = Mux(iCtrl.reset,DSPUInt(countParams.resetVal),newOnClk)
-  x.out := count.reg()
+  io.out := count.reg()
   
   // When counters are chained, subsequent counter increments when current counter wraps
   if (countParams.changeCtrl == External) oCtrl.change.get := wrap & iCtrl.change.get
@@ -175,9 +175,10 @@ class Counter(countParams: CountParams) extends DSPModule {
 object ModCounter{
   def apply(countMax: Int, incMax: Int, nameExt: String = "") : Counter = {
     val countParams = CountParams(countMax = countMax, incMax = incMax, wrapCtrl = External, countType = UpMod)
-    DSPModule(new Counter(countParams), "ModCounter" + (if (nameExt == "") "" else ("_" + nameExt)))
+    DSPModule(new ModCounter(countParams), nameExt)
   }
 }
+class ModCounter(countParams: CountParams) extends Counter(countParams)
 
 /*
   DEFAULTS

@@ -158,18 +158,12 @@ class Bundle(val view: Seq[String] = Seq()) extends Aggregate {
     res
   }
 
-  /** Name the bundle, do not use directly, use [[Chisel.Node.setName setName]] instead */
-  override def nameIt (path: String, isNamingIo: Boolean) {
-    if( !named && (name.isEmpty || (!path.isEmpty && name != path)) ) {
-      name = path
-      val prefix = if (name.length > 0) name + "_" else ""
-      for ((n, i) <- elements) {
-        i.nameIt(prefix + n, isNamingIo)
-      }
-    } else {
-      /* We are trying to rename a Bundle that has a fixed name. */
-    }
-  }
+
+
+
+
+
+
 
   /** Create a new Bundle with all the elements of both */
   def +(other: Bundle): Bundle = {
@@ -227,7 +221,7 @@ class Bundle(val view: Seq[String] = Seq()) extends Aggregate {
     val sortedElems = elements.toArray sortWith (_._2._id < _._2._id)
     (sortedElems foldLeft Array[(String, Bits)]()){(res, x) =>
       val (n, i) = x
-
+      println("nnn "+n + "_" + x._1)
       res ++ (if (i.name != "") i.flatten else i match {
         //case o: Option[_] => Array((n, o.get))
         case b: Bits => Array((n, b))
@@ -244,4 +238,17 @@ class Bundle(val view: Seq[String] = Seq()) extends Aggregate {
   override def setIsTypeNode { isTypeNode = true ; elements foreach (_._2.setIsTypeNode) }
   // Chisel3 - type-only nodes (no data - initialization or assignment) - used for verifying Wire() wrapping
   override def isTypeOnly: Boolean = { elements.forall(_._2.isTypeOnly) }
+
+  /** Name the bundle, do not use directly, use [[Chisel.Node.setName setName]] instead */
+  override def nameIt (path: String, isNamingIo: Boolean) {
+    if( !named && (name.isEmpty || (!path.isEmpty && name != path)) ) {
+      name = path
+      val prefix = if (name.length > 0) name + "_" else ""
+      for ((n, i) <- elements) {
+        i.nameIt(prefix + n, isNamingIo)
+      }
+    } else {
+      /* We are trying to rename a Bundle that has a fixed name. */
+    }
+  }
 }

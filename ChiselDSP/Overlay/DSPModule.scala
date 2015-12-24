@@ -57,8 +57,42 @@ abstract class GenDSPModule[T <: DSPQnm[T]](gen : => T, decoupledIO: Boolean = f
   * Adds itself to the current DSPModule's list of IOs to setup.
   * Note that all inputs should have the same delay.
   */
-abstract class IOBundle (view: Seq[String] = Seq()) extends Bundle(view) {
+abstract class IOBundle extends Bundle {
   Module.current.asInstanceOf[DSPModule].ios.push(this)
+
+  /** Name IO bundle + elements. For a custom bundle name,
+    * setName should be called within the module.
+    * Otherwise, the name is the Bundle's class name.
+    * Dir indicates whether to include port direction in the name.
+    * Name of IO pin = IOBundleName _ direction _ signalName
+    */
+  override def setName (name:String) = setName(name, dir = true)
+  def setName(name:String, dir: Boolean) = label(name, isNamingIo = true, dir, custom = true)
+
+  /** Set name used internally -- not user specified */
+  private[ChiselDSP] def setNameIO(name:String) = label(name, isNamingIo = true, dir = true, custom = false)
+  private def label (path: String, isNamingIo: Boolean, dir:Boolean, custom: Boolean) {
+    val oldName = name
+    if( !named && (name.isEmpty || (!path.isEmpty && name != path)) ) {
+      name = path
+      val prefix = if (name.length > 0) name + "_" else ""
+      flatten.map( x =>
+        {
+          val dirStr = if (isNamingIo && dir) (if (x._2.dir == INPUT) "in" else "out") + "_" else ""
+          val newName = prefix + dirStr + x._1
+          val newName2 = prefix + dirStr + x._2.name.replace("_in","").replace("_out","")
+          if (x._2.name.length == 0) x._2.nameIt(newName, isNamingIo)
+          else if (x._1.contains(x._2.name) && !custom){
+            x._2.named = false
+            x._2.nameIt(newName2, isNamingIo)
+          }
+        }
+      )
+    }
+    else if (custom) Warn("IO Bundle already named " + oldName + ". Cannot rename to " + path + ".")
+    named = true
+  }
+
 }
 
 /** Adds functionality to Module */
@@ -67,12 +101,9 @@ abstract class DSPModule (decoupledIO: Boolean = false, _clock: Option[Clock] = 
 
   // Keeps track of IO bundles
   private[ChiselDSP] val ios = Stack[IOBundle]()
-
-  // Fixed IO is blank -- use createIO with your custom bundles or override io
-  val io = new Bundle
   
   // Optional I/O ready + valid
-  class DecoupledIO extends Bundle {
+  class DecoupledIO extends IOBundle {
     val ready = if (decoupledIO) Some(DSPBool(INPUT)) else None
     val valid = if (decoupledIO) Some(DSPBool(INPUT)) else None
   }
@@ -81,20 +112,16 @@ abstract class DSPModule (decoupledIO: Boolean = false, _clock: Option[Clock] = 
   val decoupledO = new DecoupledIO().flip
   
   /** Convert list of potential IO pins (must be in a Bundle) to actual IO.  
-    * Allows you to selectively set signals to be module IOs (with direction) 
-    * or just constants (directionless).
-    * Name of IO pin = IOBundleName _ direction _ signalName
+    * Allows you to selectively set signals to be module IOs (with direction).
     */
-  private def createIO[T <: Bundle](m: => T): this.type = {
-    val ioName = m.getClass.getName.toString.split('.').last.split('$').last
+  private def createIO[T <: IOBundle](m: => T): this.type = {
     m.flatten.map( x =>
-      if (!x._2.isDirectionless && !x._2.isLit)
-        addPinChiselDSP(x._2, ioName + "_" + (if (x._2.dir == INPUT) "in" else "out") + "_" + x._1 )
+      if (!x._2.isDirectionless && !x._2.isLit) addPinChiselDSP(x._2)
       else Error("Directionless Lit should not be in an IO Bundle. You can use Option-able bundles.")
     )
     this
   }
-  
+
 }
 
 object DSPModule {
@@ -108,12 +135,21 @@ object DSPModule {
     if (currentName == "") currentName = thisModule.getClass.getName.toString.split('.').last
     val optName = if (nameExt == "") nameExt else "_" + nameExt
     thisModule.setModuleName(currentName + optName)
+    val ios2 = thisModule.ios.clone
     while (!thisModule.ios.isEmpty) {
-      val ioset = thisModule.ios.pop()
-      thisModule.createIO(ioset)
-    } 
-    thisModule.createIO(thisModule.decoupledI)
-    thisModule.createIO(thisModule.decoupledO)   
+      val ioSet = thisModule.ios.pop
+      // 'io' is handled separately in your normal Chisel fashion.
+      if(!ioSet.equals(thisModule.io)) {
+        val ioName = ioSet.getClass.getName.toString.split('.').last.split('$').last
+        ioSet.setNameIO(ioName)
+      }
+    }
+    while (!ios2.isEmpty) {
+      val ioSet = ios2.pop
+      // Need to add pin after correctly designating pin name
+      if(!ioSet.equals(thisModule.io)) thisModule.createIO(ioSet)
+    }
+    thisModule
   }
  
 }

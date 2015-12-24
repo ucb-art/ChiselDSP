@@ -79,8 +79,12 @@ class DemoXXX [T <: DSPQnm[T]](gen : => T, jsonParams: JSONParams) extends GenDS
   // Instantiate IO objects
   val demoIO = new DemoXXXIO
   val i = new DemoIO(jsonParams)
+  // Rename IO bundle. Otherwise, the bundle name is the class name (DemoIO).
+  i.setName("i")
+
   // Creates a new instance of DemoIO with port directions flipped (i.e. to output)
   val o = new DemoIO(jsonParams).flip
+  o.setName("o")
 
   // Delay offset by how long it takes to finish computation (n)
   // Note: Instead of doing Reg(x) or Pipe(x,n) do x.reg() or x.pipe(n) to keep meta info
@@ -139,6 +143,11 @@ class DemoXXX [T <: DSPQnm[T]](gen : => T, jsonParams: JSONParams) extends GenDS
   /** Miscellaneous test IO */
   class TestIO extends IOBundle {
     val countOut = Vec(3,DSPUInt(OUTPUT,10))
+    val x = new DemoIO(jsonParams).flip
+    val y = new Bundle {
+      val a = DSPDbl(OUTPUT)
+      val b = DSPDbl(INPUT)
+    }
   }
   val testIO = new TestIO
 
@@ -150,18 +159,45 @@ class DemoXXX [T <: DSPQnm[T]](gen : => T, jsonParams: JSONParams) extends GenDS
   // Mapping signals to ports
   CounterTest.zipWithIndex.foreach{
     case(e,i) => {
-      e.x.inc.get := DSPUInt(2)
-      e.x.modN.get := DSPUInt(3)
+
+      e.iCtrl.setName("Can't set IO names outside of Module class --> Warning in console.")
+      e.io.inc.get := DSPUInt(2)
+      e.io.modN.get := DSPUInt(3)
       e.iCtrl.change.get := DSPBool(true)
       e.iCtrl.reset := DSPBool(demoIO.reset)
       e.iCtrl.wrap.get := DSPBool(false)
-      testIO.countOut(i) := e.x.out
+      testIO.countOut(i) := e.io.out
     }
   }
 
   // Math tests
   val x = i.u2 * DSPUInt(2)
   debug(x)
+
+  // Handling complex
+  val complexTest = Complex(gen,gen)
+  complexTest := demoIO.symbolIn.reg()
+  debug(complexTest)
+
+  // Signals can be grouped together in bundles
+  class TestBundle extends Bundle {
+    val a = DSPUInt(OUTPUT,3)
+    val c = DSPUInt(OUTPUT,3)
+  }
+  val testBundle = new TestBundle
+  debug(testBundle)
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -217,7 +253,7 @@ object DemoXXX {
         c => new DemoXXXTests(c)
     }*/
 
-    chiselMainTest(demoArgs, () => DSPModule(new DemoXXX({DSPFixed(INPUT,(paramsDemoXXX.intBits,paramsDemoXXX.fracBits))}, paramsDemoXXX))) {
+    chiselMainTest(demoArgs, () => DSPModule(new DemoXXX({DSPFixed((paramsDemoXXX.intBits,paramsDemoXXX.fracBits))}, paramsDemoXXX))) {
       c => new DemoXXXTests(c)
     }
 
@@ -233,7 +269,7 @@ class DemoXXXTests[T <: DemoXXX[_ <: DSPQnm[_]]](c: T) extends DSPTester(c) {
 
   peek(c.testFixed)     // Peek internal Fixed value
 
-  for (x <- 0 until 5) {step; peek(c.testIO)}
+  for (x <- 0 until 5) {step}
 
   poke(c.i.u2,5)
   peek(c.i.u2)
@@ -242,6 +278,25 @@ class DemoXXXTests[T <: DemoXXX[_ <: DSPQnm[_]]](c: T) extends DSPTester(c) {
   peek(c.o)             // Peek bundle of outputs
   poke(c.i.b2,true)
   peek(c.i.b2)             // Peek bundle of inputs
-  peek(c.CounterTest(0).x)
+  peek(c.CounterTest(0).io)
+  peek(c.CounterTest(1).io)
   //peek(c.demoIO)        // Peek bundle of anythings
+
+  peek(c.decoupledO)
+
+
+  poke(c.demoIO.symbolIn.real,3.3)
+  poke(c.demoIO.symbolIn.imag,-3.3)
+  peek(c.complexTest)
+  step()
+  peek(c.complexTest)
+
+
+
+
+
+
+  poke(c.testIO.y.b,3.3)
+  peek(c.testIO)
+  peek(c.testBundle)
 }

@@ -16,7 +16,6 @@
       <sourceFolder url="file://$MODULE_DIR$/../../ChiselDSP_Overlay/target/scala-2.11/resource_managed/main" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/../../ChiselDSP_Overlay/src/test/resources" type="java-test-resource" />
       <sourceFolder url="file://$MODULE_DIR$/../../ChiselDSP_Overlay/target/scala-2.11/resource_managed/test" type="java-test-resource" />
-      <sourceFolder url="file://$MODULE_DIR$/../../ChiselDSP_Overlay/src/main/scala" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/../../ChiselDSP_Overlay/target" />
     </content>
     <orderEntry type="inheritedJdk" />

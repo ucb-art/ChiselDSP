@@ -37,8 +37,10 @@ case class CountParams (
   wrapCtrl:   CtrlLoc   = Internal,     // Location of wrap control signal
   changeCtrl: CtrlLoc   = External,     // Location of counter update control signal
   countType:  CountType = Up,           // Count type/direction
-  customWrap: Boolean   = false         // Whether custom wrap to value exists
+  customWrap: Boolean   = false,        // Whether custom wrap to value exists
+  inputDelay: Int       = 0             // Keep track of accumulated delay until module inputs
 ){
+  require (inputDelay >= 0, "Input delay must be non-negative")
   require (countMax >= 0, "Max counter value must be non-negative")
   require (resetVal >= 0 && resetVal <= countMax, "Counter reset should be [0,countMax]")
   require (incMax > 0 && incMax <= countMax, "Counter increment should be (0,countMax]")
@@ -78,7 +80,7 @@ class CountIO (countParams: CountParams) extends IOBundle {
 }
 
 /** Counter template */
-abstract class Counter(countParams: CountParams) extends DSPModule {
+abstract class Counter(countParams: CountParams) extends DSPModule(inputDelay = countParams.inputDelay) {
   
   override val io = new CountIO(countParams)
   val iCtrl = new CountCtrl(countParams)
@@ -173,8 +175,9 @@ abstract class Counter(countParams: CountParams) extends DSPModule {
   * oCtrl.change indicates if mod will wrap on the next cycle (count + inc > modVal)
   */
 object ModCounter{
-  def apply(countMax: Int, incMax: Int, nameExt: String = "") : Counter = {
-    val countParams = CountParams(countMax = countMax, incMax = incMax, wrapCtrl = External, countType = UpMod)
+  def apply(countMax: Int, incMax: Int, inputDelay: Int = 0, nameExt: String = "") : Counter = {
+    val countParams = CountParams(countMax = countMax, incMax = incMax, wrapCtrl = External,
+                                  countType = UpMod, inputDelay = inputDelay)
     DSPModule(new ModCounter(countParams), nameExt)
   }
 }
@@ -188,6 +191,7 @@ class ModCounter(countParams: CountParams) extends Counter(countParams)
   wrapCtrl:   CtrlLoc   = Internal,     // Location of wrap control signal
   changeCtrl: CtrlLoc   = External,     // Location of counter update control signal
   countType:  CountType = Up,           // Count type/direction
-  customWrap: Boolean   = false         // Whether custom wrap to value exists
+  customWrap: Boolean   = false,        // Whether custom wrap to value exists
+  inputDelay: Int       = 0             // Keep track of accumulated delay until module inputs
 */
 

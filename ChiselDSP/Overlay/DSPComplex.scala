@@ -13,6 +13,7 @@ object Complex {
     * @tparam T the type to represent the complex number with, eg DSPFixed, DSPDbl
     */
   def apply[T <: DSPQnm[T]](real: T, imag: T) : Complex[T] = new Complex(real, imag)
+  def apply[T <: DSPQnm[T]](gen: T) : Complex[T] = new Complex(gen.cloneType, gen.cloneType)
   
   /** Creates non-Chisel complex class if real, imag inputs are type Scala Double */
   def apply(real:Double, imag:Double) : ScalaComplex = new ScalaComplex(real, imag)
@@ -26,7 +27,13 @@ class ScalaComplex (var real:Double, var imag:Double){
 }
 
 /** Complex number representation */
-class Complex[T <: DSPQnm[T]](val real: T, val imag: T) extends Bundle {
+private[ChiselDSP] abstract class ComplexBundle extends Bundle {
+  def Q : String
+}
+class Complex[T <: DSPQnm[T]](val real: T, val imag: T) extends ComplexBundle {
+
+  /** Returns a string containing the integer and fractional widths of the real + imaginary components*/
+  def Q(): String = "[" + real.Q + "," + imag.Q + "]"
 
   /** Check that 'name' is a valid component of Complex, ie. real or imag. Any methods with
     * 0 arguments should be added to this list to prevent Chisel from stack overflowing... :(

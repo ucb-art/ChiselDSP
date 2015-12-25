@@ -2,7 +2,7 @@
 
 package Chisel
 
-abstract class ModuleOverride(_clock: Option[Clock] = None, _reset: Option[Bool] = None) 
+abstract class ModuleOverride(_clock: Option[Clock] = None, _reset: Option[Bool] = None)
                              extends Module(_clock,_reset) {
 
   /** Newer versions of Chisel have an addPin that clones the node.

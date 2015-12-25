@@ -8,9 +8,9 @@ import Chisel._
   * between DSPDbl and DSPFixed implementations for functional testing vs. fixed-point
   * characterization and optimization.
   */ 
-abstract class GenDSPModule[T <: DSPQnm[T]](gen : => T, decoupledIO: Boolean = false,
+abstract class GenDSPModule[T <: DSPQnm[T]](gen : => T, inputDelay:Int = 0, decoupledIO: Boolean = false,
                                             _clock: Option[Clock] = None, _reset: Option[Bool] = None
-                                           ) extends DSPModule(decoupledIO, _clock, _reset) {
+                                           ) extends DSPModule(inputDelay, decoupledIO, _clock, _reset) {
 
   /** Converts a double value to a constant DSPFixed (using [intWidth,fracWidth] parameters)
     * or DSPDbl (ignoring parameters).
@@ -96,8 +96,8 @@ abstract class IOBundle extends Bundle {
 }
 
 /** Adds functionality to Module */
-abstract class DSPModule (decoupledIO: Boolean = false, _clock: Option[Clock] = None, _reset: Option[Bool] = None)
-                         extends ModuleOverride(_clock,_reset) {
+abstract class DSPModule (val inputDelay:Int = 0, decoupledIO: Boolean = false, _clock: Option[Clock] = None,
+                          _reset: Option[Bool] = None) extends ModuleOverride(_clock,_reset) {
 
   // Keeps track of IO bundles
   private[ChiselDSP] val ios = Stack[IOBundle]()

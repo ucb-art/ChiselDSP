@@ -39,6 +39,7 @@ class DSPDbl extends DSPQnm[DSPDbl] {
 
   /** Print DSPDbl info */
   override def infoString() : String = "double"
+  def Q(): String = infoString
 
   type T = DSPDbl
 

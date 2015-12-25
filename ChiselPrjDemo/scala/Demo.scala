@@ -5,8 +5,10 @@ package DemoXXX
 // ------- Imports START -- DO NOT MODIFY BELOW
 import org.json4s._
 import org.json4s.native.JsonMethods._
-import Chisel.{Complex => _, Mux => _, Reg => _, RegNext => _, RegInit => _, Pipe => _, when => _, _}
+import Chisel.{Complex => _, Mux => _, Reg => _, RegNext => _, RegInit => _, Pipe => _,
+               when => _, Mem => _, Module => _, ModuleOverride => _,  _}
 import ChiselDSP._
+import scala.language.reflectiveCalls
 // ------- Imports END -- OK TO MODIFY BELOW
 
 /** Parameters externally passed via JSON file (can add defaults) */
@@ -38,14 +40,14 @@ class DemoIO(jsonParams:JSONParams) extends IOBundle {
   val optionalIO = if (jsonParams.softDemod) Some(DSPUInt(INPUT,(3,jsonParams.frameSizes.max))) else None
   
   // Example of how to create Complex
-  val complex0 = Complex(DSPDbl(INPUT),DSPDbl(INPUT))
+  val complex0 = Complex(DSPDbl(INPUT))
 }
 
 /** Special way to create a module that uses a generic type to easily switch between Double/Fixed point testing.
   * The correct type 'gen' must be passed in main. The second argument (true) @ GenDSPModule(gen,true) indicates
   * DecoupledIO is desired.
   */
-class DemoXXX [T <: DSPQnm[T]](gen : => T, jsonParams: JSONParams) extends GenDSPModule (gen, true) {
+class DemoXXX [T <: DSPQnm[T]](gen : => T, jsonParams: JSONParams) extends GenDSPModule (gen, decoupledIO = true) {
 
   /** Inline IO Bundle allows module methods double2T (double --> literal)
     * and T (customized Fixed widths) to be directly used.
@@ -53,7 +55,7 @@ class DemoXXX [T <: DSPQnm[T]](gen : => T, jsonParams: JSONParams) extends GenDS
     */
   class DemoXXXIO extends IOBundle {
     // Input either signed DSPFixed or DSPDbl, as set by gen
-    val symbolIn = Complex(gen,gen).asInput
+    val symbolIn = Complex(gen).asInput
     // # of "hard" bits required is set by the maximum n-QAM supported 
     // (toBitWidth converts from an integer to # of bits required to represent it)
     // Note for 4-QAM, the UInt range is [0,3]
@@ -143,6 +145,8 @@ class DemoXXX [T <: DSPQnm[T]](gen : => T, jsonParams: JSONParams) extends GenDS
   /** Miscellaneous test IO */
   class TestIO extends IOBundle {
     val countOut = Vec(3,DSPUInt(OUTPUT,10))
+    val countOut2 = Vec(3,DSPUInt(OUTPUT,10))
+    val countOut3 = Vec(3,UInt(OUTPUT,10))
     val x = new DemoIO(jsonParams).flip
     val y = new Bundle {
       val a = DSPDbl(OUTPUT)
@@ -150,21 +154,28 @@ class DemoXXX [T <: DSPQnm[T]](gen : => T, jsonParams: JSONParams) extends GenDS
     }
   }
   val testIO = new TestIO
+  // Will report possible overflow error since i.u2 has a larger maximum range than
+  // supported by testIO.countOut2(x) bitwidth
+  testIO.countOut2(0) := i.u2
+  testIO.countOut2(1) := i.u2 + DSPUInt(1)
+  testIO.countOut2(2) := i.u2 + DSPUInt(2)
 
   // Modcounter is a DSPModule, not GenDSPModule (you don't need to specify a generic Fixed/Dbl type)
   // See ChiselDSP/Modules/Counters.scala for how you should create a ModCounter
-  // 3 Counteres are created, indexed 0 to 2
-  val CounterTest = (0 until 3).map(x => ModCounter(10,4,"YourCounterName") )
+  // 3 Counters are created, indexed 0 to 2
+  // ModCounter expects that the inputs to the module have a total pipe delay = 3rd argument (will error if not true)
+  val dly = 3
+  val resetDly = demoIO.reset.pipe(dly)
+  val CounterTest = (0 until 3).map(x => ModCounter(10,4,dly,"YourCounterName") )
   // Alternative to for loop: e = element, i = index of element
   // Mapping signals to ports
   CounterTest.zipWithIndex.foreach{
     case(e,i) => {
-
       e.iCtrl.setName("Can't set IO names outside of Module class --> Warning in console.")
       e.io.inc.get := DSPUInt(2)
       e.io.modN.get := DSPUInt(3)
       e.iCtrl.change.get := DSPBool(true)
-      e.iCtrl.reset := DSPBool(demoIO.reset)
+      e.iCtrl.reset := resetDly
       e.iCtrl.wrap.get := DSPBool(false)
       testIO.countOut(i) := e.io.out
     }
@@ -175,7 +186,7 @@ class DemoXXX [T <: DSPQnm[T]](gen : => T, jsonParams: JSONParams) extends GenDS
   debug(x)
 
   // Handling complex
-  val complexTest = Complex(gen,gen)
+  val complexTest = Complex(gen)
   complexTest := demoIO.symbolIn.reg()
   debug(complexTest)
 
@@ -290,7 +301,10 @@ class DemoXXXTests[T <: DemoXXX[_ <: DSPQnm[_]]](c: T) extends DSPTester(c) {
   peek(c.complexTest)
   step()
   peek(c.complexTest)
-
+  poke(c.demoIO.symbolIn,Complex(1.5,-1.5))
+  peek(c.complexTest)
+  step()
+  peek(c.complexTest)
 
 
 
@@ -299,4 +313,10 @@ class DemoXXXTests[T <: DemoXXX[_ <: DSPQnm[_]]](c: T) extends DSPTester(c) {
   poke(c.testIO.y.b,3.3)
   peek(c.testIO)
   peek(c.testBundle)
+  peek(c.testIO.countOut2)
+  expect(c.testIO.countOut2,Array(6,6,7)) // errors
+  expect(c.testIO.countOut3,Array(6,6,7))
+
+  println("reset" + c.demoIO.reset.getDelay)
+  println("resetdly" + c.resetDly.getDelay)
 }

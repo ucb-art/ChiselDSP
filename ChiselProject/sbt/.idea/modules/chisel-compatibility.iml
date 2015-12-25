@@ -16,7 +16,7 @@
       <sourceFolder url="file://$MODULE_DIR$/../../ChiselCompatibility/target/scala-2.11/resource_managed/main" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/../../ChiselCompatibility/src/test/resources" type="java-test-resource" />
       <sourceFolder url="file://$MODULE_DIR$/../../ChiselCompatibility/target/scala-2.11/resource_managed/test" type="java-test-resource" />
-      <sourceFolder url="file://$MODULE_DIR$/../../ChiselCompatibility/src/main/scala" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../ChiselCompatibility/src/main" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/../../ChiselCompatibility/target" />
     </content>
     <orderEntry type="inheritedJdk" />

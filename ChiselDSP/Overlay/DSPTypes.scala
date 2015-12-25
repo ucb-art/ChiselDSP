@@ -10,6 +10,8 @@ abstract class DSPQnm[T <: DSPBits[T]] extends DSPNum[T] {
 
   /** Shorten fixed-point integer width to save hardware resources (doesn't act on DSPDbl) */
   def shortenTo(intWidth: Int) = this.asInstanceOf[T]
+
+  def Q : String
 }
 
 /** Allow numeric operations */
@@ -81,7 +83,7 @@ abstract class DSPBits [T <: DSPBits[T]] extends Bits {
 
   /** Width + other useful debug info */
   def infoString(): String = (getWidth + " bits")
-  
+
   /** Info associated with signal */
   private var info = Info()
   
@@ -136,6 +138,9 @@ abstract class DSPBits [T <: DSPBits[T]] extends Bits {
     info.rangeBits("max") = range._2
   }
 
+  /** Get tracked pipe delay */
+  final def getDelay(): Int = info.dly
+
   /** Get all meta info */
   final def getInfo(): Info = info
 
@@ -172,7 +177,7 @@ abstract class DSPBits [T <: DSPBits[T]] extends Bits {
   final private[ChiselDSP] def pass2to1[U <: DSPBits[_],V <: DSPBits[_]](in1: U, in2: V) : T = {
     in1.use(); in2.use()
     assign()
-    if (in1.info.dly != in2.info.dly) 
+    if (in1.info.dly != in2.info.dly)
       error("Operator inputs must have the same delay. Delays are " + in1.info.dly + ", " + in2.info.dly)
     info.dly = in1.info.dly
     this.asInstanceOf[T]
@@ -192,15 +197,17 @@ abstract class DSPBits [T <: DSPBits[T]] extends Bits {
   
   /** Performs checks and info updates with reassignment */
   final protected def reassign(that: T) {
-    if ((isAssigned || isUsed) && (info.dly != that.info.dly)) 
-      error("Delays of L (" + info.dly + "), R (" + that.info.dly 
-            + ") in L := R should match if L was previously assigned or used.") 
+    val thisDly = info.dly
+    if ((isAssigned || isUsed) && (info.dly != that.info.dly) && !that.isLit)
+      error("Delays of L (" + info.dly + "), R (" + that.info.dly
+            + ") in L := R should match if L was previously assigned or used.")
     if (isUsed && (that.getRange.max > getRange.max || that.getRange.min < getRange.min)){          
       error("Previous lines of code have used L in L := R. To ensure range consistency, "
             + "L cannot be updated with an R of wider range. Move := earlier in the code!")
     }
     updateLimits(List2Tuple(that.getRange))
     updateGeneric(that)
+    if (that.isLit) info.dly = thisDly
   }
   
   /** Handles how range is updated */

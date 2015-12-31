@@ -85,11 +85,10 @@ class DSPBool extends DSPBits[DSPBool]{
   /** Invert */
   def unary_!(): DSPBool = {
     val out = {
-      if (isLit) {DSPBool(!isTrue)}
+      if (isLit) DSPBool(!isTrue)
       else DSPBool(~(this.toBits))
     }
     out.passThrough(this)
-    out.passDelay(this)
   }
   
   /** Bitwise xor */
@@ -109,5 +108,5 @@ class DSPBool extends DSPBits[DSPBool]{
     setRange(range)
   }
   updateLimits((BigInt(0),BigInt(1)))
-  
+
 }

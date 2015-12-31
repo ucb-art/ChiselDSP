@@ -5,11 +5,11 @@ import Chisel._
 
 /** Register that keeps track of additional info */
 object Reg {
-  def apply [T <: Data](x: T) : T = {
+  def apply [T <: Data](x: T, clock: Clock = null) : T = {
     val out = x match {
-      case v: Vec[_] => Vec(v.map(apply(_)))
-      case t: DSPBits[_] => t.reg()
-      case c: Complex[_] => c.reg()
+      case v: Vec[_] => Vec(v.map(apply(_,clock)))
+      case t: DSPBits[_] => t.reg(clock)
+      case c: Complex[_] => c.reg(clock)
       case _ => Error("Incompatible Vec element type for Reg.")
     }
     out.asInstanceOf[T]

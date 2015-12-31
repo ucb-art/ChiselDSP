@@ -64,7 +64,7 @@ abstract class DSPNum[T <: DSPBits[T]] extends DSPBits[T] {
   
 }
 
-/** ChiselDSP type info (associated with each signal) 
+/** ChiselDSP type info (associated with each signal)
   * rangeBits = max range allowed by signal bitwidth
   */
 case class Info (
@@ -84,50 +84,50 @@ abstract class DSPBits [T <: DSPBits[T]] extends Bits {
   /** Width + other useful debug info */
   def infoString(): String = (getWidth + " bits")
 
-  /** Info associated with signal */
-  private var info = Info()
-  
+  /** Info associated with signal, initialize tracked signal pipe delay on a per module basis */
+  private[ChiselDSP] var info = Info(dly = Module.current.asInstanceOf[DSPModule].inputDelay)
+
   /** Marks the signal as being used to prevent invalid future updates */
   final protected def use() {info.isUsed = true} 
-  final protected def isUsed() : Boolean = info.isUsed 
+  final protected def isUsed() : Boolean = getInfo.isUsed
   /** Marks that node has been assigned */
   final protected def assign(): T =  {
     info.isAssigned = true
     this.asInstanceOf[T]
   }
-  final def isAssigned() : Boolean = info.isAssigned
+  final def isAssigned() : Boolean = getInfo.isAssigned
   /** Returns the signal. Marks it as used */
   final def doNothing() : this.type = {use(); this}
  
   /** Update ranging [min,max] -- subclasses need to compute rangeBits first */
   final protected def setRange(range: (BigInt,BigInt)): Unit = {
     if (range._1 > range._2) error("Range min must be <= max")
-    info.range("max") = if(isAssigned) range._2.max(info.range("max")) else range._2
-    info.range("min") = if(isAssigned) range._1.min(info.range("min")) else range._1
-    if (info.range("max") > info.rangeBits("max")) {
+    info.range("max") = if(isAssigned) range._2.max(getInfo.range("max")) else range._2
+    info.range("min") = if(isAssigned) range._1.min(getInfo.range("min")) else range._1
+    if (getInfo.range("max") > getInfo.rangeBits("max")) {
       Warn("Warning, possible max > max bits overflow. Signals down the chain may be wrong.")
-      info.range("max") = info.rangeBits("max")
+      info.range("max") = getInfo.rangeBits("max")
     }
-    if (info.range("min") < info.rangeBits("min")) {
+    if (getInfo.range("min") < getInfo.rangeBits("min")) {
       Warn("Warning, possible min < min bits overflow. Signals down the chain may be wrong.")
-      info.range("min") = info.rangeBits("min")
+      info.range("min") = getInfo.rangeBits("min")
     }
-    if (info.range("min") > info.rangeBits("max")) {
+    if (getInfo.range("min") > getInfo.rangeBits("max")) {
       Warn("Warning, possible min > max bits overflow. Signals down the chain may be wrong.")
-      info.range("min") = info.rangeBits("max")
+      info.range("min") = getInfo.rangeBits("max")
     }
-    if (info.range("max") < info.rangeBits("min")) {
+    if (getInfo.range("max") < getInfo.rangeBits("min")) {
       Warn("Warning, possible max < min bits overflow. Signals down the chain may be wrong.")
-      info.range("max") = info.rangeBits("min")
+      info.range("max") = getInfo.rangeBits("min")
     }
   }
   
   /** Get range */
-  final def getRange():List[BigInt] = List(info.range("min"),info.range("max"))
+  final def getRange():List[BigInt] = List(getInfo.range("min"),getInfo.range("max"))
   
   /** Returns range [min,max] as string */
   final protected def rangeString(fracWidth:Int = 0): String = {
-    val (min,max) = (info.range("min"),info.range("max"))
+    val (min,max) = (getInfo.range("min"),getInfo.range("max"))
     if (fracWidth == 0) "[" + min + "," + max + "]"
     else "[" + DSPFixed.toDouble(min,fracWidth) + "," + DSPFixed.toDouble(max,fracWidth) + "]"
   }
@@ -139,29 +139,29 @@ abstract class DSPBits [T <: DSPBits[T]] extends Bits {
   }
 
   /** Get tracked pipe delay */
-  final def getDelay(): Int = info.dly
+  final def getDelay(): Int = getInfo.dly
 
   /** Get all meta info */
-  final def getInfo(): Info = info
+  final def getInfo(): Info = info.copy()
 
   /** Copy info */
-  final private[ChiselDSP] def copyInfo (that: T) : T = {
+  final protected def copyInfo[T <: DSPBits[_]](that: T) : T = {
     info = that.getInfo
     this.asInstanceOf[T]
   }
-  
+
   /** Pass (range, etc.) info of input to output [this] -- DOES NOT PASS DELAY. */
   final protected def passThrough[T <: DSPBits[_]](in: T): T = {
+    copyInfo(in)
+    info.isUsed = false
     in.use()
-    info.range = in.info.range
-    info.rangeBits = in.info.rangeBits
     assign()
     this.asInstanceOf[T]
   }
-  
+
   /** Pass delay of input + offset to output [this] -- input/output types don't need to match */
   final protected def passDelay[U <: DSPBits[_]](in:U, offset: Int = 0): T = {
-    info.dly = in.info.dly + offset
+    info.dly = in.getDelay + offset
     this.asInstanceOf[T]
   }
   
@@ -177,9 +177,10 @@ abstract class DSPBits [T <: DSPBits[T]] extends Bits {
   final private[ChiselDSP] def pass2to1[U <: DSPBits[_],V <: DSPBits[_]](in1: U, in2: V) : T = {
     in1.use(); in2.use()
     assign()
-    if (in1.info.dly != in2.info.dly)
-      error("Operator inputs must have the same delay. Delays are " + in1.info.dly + ", " + in2.info.dly)
-    info.dly = in1.info.dly
+    val someLit = in1.isLit || in2.isLit
+    if (in1.getDelay != in2.getDelay && !someLit)
+      error("Operator inputs must have the same delay. Delays are " + in1.getDelay + ", " + in2.getDelay)
+    info.dly = in1.getDelay
     this.asInstanceOf[T]
   }
   
@@ -188,18 +189,23 @@ abstract class DSPBits [T <: DSPBits[T]] extends Bits {
   {
     in1.use(); in2.use(); in3.use()
     assign()
-    if (!(in1.info.dly == in2.info.dly && in2.info.dly == in3.info.dly)) 
-      error("Operator inputs must have the same delay. Delays are " + in1.info.dly + ", " + in2.info.dly
-      + ", " + in3.info.dly)
-    info.dly = in1.info.dly
+    val someLit12 = in1.isLit || in2.isLit
+    val someLit23 = in2.isLit || in3.isLit
+    val someLit13 = in1.isLit || in3.isLit
+    if ((in1.getDelay != in2.getDelay && !someLit12) ||
+        (in2.getDelay != in3.getDelay && !someLit23) ||
+        (in1.getDelay != in3.getDelay && !someLit13))
+      error("Operator inputs must have the same delay. Delays are " + in1.getDelay + ", " + in2.getDelay
+      + ", " + in3.getDelay)
+    info.dly = in1.getDelay
     this.asInstanceOf[T]
   }
-  
+
   /** Performs checks and info updates with reassignment */
   final protected def reassign(that: T) {
-    val thisDly = info.dly
-    if ((isAssigned || isUsed) && (info.dly != that.info.dly) && !that.isLit)
-      error("Delays of L (" + info.dly + "), R (" + that.info.dly
+    val thisDly = getDelay
+    if ((isAssigned || isUsed) && (thisDly != that.getDelay) && !that.isLit)
+      error("Delays of L (" + thisDly + "), R (" + that.getDelay
             + ") in L := R should match if L was previously assigned or used.")
     if (isUsed && (that.getRange.max > getRange.max || that.getRange.min < getRange.min)){          
       error("Previous lines of code have used L in L := R. To ensure range consistency, "
@@ -209,7 +215,7 @@ abstract class DSPBits [T <: DSPBits[T]] extends Bits {
     updateGeneric(that)
     if (that.isLit) info.dly = thisDly
   }
-  
+
   /** Handles how range is updated */
   protected def updateLimits(range: (BigInt,BigInt)) : Unit
 
@@ -222,34 +228,36 @@ abstract class DSPBits [T <: DSPBits[T]] extends Bits {
     }
     this
   }
-  
+
   /** Delay n clock cycles */
   final def pipe (n: Int, en: DSPBool = DSPBool(true)): T = {
-    en.use()
     val res = {
-      if (isLit) this
+      if (isLit || n == 0) this
       else {
-        val out = ShiftRegister(this,n,en.toBool)
+        en.use()
+        val temp = ShiftRegister(this,n,en.toBool).toBits
+        val out = chiselCast(temp){this.cloneType}
         out.passThrough(this)
         out.passDelay(this,n)
       }
     }
     res.asInstanceOf[T]
   }
-  
+
   /** Register that keeps track of additional info */
-  final def reg(): T = {
+  final def reg(clock: Clock = null): T = {
     val res = {
       if (isLit) this
       else {
-        val out = RegNext(this)
+        val temp = (if (clock == null) RegNext(this) else RegNext(this,clock)).toBits
+        val out = chiselCast(temp){this.cloneType}
+        // Delay = 0 because we only care about explicit pipe delays
         out.passThrough(this)
-        out.passDelay(this,0)                       // Delay = 0 because we only care about explicit pipe delays
       }
     }
     res.asInstanceOf[T]
   }
-  
+
   /** Equality check */
   def === (b: T): DSPBool = {
     val out = DSPBool(this.toBits === b.toBits)

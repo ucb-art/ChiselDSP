@@ -1,7 +1,7 @@
 /** Chisel Module Class Extension */
 
 package ChiselDSP
-import scala.collection.mutable.{Stack}
+import scala.collection.mutable.Stack
 import Chisel._
 
 /** Module that allows passing in a generic type for DSP. Allows the designer to seamlessly switch
@@ -49,6 +49,15 @@ abstract class GenDSPModule[T <: DSPQnm[T]](gen : => T, inputDelay:Int = 0, deco
       case _ => gen.error("Illegal generic type. Should be either DSPDbl or DSPFixed.")
     }
     out.asInstanceOf[T] 
+  }
+
+  /** Returns (Fixed, floating point) type used */
+  def getType[A <: DSPQnm[A]](): String = {
+    gen.asInstanceOf[A] match {
+      case f: DSPFixed => "Fixed"
+      case d: DSPDbl => "Double"
+      case _ => Error("Illegal generic type. Should be either DSPDbl or DSPFixed."); ""
+    }
   }
  
 }
@@ -98,6 +107,12 @@ abstract class IOBundle extends Bundle {
 /** Adds functionality to Module */
 abstract class DSPModule (val inputDelay:Int = 0, decoupledIO: Boolean = false, _clock: Option[Clock] = None,
                           _reset: Option[Bool] = None) extends ModuleOverride(_clock,_reset) {
+
+  /** Adds support for DSPBool with when statements */
+  //private[ChiselDSP] val switchKeysDSP = Stack[Bits]()
+  //private[ChiselDSP] val whenCondsDSP = Stack[DSPBool]()
+  //private[ChiselDSP] def hasWhenCondDSP: Boolean = !whenCondsDSP.isEmpty
+  //private[ChiselDSP] def whenCondDSP: DSPBool = if (hasWhenCondDSP) whenCondsDSP.top else DSPBool(true)
 
   // Keeps track of IO bundles
   private[ChiselDSP] val ios = Stack[IOBundle]()

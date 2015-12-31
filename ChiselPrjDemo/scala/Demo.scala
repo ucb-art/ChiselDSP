@@ -90,7 +90,9 @@ class DemoXXX [T <: DSPQnm[T]](gen : => T, jsonParams: JSONParams) extends GenDS
 
   // Delay offset by how long it takes to finish computation (n)
   // Note: Instead of doing Reg(x) or Pipe(x,n) do x.reg() or x.pipe(n) to keep meta info
-  demoIO.offsetOut := demoIO.offsetIn.pipe(5)
+  val pipeTest = demoIO.offsetIn.pipe(5)
+  debug(pipeTest)
+  demoIO.offsetOut := pipeTest - DSPUInt(3)
   
   class LitBundle extends Bundle {
     // Create literals (that can be peeked)
@@ -156,7 +158,7 @@ class DemoXXX [T <: DSPQnm[T]](gen : => T, jsonParams: JSONParams) extends GenDS
   val testIO = new TestIO
   // Will report possible overflow error since i.u2 has a larger maximum range than
   // supported by testIO.countOut2(x) bitwidth
-  testIO.countOut2(0) := i.u2
+  testIO.countOut2(0) := i.u2 >> 2
   testIO.countOut2(1) := i.u2 + DSPUInt(1)
   testIO.countOut2(2) := i.u2 + DSPUInt(2)
 
@@ -166,6 +168,8 @@ class DemoXXX [T <: DSPQnm[T]](gen : => T, jsonParams: JSONParams) extends GenDS
   // ModCounter expects that the inputs to the module have a total pipe delay = 3rd argument (will error if not true)
   val dly = 3
   val resetDly = demoIO.reset.pipe(dly)
+  val resetDly2 = demoIO.reset.pipe(2)
+  debug(resetDly2)
   val CounterTest = (0 until 3).map(x => ModCounter(10,4,dly,"YourCounterName") )
   // Alternative to for loop: e = element, i = index of element
   // Mapping signals to ports
@@ -264,6 +268,9 @@ object DemoXXX {
         c => new DemoXXXTests(c)
     }*/
 
+    Error.suppress = true
+    Warn.suppress = true
+
     chiselMainTest(demoArgs, () => DSPModule(new DemoXXX({DSPFixed((paramsDemoXXX.intBits,paramsDemoXXX.fracBits))}, paramsDemoXXX))) {
       c => new DemoXXXTests(c)
     }
@@ -274,6 +281,10 @@ object DemoXXX {
 
 /** Special way to test a module that uses a generic type to easily switch between Double/Fixed point testing. */
 class DemoXXXTests[T <: DemoXXX[_ <: DSPQnm[_]]](c: T) extends DSPTester(c) {
+
+  traceOn = false
+  //quitOnError = true
+
   reset(5)              // Hold reset for 5 cycles (reset is default Chisel reset; unused in Demo module)
   step(5)               // Step 5 cycles
   peek(c.lits)          // Peek elements of a bundle
@@ -314,9 +325,18 @@ class DemoXXXTests[T <: DemoXXX[_ <: DSPQnm[_]]](c: T) extends DSPTester(c) {
   peek(c.testIO)
   peek(c.testBundle)
   peek(c.testIO.countOut2)
-  expect(c.testIO.countOut2,Array(6,6,7)) // errors
-  expect(c.testIO.countOut3,Array(6,6,7))
+  expect(c.testIO.countOut2,Array(5,6,7)) // errors
+  expect(c.testIO.countOut3,Array(5,6,7))
+  //peek(c.demoIO.offsetIn)
+  peek(c.pipeTest)
+  peek(c.demoIO.offsetOut)
 
-  println("reset" + c.demoIO.reset.getDelay)
-  println("resetdly" + c.resetDly.getDelay)
+  expect(c.complexTest,Complex(1.5,-1.6))
+  println("offsetin " + c.demoIO.offsetIn.getDelay)
+  println("pipetest " + c.pipeTest.getDelay)
+  println("offsetout " + c.demoIO.offsetOut.getDelay)
+  println("reset " + c.demoIO.reset.getDelay)
+  println("resetdly " + c.resetDly.getDelay)
+  println("resetdly2 " + c.resetDly2.getDelay)
+  //println()
 }

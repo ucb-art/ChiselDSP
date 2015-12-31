@@ -55,7 +55,7 @@ class Complex[T <: DSPQnm[T]](val real: T, val imag: T) extends ComplexBundle {
   def pipe (n: Int, en: DSPBool = DSPBool(true)): Complex[T] = Complex(real.pipe(n,en),imag.pipe(n,en))
 
   /** Register that keeps track of additional info */
-  def reg(): Complex[T] = Complex(real.reg(),imag.reg())
+  def reg(clock: Clock = null): Complex[T] = Complex(real.reg(clock),imag.reg(clock))
   
   /** Select function: s = true -> this; else 0 */
   def ? (s: DSPBool) : Complex[T] = Complex(real ? s, imag ? s)

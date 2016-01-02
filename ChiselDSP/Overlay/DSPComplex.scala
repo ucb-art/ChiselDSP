@@ -17,8 +17,18 @@ object Complex {
   
   /** Creates non-Chisel complex class if real, imag inputs are type Scala Double */
   def apply(real:Double, imag:Double) : ScalaComplex = new ScalaComplex(real, imag)
-  
+
+  var opts: ComplexParams = ComplexParams()
+
 }
+
+/** Default Complex hardware customizations */
+case class ComplexParams (
+  mulPipe:Int = 0,                    // Amount of registers for retiming a fixed multiply (not complex multiply)
+  addPipe:Int = 0,                    // Amount of registers for retiming a fixed add (not complex add)
+  trimType: TrimType = NoTrim,        // How to trim un-needed fractional bits (reduce precision)
+  overflowType: OverflowType = Grow   // How to handle overflow
+)
 
 /** Complex class for normal Scala */
 class ScalaComplex (var real:Double, var imag:Double){

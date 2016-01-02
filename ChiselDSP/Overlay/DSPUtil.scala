@@ -10,7 +10,8 @@ object Reg {
       case v: Vec[_] => Vec(v.map(apply(_,clock)))
       case t: DSPBits[_] => t.reg(clock)
       case c: Complex[_] => c.reg(clock)
-      case _ => Error("Incompatible Vec element type for Reg.")
+      case b: Bits => Chisel.Reg(x,x,null,clock)
+      case _ => Error("Incompatible element type for Reg.")
     }
     out.asInstanceOf[T]
   }
@@ -25,7 +26,8 @@ object Pipe {
       case v: Vec[_] => Vec(v.map(apply(_, n, en)))
       case t: DSPBits[_] => t.pipe(n, en)
       case c: Complex[_] => c.pipe(n, en)
-      case _ => Error("Incompatible Vec element type for Pipe.")
+      case b: Bits => {en.doNothing(); ShiftRegister(x,n,en.toBool)}
+      case _ => Error("Incompatible element type for Pipe.")
     }
     out.asInstanceOf[T]
   }
@@ -33,14 +35,14 @@ object Pipe {
 
 //----------------------------------------------------
 
-/** Shift all elements left (arithmetically) by amount n*/
+/** Shift all elements left (arithmetically) by amount n */
 object SLA {
   def apply [T <: Data](x: T, n:Int) : T = {
     val out = x match {
       case v: Vec[_] => Vec(v.map(apply(_,n)))
       case t: DSPNum[_] => t << n
       case c: Complex[_] => c << n
-      case _ => Error("Incompatible Vec element type for SLA.")
+      case _ => Error("Incompatible element type for SLA.")
     }
     out.asInstanceOf[T]
   }
@@ -49,7 +51,7 @@ object SLA {
       case v: Vec[_] => Vec(v.map(apply(_,n)))
       case t: DSPNum[_] => t << n
       case c: Complex[_] => c << n
-      case _ => Error("Incompatible Vec element type for SLA.")
+      case _ => Error("Incompatible element type for SLA.")
     }
     out.asInstanceOf[T]
   }
@@ -62,7 +64,7 @@ object SRA {
       case v: Vec[_] => Vec(v.map(apply(_,n)))
       case t: DSPNum[_] => t >> n
       case c: Complex[_] => c >> n
-      case _ => Error("Incompatible Vec element type for SRA.")
+      case _ => Error("Incompatible element type for SRA.")
     }
     out.asInstanceOf[T]
   }
@@ -71,7 +73,7 @@ object SRA {
       case v: Vec[_] => Vec(v.map(apply(_,n)))
       case t: DSPNum[_] => t >> n
       case c: Complex[_] => c >> n
-      case _ => Error("Incompatible Vec element type for SRA.")
+      case _ => Error("Incompatible element type for SRA.")
     }
     out.asInstanceOf[T]
   }
@@ -83,8 +85,14 @@ object SRA {
   * sel = (false,true) --> (fc,tc)
   */
 object Mux {
-  def apply [T <: DSPBits[T]] (sel: DSPBool, tc: T, fc: T) : T = (fc ? (!sel)) /| (tc ? sel)
-  def apply [T <: DSPQnm[T]] (sel: DSPBool, tc: Complex[T], fc: Complex[T]) : Complex[T] = (fc ? (!sel)) /| (tc ? sel)
+  def apply (sel: Bool, tc: UInt, fc: UInt) : UInt = Chisel.Mux(sel,tc,fc)
+  def apply (sel: Bool, tc: SInt, fc: SInt) : SInt = Chisel.Mux(sel,tc,fc)
+  def apply (sel: Bool, tc: Bool, fc: Bool) : Bool = Chisel.Mux(sel,tc,fc)
+  def apply (sel: Bool, tc: Fixed, fc: Fixed) : Fixed = Chisel.Mux(sel,tc,fc)
+  def apply (sel: Bool, tc: Flo, fc: Flo) : Flo = Chisel.Mux(sel,tc,fc)
+  def apply (sel: Bool, tc: Dbl, fc: Dbl) : Dbl = Chisel.Mux(sel,tc,fc)
+  def apply [T <: DSPBits[T]] (sel: DSPBool, tc: T, fc: T) : T = (fc ? !sel) /| (tc ? sel)
+  def apply [T <: DSPQnm[T]] (sel: DSPBool, tc: Complex[T], fc: Complex[T]) : Complex[T] = (fc ? !sel) /| (tc ? sel)
 }
 
 /** Short [DSPUInt] Mod (x,n,[optional] dly)

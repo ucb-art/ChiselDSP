@@ -6,10 +6,17 @@ import scala.collection.mutable.Map
 
 /** Additional operations for Fixed in Qn.m notation (and therefore DSPDbl) */
 abstract class DSPQnm[T <: DSPBits[T]] extends DSPNum[T] {
-  // TODO: Truncate, round, overflow handling
+  // TODO: overflow handling
 
   /** Shorten fixed-point integer width to save hardware resources (doesn't act on DSPDbl) */
   def shortenTo(intWidth: Int) = this.asInstanceOf[T]
+
+  /** Truncate to n bits */
+  def $ (n: Int) = this.asInstanceOf[T]
+  /** Round to n bits */
+  def $$ (n: Int, of: OverflowType = Wrap) = this.asInstanceOf[T]
+  /** Get integer portion as DSPFixed */
+  def toInt(r: TrimType): DSPFixed
 
   def Q : String
 }
@@ -91,7 +98,7 @@ abstract class DSPBits [T <: DSPBits[T]] extends Bits {
   final protected def use() {info.isUsed = true} 
   final protected def isUsed() : Boolean = getInfo.isUsed
   /** Marks that node has been assigned */
-  final protected def assign(): T =  {
+  final private[ChiselDSP] def assign(): T =  {
     info.isAssigned = true
     this.asInstanceOf[T]
   }
@@ -180,7 +187,7 @@ abstract class DSPBits [T <: DSPBits[T]] extends Bits {
     val someLit = in1.isLit || in2.isLit
     if (in1.getDelay != in2.getDelay && !someLit)
       error("Operator inputs must have the same delay. Delays are " + in1.getDelay + ", " + in2.getDelay)
-    info.dly = in1.getDelay
+    info.dly = (if (!in1.isLit) in1 else in2).getDelay
     this.asInstanceOf[T]
   }
   
@@ -197,7 +204,7 @@ abstract class DSPBits [T <: DSPBits[T]] extends Bits {
         (in1.getDelay != in3.getDelay && !someLit13))
       error("Operator inputs must have the same delay. Delays are " + in1.getDelay + ", " + in2.getDelay
       + ", " + in3.getDelay)
-    info.dly = in1.getDelay
+    info.dly = (if (!in1.isLit) in1 else if (!in2.isLit) in2 else in3).getDelay
     this.asInstanceOf[T]
   }
 

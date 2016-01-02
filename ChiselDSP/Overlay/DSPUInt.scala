@@ -267,7 +267,7 @@ class DSPUInt extends DSPNum[DSPUInt] {
     */
   override def +& (b: DSPUInt) : DSPUInt = {
     val (x,y) = matchWidth(b)
-    val sum = Cat(sign.toBits,x)+Cat(sign.toBits,y)
+    val sum = Cat(sign.toBits,x)+Cat(b.sign.toBits,y)
     val out = toT(sum,(BigInt(0),DSPUInt.toMax(x.getWidth+1)))
     out.pass2to1(this,b)
   }

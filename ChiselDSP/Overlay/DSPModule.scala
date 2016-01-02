@@ -108,12 +108,6 @@ abstract class IOBundle extends Bundle {
 abstract class DSPModule (val inputDelay:Int = 0, decoupledIO: Boolean = false, _clock: Option[Clock] = None,
                           _reset: Option[Bool] = None) extends ModuleOverride(_clock,_reset) {
 
-  /** Adds support for DSPBool with when statements */
-  //private[ChiselDSP] val switchKeysDSP = Stack[Bits]()
-  //private[ChiselDSP] val whenCondsDSP = Stack[DSPBool]()
-  //private[ChiselDSP] def hasWhenCondDSP: Boolean = !whenCondsDSP.isEmpty
-  //private[ChiselDSP] def whenCondDSP: DSPBool = if (hasWhenCondDSP) whenCondsDSP.top else DSPBool(true)
-
   // Keeps track of IO bundles
   private[ChiselDSP] val ios = Stack[IOBundle]()
   

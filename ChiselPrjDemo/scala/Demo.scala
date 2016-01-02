@@ -5,8 +5,8 @@ package DemoXXX
 // ------- Imports START -- DO NOT MODIFY BELOW
 import org.json4s._
 import org.json4s.native.JsonMethods._
-import Chisel.{Complex => _, Mux => _, Reg => _, RegNext => _, RegInit => _, Pipe => _,
-               when => _, Mem => _, Module => _, ModuleOverride => _,  _}
+import Chisel.{Complex => _, Mux => _, Reg => _, RegNext => _, RegInit => _, Pipe => _, Mem => _,
+               Module => _, ModuleOverride => _, when => _, switch => _, is => _, unless => _, Round => _,  _}
 import ChiselDSP._
 import scala.language.reflectiveCalls
 // ------- Imports END -- OK TO MODIFY BELOW
@@ -32,6 +32,7 @@ class DemoIO(jsonParams:JSONParams) extends IOBundle {
   val b1 = Bool(INPUT)
   val u1 = UInt(INPUT,width=5)
   val s1 = SInt(INPUT,width=5)
+  val s2 = DSPSInt(INPUT,(-3,3))
   val f1 = Fixed(INPUT,width = 17, fracWidth = 15)  // width = int width + frac width + 1 (sign)
   val d1 = Dbl(INPUT)
   val f0 = Flo(INPUT)
@@ -106,6 +107,8 @@ class DemoXXX [T <: DSPQnm[T]](gen : => T, jsonParams: JSONParams) extends GenDS
     val u1 = UInt(17,width=5)
     val s1a = SInt(-10,width=5)
     val s1b = SInt(10,width=5)
+    val s2a = DSPSInt(-10)
+    val s2b = DSPSInt(10)
     val f1a = Fixed(-1.222,width = 17, fracWidth = 15)  
     val f1b = Fixed(1.222,width = 17, fracWidth = 15)  
     val d1a = Dbl(-3.33)
@@ -158,9 +161,11 @@ class DemoXXX [T <: DSPQnm[T]](gen : => T, jsonParams: JSONParams) extends GenDS
   val testIO = new TestIO
   // Will report possible overflow error since i.u2 has a larger maximum range than
   // supported by testIO.countOut2(x) bitwidth
-  testIO.countOut2(0) := i.u2 >> 2
+  testIO.countOut2(0) := Mux(i.b2,i.u2 >> 2,i.u2)
   testIO.countOut2(1) := i.u2 + DSPUInt(1)
   testIO.countOut2(2) := i.u2 + DSPUInt(2)
+  // Arithmetic shift left all values of a Vec
+  testIO.countOut3 := SLA(testIO.countOut2,3)
 
   // Modcounter is a DSPModule, not GenDSPModule (you don't need to specify a generic Fixed/Dbl type)
   // See ChiselDSP/Modules/Counters.scala for how you should create a ModCounter
@@ -202,6 +207,20 @@ class DemoXXX [T <: DSPQnm[T]](gen : => T, jsonParams: JSONParams) extends GenDS
   val testBundle = new TestBundle
   debug(testBundle)
 
+  // Example when
+  when (demoIO.offsetIn === DSPUInt(0)) {
+    testIO.y.a := DSPDbl(0)
+  }.elsewhen (demoIO.offsetIn === DSPUInt(1)) {
+    testIO.y.a := DSPDbl(1)
+  }.elsewhen (demoIO.offsetIn === DSPUInt(2)) {
+    testIO.y.a := DSPDbl(2)
+  }. otherwise {
+    testIO.y.a := DSPDbl(3)
+  }
+
+  val f2 = i.f2 >> 3
+  debug(f2)
+  o.f2 := f2
 
 
 
@@ -213,7 +232,9 @@ class DemoXXX [T <: DSPQnm[T]](gen : => T, jsonParams: JSONParams) extends GenDS
 
 
 
-
+  // Round to 5 fractional bits
+  val comp = demoIO.symbolIn.real * double2T(1.0)//(demoIO.symbolIn.imag >> 2) + demoIO.symbolIn.real //lits.d2b.toInt(Round)//f2 $$ 5
+  debug(comp)
 
 
 
@@ -268,8 +289,8 @@ object DemoXXX {
         c => new DemoXXXTests(c)
     }*/
 
-    Error.suppress = true
-    Warn.suppress = true
+    //Error.suppress = true
+    //Warn.suppress = true
 
     chiselMainTest(demoArgs, () => DSPModule(new DemoXXX({DSPFixed((paramsDemoXXX.intBits,paramsDemoXXX.fracBits))}, paramsDemoXXX))) {
       c => new DemoXXXTests(c)
@@ -282,7 +303,7 @@ object DemoXXX {
 /** Special way to test a module that uses a generic type to easily switch between Double/Fixed point testing. */
 class DemoXXXTests[T <: DemoXXX[_ <: DSPQnm[_]]](c: T) extends DSPTester(c) {
 
-  traceOn = false
+  //traceOn = false
   //quitOnError = true
 
   reset(5)              // Hold reset for 5 cycles (reset is default Chisel reset; unused in Demo module)
@@ -332,6 +353,21 @@ class DemoXXXTests[T <: DemoXXX[_ <: DSPQnm[_]]](c: T) extends DSPTester(c) {
   peek(c.demoIO.offsetOut)
 
   expect(c.complexTest,Complex(1.5,-1.6))
+
+  for (x <- 0 until 4) {
+    poke(c.demoIO.offsetIn, x)
+    expect(c.testIO.y.a,x.toDouble)
+  }
+
+  poke(c.i.f2,1.7400)
+  peek(c.f2)
+  peek(c.o.f2)
+  poke(c.i.u2,1)
+
+
+  poke(c.demoIO.symbolIn,Complex(3.3,-1.5))
+  peek(c.comp)
+
   println("offsetin " + c.demoIO.offsetIn.getDelay)
   println("pipetest " + c.pipeTest.getDelay)
   println("offsetout " + c.demoIO.offsetOut.getDelay)

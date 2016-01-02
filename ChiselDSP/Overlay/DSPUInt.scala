@@ -267,7 +267,7 @@ class DSPUInt extends DSPNum[DSPUInt] {
     */
   override def +& (b: DSPUInt) : DSPUInt = {
     val (x,y) = matchWidth(b)
-    val sum = Cat(sign.toBits,x)+Cat(sign.toBits,y)
+    val sum = Cat(sign.toBits,x)+Cat(b.sign.toBits,y)
     val out = toT(sum,(BigInt(0),DSPUInt.toMax(x.getWidth+1)))
     out.pass2to1(this,b)
   }
@@ -292,7 +292,7 @@ class DSPUInt extends DSPNum[DSPUInt] {
       else{
         val (x,y) = matchWidth(b)
         val diff = x.toUInt-y.toUInt
-        val newRange = (getRange, b.getRange.reverse).zipped.map( _ + _ )
+        val newRange = (getRange, b.getRange.reverse).zipped.map( _ - _ )
         if (newRange.min < 0) Warn("Possible DSPUInt subtraction negative result will wrap.")
         val opMin = newRange.min.max(BigInt(0))
         val opMax = if (opMin != newRange.min) DSPUInt.toMax(x.getWidth) else newRange.max

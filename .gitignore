@@ -8,7 +8,6 @@ Verilog*/
 *.phd
 javacore*
 target/
-.idea/
-*-e
+
 	
 

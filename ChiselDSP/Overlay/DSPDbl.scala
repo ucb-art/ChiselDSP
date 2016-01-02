@@ -39,6 +39,7 @@ class DSPDbl extends DSPQnm[DSPDbl] {
 
   /** Print DSPDbl info */
   override def infoString() : String = "double"
+  def Q(): String = infoString
 
   type T = DSPDbl
 
@@ -139,6 +140,23 @@ class DSPDbl extends DSPQnm[DSPDbl] {
   def /| (b: DSPDbl) : DSPDbl = {
     val out = toT(this.toBits | b.toBits)
     out.pass2to1(this,b)
+  }
+
+  /** Trim functions */
+  private def floor: DSPDbl = newUnaryOp("dfloor")
+  private def ceil: DSPDbl = newUnaryOp("dceil")
+  private def round: DSPDbl = newUnaryOp("dround")
+
+  /** Gets integer portion as DSPFixed. Optional rounding mode. */
+  def toInt(r: TrimType = Truncate): DSPFixed = {
+    val res = {
+      if (r == Truncate) floor
+      else if (r == Round) round
+      else error("Invalid trim type for toInt")
+    }
+    val sintVal = SInt(OUTPUT).fromNode(Op("dToSInt", fixWidth(64), res))
+    val out = DSPSInt(sintVal,DSPFixed.toRange(64))
+    out.updateGeneric(this)
   }
   
   /** Dbl doesn't care about limits */

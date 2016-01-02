@@ -13,11 +13,22 @@ object Complex {
     * @tparam T the type to represent the complex number with, eg DSPFixed, DSPDbl
     */
   def apply[T <: DSPQnm[T]](real: T, imag: T) : Complex[T] = new Complex(real, imag)
+  def apply[T <: DSPQnm[T]](gen: T) : Complex[T] = new Complex(gen.cloneType, gen.cloneType)
   
   /** Creates non-Chisel complex class if real, imag inputs are type Scala Double */
   def apply(real:Double, imag:Double) : ScalaComplex = new ScalaComplex(real, imag)
-  
+
+  var opts: ComplexParams = ComplexParams()
+
 }
+
+/** Default Complex hardware customizations */
+case class ComplexParams (
+  mulPipe:Int = 0,                    // Amount of registers for retiming a fixed multiply (not complex multiply)
+  addPipe:Int = 0,                    // Amount of registers for retiming a fixed add (not complex add)
+  trimType: TrimType = NoTrim,        // How to trim un-needed fractional bits (reduce precision)
+  overflowType: OverflowType = Grow   // How to handle overflow
+)
 
 /** Complex class for normal Scala */
 class ScalaComplex (var real:Double, var imag:Double){
@@ -26,7 +37,13 @@ class ScalaComplex (var real:Double, var imag:Double){
 }
 
 /** Complex number representation */
-class Complex[T <: DSPQnm[T]](val real: T, val imag: T) extends Bundle {
+private[ChiselDSP] abstract class ComplexBundle extends Bundle {
+  def Q : String
+}
+class Complex[T <: DSPQnm[T]](val real: T, val imag: T) extends ComplexBundle {
+
+  /** Returns a string containing the integer and fractional widths of the real + imaginary components*/
+  def Q(): String = "[" + real.Q + "," + imag.Q + "]"
 
   /** Check that 'name' is a valid component of Complex, ie. real or imag. Any methods with
     * 0 arguments should be added to this list to prevent Chisel from stack overflowing... :(
@@ -48,7 +65,7 @@ class Complex[T <: DSPQnm[T]](val real: T, val imag: T) extends Bundle {
   def pipe (n: Int, en: DSPBool = DSPBool(true)): Complex[T] = Complex(real.pipe(n,en),imag.pipe(n,en))
 
   /** Register that keeps track of additional info */
-  def reg(): Complex[T] = Complex(real.reg(),imag.reg())
+  def reg(clock: Clock = null): Complex[T] = Complex(real.reg(clock),imag.reg(clock))
   
   /** Select function: s = true -> this; else 0 */
   def ? (s: DSPBool) : Complex[T] = Complex(real ? s, imag ? s)

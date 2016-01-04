@@ -1,7 +1,27 @@
 /** Utility functions */
 
+// TODO: Max, min of Vec, Vec of Complex
+
 package ChiselDSP
 import Chisel._
+
+// TODO: Overflow handling
+/** Trim fractional bits */
+object Trim {
+  def apply [T <: Data](x: T, n: Int, tType: TrimType = Complex.opts.trimType) : T = {
+    val out = x match {
+      case v: Vec[_] => Vec(v.map(apply(_,n,tType)))
+      case t: DSPQnm[_] => {
+        if (tType == Truncate) t $ n
+        else if (tType == Round) t $$ n
+        else t
+      }
+      case c: Complex[_] => c.trim(n,tType)
+      case _ => Error("Incompatible element type for Trim.")
+    }
+    out.asInstanceOf[T]
+  }
+}
 
 /** Register that keeps track of additional info */
 object Reg {

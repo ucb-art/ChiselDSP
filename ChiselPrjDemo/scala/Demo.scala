@@ -3,25 +3,20 @@
 package DemoXXX
 
 // ------- Imports START -- DO NOT MODIFY BELOW
-import org.json4s._
-import org.json4s.native.JsonMethods._
 import Chisel.{Complex => _, Mux => _, Reg => _, RegNext => _, RegInit => _, Pipe => _, Mem => _,
                Module => _, ModuleOverride => _, when => _, switch => _, is => _, unless => _, Round => _,  _}
 import ChiselDSP._
-import scala.language.reflectiveCalls
 // ------- Imports END -- OK TO MODIFY BELOW
 
 /** Parameters externally passed via JSON file (can add defaults) */
-case class JSONParams (
-  QAMn: List[Int],            // List of supported n-QAM i.e. 4-QAM (QPSK), 16-QAM, 64-QAM, etc.
-  frameSizes: List[Int],      // Supported frame sizes (see FFT sizes needed)
-  softDemod: Boolean,         // If true, should do LLR calc, otherwise hard demod
-  intBits: Int,               // Fixed in Qn.m notation --> n (# of integer bits, not including sign)
-  fracBits: Int               // Fixed in Qn.m notation --> m (# frational bits, determines LSB)
+case class DemoXXXParams (
+  QAMn: List[Int] = List(4),                // List of supported n-QAM i.e. 4-QAM (QPSK), 16-QAM, 64-QAM, etc.
+  frameSizes: List[Int] = List(1024),       // Supported frame sizes (see FFT sizes needed)
+  softDemod: Boolean = false                // If true, should do LLR calc, otherwise hard demod
 )
 
 /** IO Bundle showing off data types and how to pass parameters (actual vals are meaningless) */
-class DemoIO(jsonParams:JSONParams) extends IOBundle {
+class DemoIO(p:DemoXXXParams) extends IOBundle {
   // ChiselDSP types (preferred because they keep track of meta info + perform optimizations with them)
   val b2 = DSPBool(INPUT)
   val u2 = DSPUInt(INPUT,(3,20))                    // (min,max) range; also: DSPUInt(DIR,max) -> assumes min = 0
@@ -38,7 +33,7 @@ class DemoIO(jsonParams:JSONParams) extends IOBundle {
   val f0 = Flo(INPUT)
   
   // Demonstrates customizable IO
-  val optionalIO = if (jsonParams.softDemod) Some(DSPUInt(INPUT,(3,jsonParams.frameSizes.max))) else None
+  val optionalIO = if (p.softDemod) Some(DSPUInt(INPUT,(3,p.frameSizes.max))) else None
   
   // Example of how to create Complex
   val complex0 = Complex(DSPDbl(INPUT))
@@ -48,7 +43,7 @@ class DemoIO(jsonParams:JSONParams) extends IOBundle {
   * The correct type 'gen' must be passed in main. The second argument (true) @ GenDSPModule(gen,true) indicates
   * DecoupledIO is desired.
   */
-class DemoXXX [T <: DSPQnm[T]](gen : => T, jsonParams: JSONParams) extends GenDSPModule (gen, decoupledIO = true) {
+class DemoXXX [T <: DSPQnm[T]](gen : => T, p: DemoXXXParams) extends GenDSPModule (gen, decoupledIO = true) {
 
   /** Inline IO Bundle allows module methods double2T (double --> literal)
     * and T (customized Fixed widths) to be directly used.
@@ -64,8 +59,8 @@ class DemoXXX [T <: DSPQnm[T]](gen : => T, jsonParams: JSONParams) extends GenDS
     // When performing hard decoding, n,m = 0, so each element of the vec should
     // only be 1 bit wide (using the sign bit)
     // When performing hard decoding, n = 0, m = ??? -- you should determine what ??? is (15 is a placeholder)
-    val m = if (jsonParams.softDemod) 15 else 0
-    val demodOut = Vec(DSPUInt.toBitWidth(jsonParams.QAMn.max-1), T(OUTPUT,(0,m)))
+    val m = if (p.softDemod) 15 else 0
+    val demodOut = Vec(DSPUInt.toBitWidth(p.QAMn.max-1), T(OUTPUT,(0,m)))
     // If the bits of demodOut are interpreted as signed BigInt rather than fixed (i.e. renormalize wrt LSB), 
     // a large positive number is a very confident 0, and a small positive number is a less confident 0.
     // Negative #'s are associated with confidence for being a 1. We chose the sign of the LLR as positive <-> 0
@@ -73,20 +68,20 @@ class DemoXXX [T <: DSPQnm[T]](gen : => T, jsonParams: JSONParams) extends GenDS
     // People aren't generally consistent about choosing positive LLRs to correspond to 0 or 1, so we choose
     // one with a convenient interpretation in this context.
     // Offset of the input sample relative to frame size (needs to support up to max frame size)
-    val offsetIn = DSPUInt(INPUT,jsonParams.frameSizes.max-1)
+    val offsetIn = DSPUInt(INPUT,p.frameSizes.max-1)
     // If symbolIn --> corresponding demodOut takes n cycles, offsetOut should be offsetIn delayed n clocks
-    val offsetOut = DSPUInt(OUTPUT,jsonParams.frameSizes.max-1)
+    val offsetOut = DSPUInt(OUTPUT,p.frameSizes.max-1)
     val reset = DSPBool(INPUT)
   }
 
   // Instantiate IO objects
   val demoIO = new DemoXXXIO
-  val i = new DemoIO(jsonParams)
+  val i = new DemoIO(p)
   // Rename IO bundle. Otherwise, the bundle name is the class name (DemoIO).
   i.setName("i")
 
   // Creates a new instance of DemoIO with port directions flipped (i.e. to output)
-  val o = new DemoIO(jsonParams).flip
+  val o = new DemoIO(p).flip
   o.setName("o")
 
   // Delay offset by how long it takes to finish computation (n)
@@ -152,11 +147,12 @@ class DemoXXX [T <: DSPQnm[T]](gen : => T, jsonParams: JSONParams) extends GenDS
     val countOut = Vec(3,DSPUInt(OUTPUT,10))
     val countOut2 = Vec(3,DSPUInt(OUTPUT,10))
     val countOut3 = Vec(3,UInt(OUTPUT,10))
-    val x = new DemoIO(jsonParams).flip
+    val x = new DemoIO(p).flip
     val y = new Bundle {
       val a = DSPDbl(OUTPUT)
       val b = DSPDbl(INPUT)
     }
+    val genT = Complex(gen).asOutput
   }
   val testIO = new TestIO
   // Will report possible overflow error since i.u2 has a larger maximum range than
@@ -164,7 +160,7 @@ class DemoXXX [T <: DSPQnm[T]](gen : => T, jsonParams: JSONParams) extends GenDS
   testIO.countOut2(0) := Mux(i.b2,i.u2 >> 2,i.u2)
   testIO.countOut2(1) := i.u2 + DSPUInt(1)
   testIO.countOut2(2) := i.u2 + DSPUInt(2)
-  // Arithmetic shift left all values of a Vec
+  // Arithmetic shift left all values of a Vec (See util for other grouped operations)
   testIO.countOut3 := SLA(testIO.countOut2,3)
 
   // Modcounter is a DSPModule, not GenDSPModule (you don't need to specify a generic Fixed/Dbl type)
@@ -222,79 +218,41 @@ class DemoXXX [T <: DSPQnm[T]](gen : => T, jsonParams: JSONParams) extends GenDS
   debug(f2)
   o.f2 := f2
 
-
-
-
-
-
-
-
-
-
-
-  // Round to 5 fractional bits
-  val comp = demoIO.symbolIn.real * double2T(1.0)//(demoIO.symbolIn.imag >> 2) + demoIO.symbolIn.real //lits.d2b.toInt(Round)//f2 $$ 5
+  // See Complex for more details on how to manipulate complex numbers (special muls for complex * real, complex * imag,
+  // etc.)
+  val comp = ((demoIO.symbolIn >> 2) * demoIO.symbolIn + demoIO.symbolIn ** (double2T(2.3), typ = Real))
   debug(comp)
-
-
-
-
+  val comp2 = demoIO.symbolIn.real.toInt()
+  debug(comp2)
+  testIO.genT := Trim(comp,Complex.getFrac,tType = Truncate)
 
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+/** Composition of your generator parameters (with default values!) */
+case class GeneratorParams(complex: ComplexParams = ComplexParams(),
+                           demoXXX: DemoXXXParams = DemoXXXParams()       // Add your parameters here
+                          ) extends JSONParams(complex)
 
 object DemoXXX {
 
   def main(args: Array[String]): Unit = {
+    // Suppress warnings
+    Warn.suppress = true
 
-    val demoArgs = args.slice(1, args.length)
+    // Must include in front of main module + tester instantiation for parameter + fixed/double mode setup
+    // add ser = List(YourCustomSerializers) if needed to method args list
+    val (isFixed,p) = Init({GeneratorParams()}, jsonName = "DemoXXX", args = args)
 
-    // Needed for JSON parameter extraction to case class
-    // To see how to set case class parameters without a JSON file, check out
-    // ChiselDSP/Modules/Counters.scala
-    implicit val formats = DefaultFormats
-    val jsonContents = scala.io.Source.fromFile("src/main/resources/Demo.json").getLines.mkString
-    val json = parse(jsonContents)
-    val paramsDemoXXX = json.extract[JSONParams]
-    Status("User parameters: " + jsonContents.replace("\t","\n").replace("{","").replace("}",""))
-
-    // SBT parameters (used to set Fixed/Dbl)
-    val paramsSBT = """-params_(.*)""".r.findFirstMatchIn(args(0))
-    val isFixed = paramsSBT.get.group(1).toBoolean
-    val mode = if (isFixed) "fixed point" else "double precision floating point"
-    Status("Compiling XXX in " + mode + " mode")
+    // Print out objects for debug
+    println(p)
+    println(Complex.getFixedParams)
 
     // Setup module + tester
-    /*val gen = if (isFixed) DSPFixed((paramsDemoXXX.intBits,paramsDemoXXX.fracBits)) else DSPDbl()
-    val topModule = new DemoXXX({gen}, paramsDemoXXX)
-    chiselMainTest(demoArgs, () => DSPModule(topModule)) {
-        c => new DemoXXXTests(c)
-    }*/
-
-    //Error.suppress = true
-    //Warn.suppress = true
-
-    chiselMainTest(demoArgs, () => DSPModule(new DemoXXX({DSPFixed((paramsDemoXXX.intBits,paramsDemoXXX.fracBits))}, paramsDemoXXX))) {
-      c => new DemoXXXTests(c)
-    }
+    val demoArgs = args.slice(1, args.length)
+    if (isFixed)
+      chiselMainTest(demoArgs, () => DSPModule(new DemoXXX({DSPFixed()},p.demoXXX))) { c => new DemoXXXTests(c) }
+    else
+      chiselMainTest(demoArgs, () => DSPModule(new DemoXXX({DSPDbl()},p.demoXXX))) { c => new DemoXXXTests(c) }
 
   }
 
@@ -303,56 +261,44 @@ object DemoXXX {
 /** Special way to test a module that uses a generic type to easily switch between Double/Fixed point testing. */
 class DemoXXXTests[T <: DemoXXX[_ <: DSPQnm[_]]](c: T) extends DSPTester(c) {
 
-  //traceOn = false
-  //quitOnError = true
+  hide()                    // Hide tester output from console
+  show()
+  reset(5)                  // Hold reset for 5 cycles (reset is default Chisel reset; unused in Demo module)
+  step(5)                   // Step 5 cycles
+  peek(c.lits)              // Peek elements of a bundle
+  peek(c.testFixed)         // Peek internal Fixed value
 
-  reset(5)              // Hold reset for 5 cycles (reset is default Chisel reset; unused in Demo module)
-  step(5)               // Step 5 cycles
-  peek(c.lits)          // Peek elements of a bundle
+  for (x <- 0 until 5) step
 
-  peek(c.testFixed)     // Peek internal Fixed value
-
-  for (x <- 0 until 5) {step}
-
-  poke(c.i.u2,5)
+  poke(c.i.u2,5)            // Poke value
   peek(c.i.u2)
   peek(c.x)
-
-  peek(c.o)             // Peek bundle of outputs
+  peek(c.o)                 // Peek bundle of outputs
   poke(c.i.b2,true)
-  peek(c.i.b2)             // Peek bundle of inputs
+  peek(c.i.b2)              // Peek bundle of inputs
   peek(c.CounterTest(0).io)
   peek(c.CounterTest(1).io)
-  //peek(c.demoIO)        // Peek bundle of anythings
-
   peek(c.decoupledO)
-
 
   poke(c.demoIO.symbolIn.real,3.3)
   poke(c.demoIO.symbolIn.imag,-3.3)
   peek(c.complexTest)
-  step()
+  step
   peek(c.complexTest)
   poke(c.demoIO.symbolIn,Complex(1.5,-1.5))
   peek(c.complexTest)
-  step()
+  step
   peek(c.complexTest)
-
-
-
-
-
   poke(c.testIO.y.b,3.3)
   peek(c.testIO)
   peek(c.testBundle)
   peek(c.testIO.countOut2)
-  expect(c.testIO.countOut2,Array(5,6,7)) // errors
-  expect(c.testIO.countOut3,Array(5,6,7))
-  //peek(c.demoIO.offsetIn)
+
+  expect(c.testIO.countOut2,Array(5,6,7)) // errors -- output doesn't match expected
+  expect(c.testIO.countOut3,Array(5,6,7)) // errors -- output doesn't match expected
   peek(c.pipeTest)
   peek(c.demoIO.offsetOut)
-
-  expect(c.complexTest,Complex(1.5,-1.6))
+  expect(c.complexTest,Complex(1.5,-1.6)) // errors -- output doesn't match expected
 
   for (x <- 0 until 4) {
     poke(c.demoIO.offsetIn, x)
@@ -363,16 +309,12 @@ class DemoXXXTests[T <: DemoXXX[_ <: DSPQnm[_]]](c: T) extends DSPTester(c) {
   peek(c.f2)
   peek(c.o.f2)
   poke(c.i.u2,1)
-
-
   poke(c.demoIO.symbolIn,Complex(3.3,-1.5))
+  poke(c.demoIO.reset,true)
   peek(c.comp)
+  poke(c.demoIO.reset,false)
+  peek(c.comp)
+  peek(c.testIO.genT)
+  peek(c.comp2)
 
-  println("offsetin " + c.demoIO.offsetIn.getDelay)
-  println("pipetest " + c.pipeTest.getDelay)
-  println("offsetout " + c.demoIO.offsetOut.getDelay)
-  println("reset " + c.demoIO.reset.getDelay)
-  println("resetdly " + c.resetDly.getDelay)
-  println("resetdly2 " + c.resetDly2.getDelay)
-  //println()
 }

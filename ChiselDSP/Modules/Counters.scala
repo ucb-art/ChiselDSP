@@ -12,10 +12,10 @@ import Chisel._
   * TieTrue = Fix Ctrl signal to true
   */
 abstract class CtrlLoc 
-object External extends CtrlLoc
-object Internal extends CtrlLoc
-object TieFalse extends CtrlLoc
-object TieTrue extends CtrlLoc
+case object External extends CtrlLoc
+case object Internal extends CtrlLoc
+case object TieFalse extends CtrlLoc
+case object TieTrue extends CtrlLoc
 
 /** Count type:  
   * Up = always count up (count + inc)
@@ -24,10 +24,10 @@ object TieTrue extends CtrlLoc
   * UpMod = always count up, but mod with #
   */
 abstract class CountType
-object Up extends CountType
-object Down extends CountType
-object UpDown extends CountType
-object UpMod extends CountType
+case object Up extends CountType
+case object Down extends CountType
+case object UpDown extends CountType
+case object UpMod extends CountType
 
 /** Counter Generator parameters */
 case class CountParams (

@@ -1,8 +1,17 @@
 /** Base for new ChiselDSP types */
+// TODO: Scaladoc
   
 package ChiselDSP
 import Chisel._
 import scala.collection.mutable.Map
+
+/** User override for whether to check delay */
+object CheckDelay {
+  private var check = true
+  def on() {check = true}
+  def off() {check = false}
+  def get() : Boolean = check
+}
 
 /** Additional operations for Fixed in Qn.m notation (and therefore DSPDbl) */
 abstract class DSPQnm[T <: DSPBits[T]] extends DSPNum[T] {
@@ -14,8 +23,10 @@ abstract class DSPQnm[T <: DSPBits[T]] extends DSPNum[T] {
   /** Truncate to n bits */
   def $ (n: Int) = this.asInstanceOf[T]
   /** Round to n bits */
-  def $$ (n: Int, of: OverflowType = Wrap) = this.asInstanceOf[T]
+  def $$ (n: Int, of: OverflowType) = this.asInstanceOf[T]
+  def $$ (n: Int) : T = this $$ (n, of = Wrap)
   /** Get integer portion as DSPFixed */
+  def toInt(): DSPFixed = toInt(r = Truncate)
   def toInt(r: TrimType): DSPFixed
 
   def Q : String
@@ -185,9 +196,13 @@ abstract class DSPBits [T <: DSPBits[T]] extends Bits {
     in1.use(); in2.use()
     assign()
     val someLit = in1.isLit || in2.isLit
-    if (in1.getDelay != in2.getDelay && !someLit)
-      error("Operator inputs must have the same delay. Delays are " + in1.getDelay + ", " + in2.getDelay)
-    info.dly = (if (!in1.isLit) in1 else in2).getDelay
+    if (in1.getDelay != in2.getDelay && !someLit) {
+      if (CheckDelay.get)
+        error("Operator inputs must have the same delay. Delays are " + in1.getDelay + ", " + in2.getDelay)
+      // When you want to override delay check, if the delays aren't the same, take the min value
+      else info.dly = in1.getDelay.min(in2.getDelay)
+    }
+    else info.dly = (if (!in1.isLit) in1 else in2).getDelay
     this.asInstanceOf[T]
   }
   
@@ -201,26 +216,32 @@ abstract class DSPBits [T <: DSPBits[T]] extends Bits {
     val someLit13 = in1.isLit || in3.isLit
     if ((in1.getDelay != in2.getDelay && !someLit12) ||
         (in2.getDelay != in3.getDelay && !someLit23) ||
-        (in1.getDelay != in3.getDelay && !someLit13))
-      error("Operator inputs must have the same delay. Delays are " + in1.getDelay + ", " + in2.getDelay
-      + ", " + in3.getDelay)
-    info.dly = (if (!in1.isLit) in1 else if (!in2.isLit) in2 else in3).getDelay
+        (in1.getDelay != in3.getDelay && !someLit13)) {
+      if (CheckDelay.get) error("Operator inputs must have the same delay. Delays are " + in1.getDelay + ", "
+                                + in2.getDelay + ", " + in3.getDelay)
+      else info.dly = List(in1,in2,in3).map(_.getDelay).min
+    }
+    else info.dly = (if (!in1.isLit) in1 else if (!in2.isLit) in2 else in3).getDelay
     this.asInstanceOf[T]
   }
 
   /** Performs checks and info updates with reassignment */
   final protected def reassign(that: T) {
     val thisDly = getDelay
-    if ((isAssigned || isUsed) && (thisDly != that.getDelay) && !that.isLit)
-      error("Delays of L (" + thisDly + "), R (" + that.getDelay
-            + ") in L := R should match if L was previously assigned or used.")
+    var dlyNoUpdate = false
+    if ((isAssigned || isUsed) && (thisDly != that.getDelay) && !that.isLit) {
+      if (CheckDelay.get) error("Delays of L (" + thisDly + "), R (" + that.getDelay
+                                + ") in L := R should match if L was previously assigned or used.")
+      // When you want to override delay check, if the delays aren't the same, don't update delay
+      else dlyNoUpdate = true
+    }
     if (isUsed && (that.getRange.max > getRange.max || that.getRange.min < getRange.min)){          
       error("Previous lines of code have used L in L := R. To ensure range consistency, "
             + "L cannot be updated with an R of wider range. Move := earlier in the code!")
     }
     updateLimits(List2Tuple(that.getRange))
     updateGeneric(that)
-    if (that.isLit) info.dly = thisDly
+    if (that.isLit || dlyNoUpdate) info.dly = thisDly
   }
 
   /** Handles how range is updated */

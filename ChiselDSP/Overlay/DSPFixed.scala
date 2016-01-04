@@ -7,15 +7,15 @@ import Chisel._
 
 /** Different overflow handling methods */
 abstract class OverflowType
-object Saturate extends OverflowType
-object Wrap extends OverflowType
-object Grow extends OverflowType
+case object Saturate extends OverflowType
+case object Wrap extends OverflowType
+case object Grow extends OverflowType
 
 /** Different trim methods */
 abstract class TrimType
-object Truncate extends TrimType
-object Round extends TrimType
-object NoTrim extends TrimType
+case object Truncate extends TrimType
+case object Round extends TrimType
+case object NoTrim extends TrimType
 
 object DSPFixed {
 
@@ -40,6 +40,7 @@ object DSPFixed {
     * integer bits needed. If the Lit can be represented in fewer bits,
     * the smaller # is used.
     */
+  def apply(x: Double): DSPFixed = apply(x,Complex.getFixedParams)
   def apply(x: Double, fixedParams: (Int, Int)): DSPFixed = apply(toFixed(x, fixedParams._2), fixedParams)
   def apply(x: Double, fracWidth: Int): DSPFixed = {
     val fixed = toFixed(x, fracWidth)
@@ -61,6 +62,8 @@ object DSPFixed {
   }
 
   /** Creates a DSPFixed object with a specified IODirection, (intWidth,fracWidth) */
+  def apply(dir: IODirection): DSPFixed = apply(dir,Complex.getFixedParams)
+  def apply(): DSPFixed = apply(Complex.getFixedParams)
   def apply(fixedParams: (Int,Int)): DSPFixed = apply(NODIR,fixedParams)
   def apply(dir: IODirection, fixedParams: (Int, Int)): DSPFixed = {
     apply(dir, fixedParams, toRange(paramsToWidth(fixedParams)))
@@ -68,6 +71,8 @@ object DSPFixed {
   /** Creates a DSPFixed object with a specified IODirection, (intWidth,fracWidth), 
     * and [optional] Double (min,max) range.
     */
+  def apply(range : => (Double,Double)): DSPFixed = apply(Complex.getFixedParams,range)
+  def apply(dir: IODirection, range : => (Double,Double)): DSPFixed = apply(dir,Complex.getFixedParams,range)
   def apply(fixedParams:(Int,Int), range: (Double,Double)) : DSPFixed = apply(NODIR,fixedParams,range)
   def apply(dir: IODirection, fixedParams:(Int,Int), range: (Double,Double)) : DSPFixed = {
     val min = toFixed(range._1, fixedParams._2)
@@ -75,7 +80,7 @@ object DSPFixed {
     apply(dir,fixedParams,(min,max))
   }
   def apply(fracWidth:Int, range: (Double,Double)) : DSPFixed = apply(NODIR,fracWidth,range)
-  def apply(dir: IODirection = NODIR, fracWidth:Int, range: (Double,Double)) : DSPFixed = {
+  def apply(dir: IODirection, fracWidth:Int, range: (Double,Double)) : DSPFixed = {
     val min = toFixed(range._1, fracWidth)
     val max = toFixed(range._2, fracWidth)
     apply(dir,fracWidth,(min,max))
@@ -218,7 +223,8 @@ class DSPFixed (private var fractionalWidth:Int = 0)  extends DSPQnm[DSPFixed] {
 
   /** Check fractional width alignment */
   private def checkAlign(f: DSPFixed): Unit = {
-    if (getFracWidth != f.getFracWidth) Error("Fractional widths should match.")
+    if (getFracWidth != f.getFracWidth) Error("Fractional widths should match. L = " + getFracWidth +
+                                              ", R = " + f.getFracWidth)
   }
 
   /** Reassign with ":=". Certain conditions must be enforced so delay + range are consistent.
@@ -393,7 +399,7 @@ class DSPFixed (private var fractionalWidth:Int = 0)  extends DSPQnm[DSPFixed] {
     * Reduces bias as compared to truncation (bias still present at half-way pt)
     * Generally rounds by magnitude except at half pt, which rounds to more positive value
     */
-  override def $$ (n: Int, of: OverflowType = Wrap) : DSPFixed = {
+  override def $$ (n: Int, of: OverflowType) : DSPFixed = {
     val truncateAmount = getFracWidth-n
     if (truncateAmount == 0) this
     else {
@@ -408,7 +414,7 @@ class DSPFixed (private var fractionalWidth:Int = 0)  extends DSPQnm[DSPFixed] {
   }
 
   /** Gets integer portion of DSPFixed. Optional rounding mode. */
-  def toInt(r: TrimType = Truncate): DSPFixed = {
+  def toInt(r: TrimType): DSPFixed = {
     if (r == Truncate) this $ 0
     else if (r == Round) this $$ (0, Grow)
     else error("Invalid trim type")
@@ -499,6 +505,7 @@ class DSPFixed (private var fractionalWidth:Int = 0)  extends DSPQnm[DSPFixed] {
   /** 0 - this (mathematically correct; bitwidth sized accordingly) */
   override def unary_-():DSPFixed = DSPFixed(BigInt(0),(getIntWidth,getFracWidth)) - this
 
+  //TODO: Overflow handling for *
   /** Multiply while determining optimal product bitwidth + range */
   def * (b: DSPFixed) : DSPFixed = {
     val out = {

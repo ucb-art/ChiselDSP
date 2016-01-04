@@ -37,6 +37,9 @@ class DSPDbl extends DSPQnm[DSPDbl] {
     res.assign()
   }
 
+  /** For converting inputs to Dbl */
+  protected def dbl() : Dbl = chiselCast(this){Dbl(this.dir)}
+
   /** Print DSPDbl info */
   override def infoString() : String = "double"
   def Q(): String = infoString
@@ -57,48 +60,47 @@ class DSPDbl extends DSPQnm[DSPDbl] {
     case _ => illegalAssignment(that)
   }
   
-  /** Ops using Dbl backend --------------------- */
+  /** Ops using Dbl backend --------------------- (requires conversion to Chisel.Dbl first) */
   
   def + (b: DSPDbl): DSPDbl = {
-    val out = newBinaryOp(b, "d+")
+    val out = toT(dbl() + b.dbl())
     out.pass2to1(this,b)
   }
   def - (b: DSPDbl): DSPDbl = {
-    val out = newBinaryOp(b, "d-")
+    val out = toT(dbl() - b.dbl())
     out.pass2to1(this,b)
   }
   override def unary_-(): DSPDbl = {DSPDbl(0.0)-this}
   def * (b: DSPDbl): DSPDbl = {
-    val out = newBinaryOp(b, "d*")
+    val out = toT(dbl() * b.dbl())
     out.pass2to1(this,b)
   }
-  
-  private[ChiselDSP] override def / (b: DSPDbl): DSPDbl = {newBinaryOp(b, "d/")}
-  
+  private[ChiselDSP] override def / (b: DSPDbl): DSPDbl = toT(dbl() / b.dbl())
+
   /** Comparison operators --------------------- */
   
   override def === (b: DSPDbl): DSPBool = {
-    val out = DSPBool(newLogicalOp(b, "d=="))
+    val out = DSPBool(dbl() === b.dbl())
     out.pass2to1(this,b)
   }
   override def =/= (b: DSPDbl): DSPBool = { 
-    val out = DSPBool(newLogicalOp(b, "d!="))
+    val out = DSPBool(dbl() =/= b.dbl())
     out.pass2to1(this,b)
   }
   def > (b: DSPDbl): DSPBool = {
-    val out = DSPBool(newLogicalOp(b, "d>"))
+    val out = DSPBool(dbl() > b.dbl())
     out.pass2to1(this,b)
   }
   def < (b: DSPDbl): DSPBool = {
-    val out = DSPBool(newLogicalOp(b, "d<"))
+    val out = DSPBool(dbl() < b.dbl())
     out.pass2to1(this,b)
   }
   def <= (b: DSPDbl): DSPBool = {
-    val out = DSPBool(newLogicalOp(b, "d<="))
+    val out = DSPBool(dbl() <= b.dbl())
     out.pass2to1(this,b)
   }
   def >= (b: DSPDbl): DSPBool = {
-    val out = DSPBool(newLogicalOp(b, "d>="))
+    val out = DSPBool(dbl() >= b.dbl())
     out.pass2to1(this,b)
   }
 
@@ -143,18 +145,18 @@ class DSPDbl extends DSPQnm[DSPDbl] {
   }
 
   /** Trim functions */
-  private def floor: DSPDbl = newUnaryOp("dfloor")
-  private def ceil: DSPDbl = newUnaryOp("dceil")
-  private def round: DSPDbl = newUnaryOp("dround")
+  private def floor: DSPDbl = toT(dbl().floor)
+  private def ceil: DSPDbl = toT(dbl().ceil)
+  private def round: DSPDbl = toT(dbl().round)
 
   /** Gets integer portion as DSPFixed. Optional rounding mode. */
-  def toInt(r: TrimType = Truncate): DSPFixed = {
+  def toInt(r: TrimType): DSPFixed = {
     val res = {
       if (r == Truncate) floor
       else if (r == Round) round
       else error("Invalid trim type for toInt")
     }
-    val sintVal = SInt(OUTPUT).fromNode(Op("dToSInt", fixWidth(64), res))
+    val sintVal = res.dbl().toSInt()
     val out = DSPSInt(sintVal,DSPFixed.toRange(64))
     out.updateGeneric(this)
   }

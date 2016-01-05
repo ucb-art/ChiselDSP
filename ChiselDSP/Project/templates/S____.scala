@@ -1,6 +1,6 @@
 package T____
 
-***IMPORTS***
+**IMPORTS
 
 class S____ extends DSPModule {
 

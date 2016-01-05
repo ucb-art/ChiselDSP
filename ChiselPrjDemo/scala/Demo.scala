@@ -1,6 +1,6 @@
 /** Demo using skeleton for QAM demod */
 
-package DemoXXX
+package Demo
 
 // ------- Imports START -- DO NOT MODIFY BELOW
 import Chisel.{Complex => _, Mux => _, Reg => _, RegNext => _, RegInit => _, Pipe => _, Mem => _,
@@ -9,14 +9,14 @@ import ChiselDSP._
 // ------- Imports END -- OK TO MODIFY BELOW
 
 /** Parameters externally passed via JSON file (can add defaults) */
-case class DemoXXXParams (
+case class DemoParams (
   QAMn: List[Int] = List(4),                // List of supported n-QAM i.e. 4-QAM (QPSK), 16-QAM, 64-QAM, etc.
   frameSizes: List[Int] = List(1024),       // Supported frame sizes (see FFT sizes needed)
   softDemod: Boolean = false                // If true, should do LLR calc, otherwise hard demod
 )
 
 /** IO Bundle showing off data types and how to pass parameters (actual vals are meaningless) */
-class DemoIO(p:DemoXXXParams) extends IOBundle {
+class DemoIO(p:DemoParams) extends IOBundle {
   // ChiselDSP types (preferred because they keep track of meta info + perform optimizations with them)
   val b2 = DSPBool(INPUT)
   val u2 = DSPUInt(INPUT,(3,20))                    // (min,max) range; also: DSPUInt(DIR,max) -> assumes min = 0
@@ -43,13 +43,13 @@ class DemoIO(p:DemoXXXParams) extends IOBundle {
   * The correct type 'gen' must be passed in main. The second argument (true) @ GenDSPModule(gen,true) indicates
   * DecoupledIO is desired.
   */
-class DemoXXX [T <: DSPQnm[T]](gen : => T, p: DemoXXXParams) extends GenDSPModule (gen, decoupledIO = true) {
+class Demo [T <: DSPQnm[T]](gen : => T, p: DemoParams) extends GenDSPModule (gen, decoupledIO = true) {
 
   /** Inline IO Bundle allows module methods double2T (double --> literal)
     * and T (customized Fixed widths) to be directly used.
     * Note IO should be in IOBundle.
     */
-  class DemoXXXIO extends IOBundle {
+  class DemodIO extends IOBundle {
     // Input either signed DSPFixed or DSPDbl, as set by gen
     val symbolIn = Complex(gen).asInput
     // # of "hard" bits required is set by the maximum n-QAM supported 
@@ -75,7 +75,7 @@ class DemoXXX [T <: DSPQnm[T]](gen : => T, p: DemoXXXParams) extends GenDSPModul
   }
 
   // Instantiate IO objects
-  val demoIO = new DemoXXXIO
+  val demoIO = new DemodIO
   val i = new DemoIO(p)
   // Rename IO bundle. Otherwise, the bundle name is the class name (DemoIO).
   i.setName("i")
@@ -230,10 +230,10 @@ class DemoXXX [T <: DSPQnm[T]](gen : => T, p: DemoXXXParams) extends GenDSPModul
 
 /** Composition of your generator parameters (with default values!) */
 case class GeneratorParams(complex: ComplexParams = ComplexParams(),
-                           demoXXX: DemoXXXParams = DemoXXXParams()       // Add your parameters here
+                           demo: DemoParams = DemoParams()       // Add your parameters here
                           ) extends JSONParams(complex)
 
-object DemoXXX {
+object Main {
 
   def main(args: Array[String]): Unit = {
     // Suppress warnings
@@ -241,7 +241,7 @@ object DemoXXX {
 
     // Must include in front of main module + tester instantiation for parameter + fixed/double mode setup
     // add ser = List(YourCustomSerializers) if needed to method args list
-    val (isFixed,p) = Init({GeneratorParams()}, jsonName = "DemoXXX", args = args)
+    val (isFixed,p) = Init({GeneratorParams()}, jsonName = "Demo", args = args)
 
     // Print out objects for debug
     println(p)
@@ -250,16 +250,16 @@ object DemoXXX {
     // Setup module + tester
     val demoArgs = args.slice(1, args.length)
     if (isFixed)
-      chiselMainTest(demoArgs, () => DSPModule(new DemoXXX({DSPFixed()},p.demoXXX))) { c => new DemoXXXTests(c) }
+      chiselMainTest(demoArgs, () => DSPModule(new Demo({DSPFixed()},p.demo))) { c => new DemoTests(c) }
     else
-      chiselMainTest(demoArgs, () => DSPModule(new DemoXXX({DSPDbl()},p.demoXXX))) { c => new DemoXXXTests(c) }
+      chiselMainTest(demoArgs, () => DSPModule(new Demo({DSPDbl()},p.demo))) { c => new DemoTests(c) }
 
   }
 
 }
 
 /** Special way to test a module that uses a generic type to easily switch between Double/Fixed point testing. */
-class DemoXXXTests[T <: DemoXXX[_ <: DSPQnm[_]]](c: T) extends DSPTester(c) {
+class DemoTests[T <: Demo[_ <: DSPQnm[_]]](c: T) extends DSPTester(c) {
 
   hide()                    // Hide tester output from console
   show()

@@ -1,5 +1,5 @@
-PRJ=Demo
-FIXED=false
+PRJ = FFT
+FIXED = false
 
 vlsi:
 	mkdir -p vlsi/generated-src

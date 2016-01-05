@@ -5,7 +5,7 @@ import ChiselDSP._
 case class GeneratorParams(complex: ComplexParams = ComplexParams()
                           ) extends JSONParams(complex)
 
-object T____ {
+object Main {
 
   def main(args: Array[String]): Unit = {
 
@@ -15,9 +15,9 @@ object T____ {
     // Setup module + tester
     val demoArgs = args.slice(1, args.length)
     if (isFixed)
-      chiselMainTest(demoArgs, () => DSPModule(new T____({DSPFixed()}))) { c => new DemoXXXTests(c) }
+      Chisel.chiselMainTest(demoArgs, () => DSPModule(new T____({DSPFixed()}))) { c => new T____Tests(c) }
     else
-      chiselMainTest(demoArgs, () => DSPModule(new T____({DSPDbl()}))) { c => new DemoXXXTests(c) }
+      Chisel.chiselMainTest(demoArgs, () => DSPModule(new T____({DSPDbl()}))) { c => new T____Tests(c) }
 
   }
 

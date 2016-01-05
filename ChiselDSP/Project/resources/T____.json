@@ -1,20 +1,12 @@
 {
   "complex":{
-    "intBits":2,
-    "fracBits":13,
+    "intBits":1,
+    "fracBits":14,
     "use4Muls":true,
     "mulPipe":3,
     "addPipe":0.3,
     "trimType":"Truncate",
     "overflowType":"Wrap",
     "mulFracGrowth":1
-  },
-  "demoXXX":{
-    "QAMn":[2,4,16,64,256],
-    "frameSizes":[128,256,512,1024,2048],
-    "softDemod":true
   }
 }
-
-
-

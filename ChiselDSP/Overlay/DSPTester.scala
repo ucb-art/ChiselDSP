@@ -21,6 +21,10 @@ class DSPTester[+T <: Module](c: T, var traceOn: Boolean = true, var hexOn: Bool
                               var quitOnError: Boolean = false)
                               extends Tester(c, false, 16){
 
+  /** Show/hide tester console outputs */
+  def show(){traceOn = true}
+  def hide(){traceOn = false}
+
   /** Differentiate treatment of signed, unsigned types -- Added ChiselDSP types. */
   override def signed_fix(dtype: Bits, rv: BigInt): BigInt = {
     val w = rv.bitLength.max(dtype.needWidth())

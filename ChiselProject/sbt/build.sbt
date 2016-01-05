@@ -1,7 +1,7 @@
 scalaVersion in ThisBuild := "2.11.7"
 
 val prjSettings = Project.defaultSettings ++ Seq(
-  scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature"),
+  scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-language:reflectiveCalls"),
   libraryDependencies += "org.json4s" %% "json4s-native" % "3.3.0",
   libraryDependencies += "edu.berkeley.cs" %% "chisel" % "latest.release",
   libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-compiler" % _ ) 

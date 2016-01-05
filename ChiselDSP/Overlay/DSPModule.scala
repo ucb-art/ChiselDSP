@@ -64,9 +64,10 @@ abstract class GenDSPModule[T <: DSPQnm[T]](gen : => T, inputDelay:Int = 0, deco
 
 /** Special bundle for IO - should only be used with DSPModule and its child classes 
   * Adds itself to the current DSPModule's list of IOs to setup.
+  * If checkOutDlyMatch = true, all assigned outputs of the bundle should have the same delay
   * Note that all inputs should have the same delay.
   */
-abstract class IOBundle extends Bundle {
+abstract class IOBundle(val outDlyMatch: Boolean = false) extends Bundle {
   Module.current.asInstanceOf[DSPModule].ios.push(this)
 
   /** Name IO bundle + elements. For a custom bundle name,
@@ -100,6 +101,18 @@ abstract class IOBundle extends Bundle {
     }
     else if (custom) Warn("IO Bundle already named " + oldName + ". Cannot rename to " + path + ".")
     named = true
+  }
+
+  /** Checks to see that assigned outputs of the IO Bundle have the same delay; otherwise errors out */
+  def checkOutDly(y: Boolean = true): Unit ={
+    if (y){
+      val dlys = flatten.map (x => x._2 match{
+        case d : DSPBits[_] => if(d.dir == OUTPUT && d.isAssigned) d.getDelay() else -1
+        case _ => -1
+      })
+      val numDistinct = dlys.distinct.filter(_ != -1).length
+      if (numDistinct > 1) Error("Assigned IO Bundle outputs don't have the same delay")
+    }
   }
 
 }
@@ -155,6 +168,7 @@ object DSPModule {
     }
     while (!ios2.isEmpty) {
       val ioSet = ios2.pop
+      ioSet.checkOutDly(ioSet.outDlyMatch)
       // Need to add pin after correctly designating pin name
       if(!ioSet.equals(thisModule.io)) thisModule.createIO(ioSet)
     }

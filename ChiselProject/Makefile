@@ -1,9 +1,11 @@
 PRJ = FFT
-FIXED = false
+FIXED = true
 
 vlsi:
 	mkdir -p vlsi/generated-src
-	cd sbt; sbt "run -params_true --backend v --targetDir ../vlsi/generated-src"; mv ../vlsi/generated-src/*.v ../../Verilog${PRJ}/.
+	cd sbt; rm generator_out.json ;\
+	sbt "run -params_true --backend v --targetDir ../vlsi/generated-src"; mv ../vlsi/generated-src/*.v ../../Verilog${PRJ}/. ;\
+	mv generator_out.json ../../Verilog${PRJ}/.
 
 test:
 	mkdir -p test/generated-src

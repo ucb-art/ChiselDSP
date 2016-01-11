@@ -1,5 +1,7 @@
 /** Double class customizations */
 
+// TODO: For Fixed, Dbl, if both inputs to +,-,*, etc. are lits, solve as lits so you don't have delay mismatch errors
+
 package ChiselDSP
 import Chisel._
 import Node.fixWidth
@@ -53,27 +55,46 @@ class DSPDbl extends DSPQnm[DSPDbl] {
   
   /** Reassign with ":=". Certain conditions must be enforced so delay is consistent */
   override protected def colonEquals(that : Bits): Unit = that match {
-    case d: DSPDbl => {
-      reassign(d)
-      super.colonEquals(d)
-    }
+    case d: DSPDbl => super.colonEquals(assign(d))
     case _ => illegalAssignment(that)
   }
+
+  /** Used for bulk assigning + := */
+  private[ChiselDSP] def assign(d: DSPDbl): DSPDbl = {reassign(d);d}
   
   /** Ops using Dbl backend --------------------- (requires conversion to Chisel.Dbl first) */
   
   def + (b: DSPDbl): DSPDbl = {
-    val out = toT(dbl() + b.dbl())
-    out.pass2to1(this,b)
+    if (isLit && litValue() == 0) b
+    else if (b.isLit && b.litValue() == 0) this
+    else {
+      val out = toT(dbl() + b.dbl())
+      out.pass2to1(this,b)
+    }
   }
   def - (b: DSPDbl): DSPDbl = {
-    val out = toT(dbl() - b.dbl())
-    out.pass2to1(this,b)
+    if (isLit && b.isLit) {
+      val aLit = java.lang.Double.longBitsToDouble(litValue().longValue)
+      val bLit = java.lang.Double.longBitsToDouble(b.litValue().longValue)
+      DSPDbl(aLit-bLit)
+    }
+    else if (b.isLit && b.litValue() == 0) this
+    else {
+      val out = toT(dbl() - b.dbl())
+      out.pass2to1(this, b)
+    }
   }
   override def unary_-(): DSPDbl = {DSPDbl(0.0)-this}
   def * (b: DSPDbl): DSPDbl = {
-    val out = toT(dbl() * b.dbl())
-    out.pass2to1(this,b)
+    val bits1 = BigInt(java.lang.Double.doubleToLongBits(1.0))
+    if (isLit && litValue() == 0) DSPDbl(0.0)
+    else if (isLit && litValue() == bits1) b
+    else if (b.isLit && b.litValue() == 0) DSPDbl(0.0)
+    else if (b.isLit && b.litValue() == bits1) this
+    else {
+      val out = toT(dbl() * b.dbl())
+      out.pass2to1(this,b)
+    }
   }
   private[ChiselDSP] override def / (b: DSPDbl): DSPDbl = toT(dbl() / b.dbl())
 
@@ -106,44 +127,74 @@ class DSPDbl extends DSPQnm[DSPDbl] {
 
   /** ARITHMETIC Right shift n --> this/2^n */
   override def >> (n: Int) : DSPDbl = {
-    val out = this/DSPDbl(math.pow(2,n))
-    out.updateGeneric(this)
+    if (n < 0) error("Shift amount must be non-negative")
+    if (n == 0) this
+    else if (isLit) {
+      val x = java.lang.Double.longBitsToDouble(litValue().longValue)/math.pow(2,n)
+      DSPDbl(x)
+    }
+    else{
+      val out = this/DSPDbl(math.pow(2,n))
+      out.updateGeneric(this)
+    }
   }
     
   /** ARITHMETIC Left shift n --> this*2^n */
   def << (n: Int) : DSPDbl = {
-    val out = this*DSPDbl(math.pow(2,n))
-    out.updateGeneric(this)
+    if (n < 0) error("Shift amount must be non-negative")
+    if (n == 0) this
+    else if (isLit) {
+      val x = java.lang.Double.longBitsToDouble(litValue().longValue)*math.pow(2,n)
+      DSPDbl(x)
+    }
+    else {
+      val out = this * DSPDbl(math.pow(2, n))
+      out.updateGeneric(this)
+    }
   }
   
   /** ARITHMETIC Right shift variable n --> this/2^n */
   def >> (n: DSPUInt) : DSPDbl = {
     if (n.getRange.max > 64) error("Can't divide by more than 2^64")
-    val shiftLUT = Vec((0 until 65).map( x => DSPDbl(math.pow(2,x))))
-    val out = this/shiftLUT(n.toUInt)
-    out.pass2to1(this,n)
+    if (n.isLit) this >> n.litValue().intValue
+    else {
+      val shiftLUT = Vec((0 until 65).map( x => DSPDbl(math.pow(2,x))))
+      val out = this/shiftLUT(n.toUInt)
+      out.pass2to1(this,n)
+    }
   }
   
   /** ARITHMETIC Left shift variable n --> this*2^n */
   def << (n: DSPUInt) : DSPDbl = {
     if (n.getRange.max > 64) error("Can't multiply by more than 2^64")
-    val shiftLUT = Vec((0 until 65).map( x => DSPDbl(math.pow(2,x))))
-    val out = this*shiftLUT(n.toUInt)
-    out.pass2to1(this,n)
+    if (n.isLit) this << n.litValue().intValue
+    else {
+      val shiftLUT = Vec((0 until 65).map(x => DSPDbl(math.pow(2, x))))
+      val out = this * shiftLUT(n.toUInt)
+      out.pass2to1(this, n)
+    }
   }
 
   /** select ? this (true) : 0 (false) -- used for Mux */
   def ? (select: DSPBool) : DSPDbl = {
-    val out = toT(this.toBits & Fill(64,select.toBool))
-    out.pass2to1(this,select)
+    if (select.isLit) {if (select.isTrue) this else DSPDbl(0.0)}
+    else {
+      val out = toT(this.toBits & Fill(64, select.toBool))
+      out.pass2to1(this, select)
+    }
   }
   
   /** Bitwise-OR. Use case: Mux, etc. with the expectation that one input is 0 */ 
   def /| (b: DSPDbl) : DSPDbl = {
-    val out = toT(this.toBits | b.toBits)
-    out.pass2to1(this,b)
+    if (isLit && litValue() == 0) b
+    else if (b.isLit && b.litValue() == 0) this
+    else {
+      val out = toT(this.toBits | b.toBits)
+      out.pass2to1(this, b)
+    }
   }
 
+  // TODO: Add lit support below
   /** Trim functions */
   private def floor: DSPDbl = toT(dbl().floor)
   private def ceil: DSPDbl = toT(dbl().ceil)

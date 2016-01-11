@@ -232,14 +232,17 @@ class DSPFixed (private var fractionalWidth:Int = 0)  extends DSPQnm[DSPFixed] {
     */
   override protected def colonEquals(that : Bits): Unit = {
     that match {
-      case f: DSPFixed => {
-        checkAlign(f)
-        reassign(f)
-        val (x,y,xrange,yrange,fixedParams) = matchWidth(f)
-        super.colonEquals(fromSInt(y,fixedParams,List2Tuple(yrange)))
-      }
+      case f: DSPFixed => super.colonEquals(assign(f))
       case _ => illegalAssignment(that)
     }
+  }
+
+  /** Used for bulk assigning + := */
+  private[ChiselDSP] def assign(f: DSPFixed): DSPFixed = {
+    checkAlign(f)
+    reassign(f)
+    val (x,y,xrange,yrange,fixedParams) = matchWidth(f)
+    fromSInt(y,fixedParams,List2Tuple(yrange))
   }
 
   /** Shorten # of integer bits -- get rid of MSBs by forcing the generator to use a smaller width
@@ -386,7 +389,7 @@ class DSPFixed (private var fractionalWidth:Int = 0)  extends DSPQnm[DSPFixed] {
   override def $ (n: Int) : DSPFixed = {
     if (n < 0) Error("Can't truncate to negative fractional bits.")
     val truncateAmount = getFracWidth-n
-    if (truncateAmount == 0) this
+    if (truncateAmount <= 0) this
     else{
       val temp = this >> truncateAmount
       val out = fromSInt(temp.toSInt,n,List2Tuple(temp.getRange))
@@ -401,7 +404,7 @@ class DSPFixed (private var fractionalWidth:Int = 0)  extends DSPQnm[DSPFixed] {
     */
   override def $$ (n: Int, of: OverflowType) : DSPFixed = {
     val truncateAmount = getFracWidth-n
-    if (truncateAmount == 0) this
+    if (truncateAmount <= 0) this
     else {
       val truncated = this $ n
       val roundingBit = this(truncateAmount-1)
@@ -462,10 +465,29 @@ class DSPFixed (private var fractionalWidth:Int = 0)  extends DSPQnm[DSPFixed] {
     out.pass2to1(this,b)
   }
 
+  // TODO: Separately handle cases when both operator inputs are Lits for ALL operations (+,-,*)
+  // --> reason behind delay mismatch errors
+
+  /** Make sure Lit fractional widths are also matched */
+  def matchLitFracWidth(b: DSPFixed) : Tuple3[BigInt,BigInt,Int] = {
+    val fracWidth = getFracWidth.max(b.getFracWidth)
+    val fracDiff = getFracWidth - b.getFracWidth
+    val out = {
+      if (fracDiff > 0) (litValue(), b.litValue() << fracDiff)
+      else if (fracDiff < 0) (litValue() << math.abs(fracDiff), b.litValue())
+      else (litValue(),b.litValue())
+    }
+    (out._1,out._2,fracWidth)
+  }
+
   /** Subtract and wrap */
   override def -% (b: DSPFixed) : DSPFixed = {
     val out = {
       if (b.isLit && b.litValue() == 0) this
+      else if (isLit && b.isLit) {
+        val (aT,bT,fracW) = matchLitFracWidth(b)
+        DSPFixed(aT-bT,fracW)
+      }
       else{
         val (x,y,xrange,yrange,fixedParams) = matchWidth(b)
         val newRange = (xrange, yrange.reverse).zipped.map( _ - _ )
@@ -493,6 +515,10 @@ class DSPFixed (private var fractionalWidth:Int = 0)  extends DSPQnm[DSPFixed] {
   def - (b: DSPFixed) : DSPFixed = {
     val out = {
       if (b.isLit && b.litValue() == 0) this
+      else if (isLit && b.isLit) {
+        val (aT,bT,fracW) = matchLitFracWidth(b)
+        DSPFixed(aT-bT,fracW)
+      }
       else{
         val (x,y,xrange,yrange,(intW,fracW)) = matchWidth(b)
         val newRange = (xrange, yrange.reverse).zipped.map( _ - _ )

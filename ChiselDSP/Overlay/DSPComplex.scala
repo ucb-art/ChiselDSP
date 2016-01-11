@@ -24,6 +24,7 @@ object Complex {
   def getFrac(): Int = opts.fracBits
   def getInt(): Int = opts.intBits
   def getAddPipe(): Double = opts.addPipe
+  def getMulPipe(): Int = opts.mulPipe
 
 }
 
@@ -57,6 +58,12 @@ private[ChiselDSP] abstract class ComplexBundle extends Bundle {
 }
 class Complex[T <: DSPQnm[T]](val real: T, val imag: T) extends ComplexBundle {
 
+  /** Get tracked delay of complex # */
+  def getDelay(): Int = {
+    if (real.getDelay != imag.getDelay) Error("Real and imaginary components have different delays")
+    real.getDelay
+  }
+
   /** Returns a string containing the integer and fractional widths of the real + imaginary components*/
   def Q(): String = "[" + real.Q + "," + imag.Q + "]"
 
@@ -87,6 +94,7 @@ class Complex[T <: DSPQnm[T]](val real: T, val imag: T) extends ComplexBundle {
   
   /** Custom bitwise or for muxing */
   def /| (b: Complex[T]) : Complex[T] = Complex(real /| b.real, imag /| b.imag)
+  def | (b: Complex[T]) : Complex[T] = this /| b
 
   /** ARITHMETIC Right shift n */
   def >> (n: Int) : Complex[T] = Complex( real >> n, imag >> n)
@@ -186,6 +194,7 @@ class Complex[T <: DSPQnm[T]](val real: T, val imag: T) extends ComplexBundle {
     prod.pipe(mPipe).trim(fracW + fracGrowth,tType)
   }
 
+  // TODO: Trim needs special handling for when inputs are certain lits --> i.e. growth might not be valid (see **)
   /** Multiply by real (im = false) OR imaginary (im = true),selected @ runtime */
   def *? (b: T, im: DSPBool, mPipe: Int = Complex.opts.mulPipe,
          ofType: OverflowType = Complex.opts.overflowType, tType: TrimType = Complex.opts.trimType,

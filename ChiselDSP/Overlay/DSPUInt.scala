@@ -123,13 +123,16 @@ class DSPUInt extends DSPNum[DSPUInt] {
   /** Reassign with ":=". Certain conditions must be enforced so delay + range are consistent */
   override protected def colonEquals(that : Bits): Unit = {
     that match {
-      case u: DSPUInt => {
-        reassign(u)
-        val (x,y) = matchWidth(u)
-        super.colonEquals(toT(y,List2Tuple(u.getRange))) 
-      }
+      case u: DSPUInt => super.colonEquals(assign(u))
       case _ => illegalAssignment(that)
     }
+  }
+
+  /** Used for bulk assigning + := */
+  private[ChiselDSP] def assign(u: DSPUInt): DSPUInt = {
+    reassign(u)
+    val (x,y) = matchWidth(u)
+    toT(y,List2Tuple(u.getRange))
   }
   
   /** Greater than */

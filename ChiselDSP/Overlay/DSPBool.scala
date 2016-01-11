@@ -53,12 +53,12 @@ class DSPBool extends DSPBits[DSPBool]{
  
   /** Implementation of := operator, assigns value to this DSPBool */
   override protected def colonEquals(that: Bits): Unit = that match {
-    case b: DSPBool => {
-      reassign(b)
-      super.colonEquals(b)
-    }
+    case b: DSPBool => super.colonEquals(assign(b))
     case _ => illegalAssignment(that)
   }
+
+  /** Used for bulk assigning + := */
+  private[ChiselDSP] def assign(b: DSPBool): DSPBool = {reassign(b);b}
   
   /** Bitwise and */
   def & (b: DSPBool): DSPBool = {
@@ -72,7 +72,7 @@ class DSPBool extends DSPBits[DSPBool]{
   def ? (b: DSPBool): DSPBool = this & b
   
   /** Bitwise or */
-  def | (b: DSPBool): DSPBool = {
+  def /| (b: DSPBool): DSPBool = {
     val out = {
       if (isLit) {if (isTrue) DSPBool(true) else b}
       else if (b.isLit) {if(b.isTrue) DSPBool(true) else this}
@@ -80,7 +80,6 @@ class DSPBool extends DSPBits[DSPBool]{
     }
     out.pass2to1(this,b)
   }
-  def /| (b: DSPBool): DSPBool = this | b
   
   /** Invert */
   def unary_!(): DSPBool = {

@@ -15,6 +15,7 @@ object CheckDelay {
 
 /** Additional operations for Fixed in Qn.m notation (and therefore DSPDbl) */
 abstract class DSPQnm[T <: DSPBits[T]] extends DSPNum[T] {
+
   // TODO: overflow handling
 
   /** Shorten fixed-point integer width to save hardware resources (doesn't act on DSPDbl) */
@@ -303,7 +304,8 @@ abstract class DSPBits [T <: DSPBits[T]] extends Bits {
   def ? (s: DSPBool) : T
   /** Custom bitwise or for muxing on type T */
   def /| (b: T) : T
-  
+  def | (b: T) : T = this /| b
+
   /** Enforce that bitwise operations return bits to explicitly destroy info */
   
   private val warn = " Additional info like ranges, delays, etc. will be lost."
@@ -323,5 +325,17 @@ abstract class DSPBits [T <: DSPBits[T]] extends Bits {
   final override def ##[T <: Data](right: T): this.type = error(castMsg + "bit concatenation. " + warn)
   /** Set bit 'off' */
   final override def bitSet(off: UInt, dat: UInt): this.type = error(castMsg + "manual bit sets. " + warn)
-   
+
+  /** Pass parameters on assignment <> or := */
+  private[ChiselDSP] def assign (b: T): T
+  /** Bulk connections also pass parameters */
+  override def <>(src: Node) : Unit = {
+    val b = src.asInstanceOf[T]
+    if (isAssigned && !b.isAssigned) b <> this
+    else if (isAssigned && b.isAssigned) error ("Cannot bulk assign signal that was previously assigned.")
+    else super.<>(assign(b))
+  }
+
+  // TODO: Check bundle := passes params properly
+
 }

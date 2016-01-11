@@ -103,16 +103,25 @@ abstract class IOBundle(val outDlyMatch: Boolean = false) extends Bundle {
     named = true
   }
 
+  private var outDly = 0
   /** Checks to see that assigned outputs of the IO Bundle have the same delay; otherwise errors out */
-  def checkOutDly(y: Boolean = true): Unit ={
-    if (y){
-      val dlys = flatten.map (x => x._2 match{
+  def checkOutDly(): Unit ={
+    if (outDlyMatch){
+      val temp = flatten.map (x => x._2 match{
         case d : DSPBits[_] => if(d.dir == OUTPUT && d.isAssigned) d.getDelay() else -1
         case _ => -1
       })
-      val numDistinct = dlys.distinct.filter(_ != -1).length
+      val dly = temp.distinct.filter(_ != -1)
+      val numDistinct = dly.length
       if (numDistinct > 1) Error("Assigned IO Bundle outputs don't have the same delay")
+      if (numDistinct == 1) outDly = dly.head
     }
+  }
+
+  /** Get output delay of bundle elements if tracked elements should all have the same delay */
+  def getOutDelay(): Int = {
+    if (!outDlyMatch) Error("Cannot get IO Bundle output delay when not explicitly checked")
+    outDly
   }
 
 }
@@ -137,10 +146,10 @@ abstract class DSPModule (val inputDelay:Int = 0, decoupledIO: Boolean = false, 
     * Allows you to selectively set signals to be module IOs (with direction).
     */
   private def createIO[T <: IOBundle](m: => T): this.type = {
-    m.flatten.map( x =>
+    m.flatten.map( x => {
       if (!x._2.isDirectionless && !x._2.isLit) addPinChiselDSP(x._2)
       else Error("Directionless Lit should not be in an IO Bundle. You can use Option-able bundles.")
-    )
+    })
     this
   }
 
@@ -156,7 +165,12 @@ object DSPModule {
     var currentName = thisModule.name
     if (currentName == "") currentName = thisModule.getClass.getName.toString.split('.').last
     val optName = if (nameExt == "") nameExt else "_" + nameExt
-    thisModule.setModuleName(currentName + optName)
+    val newName = currentName + optName
+    // Name module
+    thisModule.setModuleName(newName)
+    // Name module (used for Verilog file name)
+    thisModule.setName(newName)
+
     val ios2 = thisModule.ios.clone
     while (!thisModule.ios.isEmpty) {
       val ioSet = thisModule.ios.pop
@@ -168,7 +182,7 @@ object DSPModule {
     }
     while (!ios2.isEmpty) {
       val ioSet = ios2.pop
-      ioSet.checkOutDly(ioSet.outDlyMatch)
+      ioSet.checkOutDly()
       // Need to add pin after correctly designating pin name
       if(!ioSet.equals(thisModule.io)) thisModule.createIO(ioSet)
     }

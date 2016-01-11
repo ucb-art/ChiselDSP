@@ -16,6 +16,9 @@ object DSPTester {
     fixTolLSB = fixedTol
     floTolLSB = floTol
   }
+
+  /** To keep track of failed test cases */
+  private[ChiselDSP] var failedTests = Array.empty[String]
 }
 class DSPTester[+T <: Module](c: T, var traceOn: Boolean = true, var hexOn: Boolean = true,
                               var quitOnError: Boolean = false)
@@ -317,23 +320,20 @@ class DSPTester[+T <: Module](c: T, var traceOn: Boolean = true, var hexOn: Bool
     good
   }
 
-  /** To keep track of failed test cases */
-  private var failedTests = Array.empty[String]
-
   /** Error handling */
   private def handleError(exp: String, test: String, error: String): Boolean = {
     println(Console.RED + "  >>>> Does not match " + exp + (if (!error.isEmpty) ", " else "") + error
             + ", Time = " + t + Console.RESET)
     fail
-    if (!failedTests.contains(test) && test != "") failedTests = failedTests :+ test
+    if (!DSPTester.failedTests.contains(test) && test != "") DSPTester.failedTests = DSPTester.failedTests :+ test
     if (quitOnError) {println(Console.RED + "  Quitting on first error!");finish()}
     false
   }
 
   /** Complete the simulation and inspect all tests */
   override def finish() = {
-    if (failedTests.nonEmpty)
-      println(Console.RED + Console.BOLD + "\n\n  Failed test cases: [" + failedTests.mkString(", ") + "]\n")
+    if (DSPTester.failedTests.nonEmpty)
+      println(Console.RED + Console.BOLD + "\n  Failed test cases: [" + DSPTester.failedTests.mkString(", ") + "]\n")
     super.finish
   }
 

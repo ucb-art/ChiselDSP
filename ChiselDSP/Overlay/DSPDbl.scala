@@ -85,6 +85,8 @@ class DSPDbl extends DSPQnm[DSPDbl] {
     }
   }
   override def unary_-(): DSPDbl = {DSPDbl(0.0)-this}
+
+  // TODO: multiply by literal -1
   def * (b: DSPDbl): DSPDbl = {
     val bits1 = BigInt(java.lang.Double.doubleToLongBits(1.0))
     if (isLit && litValue() == 0) DSPDbl(0.0)

@@ -303,7 +303,7 @@ class DSPFixed (private var fractionalWidth:Int = 0)  extends DSPQnm[DSPFixed] {
   def >> (n: Int) : DSPFixed = {
     if (n < 0) error("Shift amount must be non-negative")
     val out = {
-      if (isLit) DSPFixed(litValue() >> n,getFracWidth)
+      if (isLit) DSPFixed(signed_fix() >> n,getFracWidth)
       else if (n >= getWidth) DSPFixed(0,getFracWidth)
       else if (n == 0) this
       else {
@@ -319,7 +319,7 @@ class DSPFixed (private var fractionalWidth:Int = 0)  extends DSPQnm[DSPFixed] {
   def << (n: Int) : DSPFixed = {
     if (n < 0) error("Shift amount must be non-negative")
     val out = {
-      if (isLit) DSPFixed(litValue() << n,getFracWidth)
+      if (isLit) DSPFixed(signed_fix() << n,getFracWidth)
       else if (n == 0) this
       else {
         val res = Cat(this,Fill(n,Bits(0,1)))
@@ -371,8 +371,8 @@ class DSPFixed (private var fractionalWidth:Int = 0)  extends DSPQnm[DSPFixed] {
   /** Bitwise-OR with custom range inference */
   def /| (b: DSPFixed) : DSPFixed = {
     val out = {
-      if (isLit && litValue() == 0) b
-      else if (b.isLit && b.litValue() == 0) this
+      if (isLit && signed_fix() == 0) b
+      else if (b.isLit && b.signed_fix() == 0) this
       else{
         val (x,y, xrange, yrange,fixedParams) = matchWidth(b)
         val opMax =  xrange.max.max(yrange.max)
@@ -426,8 +426,8 @@ class DSPFixed (private var fractionalWidth:Int = 0)  extends DSPQnm[DSPFixed] {
   /** Add overflow -> wrap to max(this.width,b.width) # of bits */
   override def +% (b: DSPFixed) : DSPFixed = {
     val out = {
-      if (isLit && litValue() == 0) b
-      else if (b.isLit && b.litValue() == 0) this
+      if (isLit && signed_fix() == 0) b
+      else if (b.isLit && b.signed_fix() == 0) this
       else{
         val (x,y,xrange,yrange,fixedParams) = matchWidth(b)
         val newRange = (xrange, yrange).zipped.map( _ + _ )
@@ -454,8 +454,8 @@ class DSPFixed (private var fractionalWidth:Int = 0)  extends DSPQnm[DSPFixed] {
   /** Add that determines optimal sum range, bitwidth */
   def + (b: DSPFixed) : DSPFixed = {
     val out = {
-      if (isLit && litValue() == 0) b
-      else if (b.isLit && b.litValue() == 0) this
+      if (isLit && signed_fix() == 0) b
+      else if (b.isLit && b.signed_fix() == 0) this
       else{
         val (x,y,xrange,yrange,(intW,fracW)) = matchWidth(b)
         val newRange = (xrange, yrange).zipped.map( _ + _ )
@@ -472,18 +472,27 @@ class DSPFixed (private var fractionalWidth:Int = 0)  extends DSPQnm[DSPFixed] {
   def matchLitFracWidth(b: DSPFixed) : Tuple3[BigInt,BigInt,Int] = {
     val fracWidth = getFracWidth.max(b.getFracWidth)
     val fracDiff = getFracWidth - b.getFracWidth
+    val x = signed_fix()
+    val y = b.signed_fix()
     val out = {
-      if (fracDiff > 0) (litValue(), b.litValue() << fracDiff)
-      else if (fracDiff < 0) (litValue() << math.abs(fracDiff), b.litValue())
-      else (litValue(),b.litValue())
+      if (fracDiff > 0) (x, y << fracDiff)
+      else if (fracDiff < 0) (x << math.abs(fracDiff), y)
+      else (x,y)
     }
     (out._1,out._2,fracWidth)
+  }
+
+  /** Fix sign of Lit */
+  def signed_fix() : BigInt = {
+    val rv = litValue()
+    val w = rv.bitLength.max(getWidth)
+    if(rv >= (BigInt(1) << w - 1)) (rv - (BigInt(1) << w)) else rv
   }
 
   /** Subtract and wrap */
   override def -% (b: DSPFixed) : DSPFixed = {
     val out = {
-      if (b.isLit && b.litValue() == 0) this
+      if (b.isLit && b.signed_fix() == 0) this
       else if (isLit && b.isLit) {
         val (aT,bT,fracW) = matchLitFracWidth(b)
         DSPFixed(aT-bT,fracW)
@@ -514,7 +523,7 @@ class DSPFixed (private var fractionalWidth:Int = 0)  extends DSPQnm[DSPFixed] {
   /** Sub that determines optimal diff range, bitwidth */
   def - (b: DSPFixed) : DSPFixed = {
     val out = {
-      if (b.isLit && b.litValue() == 0) this
+      if (b.isLit && b.signed_fix() == 0) this
       else if (isLit && b.isLit) {
         val (aT,bT,fracW) = matchLitFracWidth(b)
         DSPFixed(aT-bT,fracW)
@@ -531,14 +540,18 @@ class DSPFixed (private var fractionalWidth:Int = 0)  extends DSPQnm[DSPFixed] {
   /** 0 - this (mathematically correct; bitwidth sized accordingly) */
   override def unary_-():DSPFixed = DSPFixed(BigInt(0),(getIntWidth,getFracWidth)) - this
 
-  //TODO: Overflow handling for *
+  // TODO: Overflow handling for *, also check correctness of n * -1 conversion into 0-n (correct sub from -, -%, -&)
+  // see https://sestevenson.wordpress.com/2009/08/10/overflow-handling-in-fixed-point-computations/
+  // for -1 multiplication overflow problem
   /** Multiply while determining optimal product bitwidth + range */
   def * (b: DSPFixed) : DSPFixed = {
     val out = {
-      if (isLit && litValue() == 0) DSPFixed(0,(getIntWidth,getFracWidth))
-      else if (isLit && litValue() == DSPFixed.toFixed(1,getFracWidth)) b
-      else if (b.isLit && b.litValue() == 0) DSPFixed(0,(b.getIntWidth,b.getFracWidth))
-      else if (b.isLit && b.litValue() == DSPFixed.toFixed(1,b.getFracWidth)) this
+      if (isLit && signed_fix() == 0) DSPFixed(0,(getIntWidth,getFracWidth))
+      else if (isLit && signed_fix() == DSPFixed.toFixed(1,getFracWidth)) b
+      else if (isLit && signed_fix() == DSPFixed.toFixed(-1,getFracWidth)) -b
+      else if (b.isLit && b.signed_fix() == 0) DSPFixed(0,(b.getIntWidth,b.getFracWidth))
+      else if (b.isLit && b.signed_fix() == DSPFixed.toFixed(1,b.getFracWidth)) this
+      else if (b.isLit && b.signed_fix() == DSPFixed.toFixed(-1,b.getFracWidth)) -this
       else {
         val (x,y,xrange,yrange,(intW,fracW)) = matchWidth(b)
         val res = x * y

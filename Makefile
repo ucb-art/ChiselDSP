@@ -3,7 +3,7 @@
 # Project Name
 PRJ = FFT
 # True -> tests with fixed point, else tests with double precision floating point
-FIXED = true
+FIXED = false
 
 # Setup environment with 'make reset'
 reset:

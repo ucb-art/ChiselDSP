@@ -63,7 +63,10 @@ class DSPTester[+T <: Module](c: T, var traceOn: Boolean = true, var hexOn: Bool
   private def peek(data: ComplexBundle, disp:Boolean, pk:Boolean): Tuple3[ScalaComplex,Array[BigInt],String] = {
     val res = data.flatten map (x => peek(x._2,false,false))
     val names = data.flatten map (x => dumpName(x._2))
-    val name = names.head.replace("_real","")
+    val isLit = data.flatten.map(x => x._2.isLit).toList.reduce(_&&_)
+    val realName = names.head.replace("_real","")
+    val imagName = names.last.replace("_imag","")
+    val name = if (isLit) "*Complex Lit*" else if (realName == imagName) realName else names.head + ", " + names.last
     val command = if (pk) "PEEK" else "POKE"
     val out = Complex(res.head._1,res.last._1)
     val outBits = Array(res.head._2,res.last._2)
@@ -72,6 +75,7 @@ class DSPTester[+T <: Module](c: T, var traceOn: Boolean = true, var hexOn: Bool
     (out,outBits,msg)
   }
 
+  // TODO: peek vec of lits --> name = *Vec Lit*, peek Vec -- check that names before #'s all match, else print individually
   /** Convenient peek of a Vec of DSPBits */
   def peek[A <: DSPBits[A]](data: Vec[A]): Array[BigInt] = peek(data,traceOn,true)._1
   private def peek[A <: DSPBits[A]](data: Vec[A], disp:Boolean, pk:Boolean): Tuple2[Array[BigInt],String] = {

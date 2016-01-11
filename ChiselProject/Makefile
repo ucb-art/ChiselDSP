@@ -1,5 +1,5 @@
 PRJ = FFT
-FIXED = true
+FIXED = false
 
 vlsi:
 	mkdir -p vlsi/generated-src

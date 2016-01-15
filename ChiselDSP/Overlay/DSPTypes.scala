@@ -333,7 +333,13 @@ abstract class DSPBits [T <: DSPBits[T]] extends Bits {
     val b = src.asInstanceOf[T]
     if (isAssigned && !b.isAssigned) b <> this
     else if (isAssigned && b.isAssigned) error ("Cannot bulk assign signal that was previously assigned.")
-    else super.<>(assign(b))
+    else {
+      val p = compOpt
+      val q = b.compOpt
+      val rhs = assign(b)
+      //println(chiselName + p + "," + q + "," + rhs.compOpt)
+      super.<>(b)
+    }
   }
 
   // TODO: Check bundle := passes params properly

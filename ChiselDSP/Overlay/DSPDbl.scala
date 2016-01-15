@@ -1,6 +1,7 @@
 /** Double class customizations */
 
 // TODO: For Fixed, Dbl, if both inputs to +,-,*, etc. are lits, solve as lits so you don't have delay mismatch errors
+// check if litValue is right or need signed_fix (dbl >> n, * lit = 1)
 
 package ChiselDSP
 import Chisel._

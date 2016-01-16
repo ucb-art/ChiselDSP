@@ -104,11 +104,11 @@ abstract class DSPBits [T <: DSPBits[T]] extends Bits {
   def infoString(): String = (getWidth + " bits")
 
   /** Info associated with signal, initialize tracked signal pipe delay on a per module basis */
-  private[ChiselDSP] var info = Info(dly = Module.current.asInstanceOf[DSPModule].inputDelay)
+  private var info = Info(dly = Module.current.asInstanceOf[DSPModule].inputDelay)
 
   /** Marks the signal as being used to prevent invalid future updates */
   final protected def use() {info.isUsed = true} 
-  final protected def isUsed() : Boolean = getInfo.isUsed
+  final def isUsed() : Boolean = getInfo.isUsed
   /** Marks that node has been assigned */
   final private[ChiselDSP] def assign(): T =  {
     info.isAssigned = true
@@ -139,6 +139,7 @@ abstract class DSPBits [T <: DSPBits[T]] extends Bits {
       Warn("Warning, possible max < min bits overflow. Signals down the chain may be wrong.")
       info.range("max") = getInfo.rangeBits("min")
     }
+
   }
   
   /** Get range */
@@ -179,7 +180,7 @@ abstract class DSPBits [T <: DSPBits[T]] extends Bits {
   }
 
   /** Pass delay of input + offset to output [this] -- input/output types don't need to match */
-  final protected def passDelay[U <: DSPBits[_]](in:U, offset: Int = 0): T = {
+  final private[ChiselDSP] def passDelay[U <: DSPBits[_]](in:U, offset: Int = 0): T = {
     info.dly = in.getDelay + offset
     this.asInstanceOf[T]
   }
@@ -236,7 +237,7 @@ abstract class DSPBits [T <: DSPBits[T]] extends Bits {
       // When you want to override delay check, if the delays aren't the same, don't update delay
       else dlyNoUpdate = true
     }
-    if (isUsed && (that.getRange.max > getRange.max || that.getRange.min < getRange.min)){          
+    if (isUsed && (that.getRange.max > getRange.max || that.getRange.min < getRange.min)){
       error("Previous lines of code have used L in L := R. To ensure range consistency, "
             + "L cannot be updated with an R of wider range. Move := earlier in the code!")
     }
@@ -246,7 +247,7 @@ abstract class DSPBits [T <: DSPBits[T]] extends Bits {
   }
 
   /** Handles how range is updated */
-  protected def updateLimits(range: (BigInt,BigInt)) : Unit
+  private[ChiselDSP] def updateLimits(range: (BigInt,BigInt)) : Unit
 
   /** Change INPUT to OUTPUT and OUTPUT to INPUT. NODIR stays the same. */
   final override def flip: this.type = {
@@ -333,13 +334,7 @@ abstract class DSPBits [T <: DSPBits[T]] extends Bits {
     val b = src.asInstanceOf[T]
     if (isAssigned && !b.isAssigned) b <> this
     else if (isAssigned && b.isAssigned) error ("Cannot bulk assign signal that was previously assigned.")
-    else {
-      val p = compOpt
-      val q = b.compOpt
-      val rhs = assign(b)
-      //println(chiselName + p + "," + q + "," + rhs.compOpt)
-      super.<>(b)
-    }
+    else super.<>(assign(b))
   }
 
   // TODO: Check bundle := passes params properly

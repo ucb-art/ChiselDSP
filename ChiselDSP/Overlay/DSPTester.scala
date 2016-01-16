@@ -1,6 +1,5 @@
 /** Custom DSP tester -- shows values in Ints, Doubles instead of only hex.
-  * Handles Chisel data types and ChiselDSP data types.  
-  * TODO: Aggregate peek/poke, expect, custom finish. 
+  * Handles Chisel data types and ChiselDSP data types.
   */
 
 package ChiselDSP
@@ -198,11 +197,17 @@ class DSPTester[+T <: Module](c: T, var traceOn: Boolean = true, var hexOn: Bool
     * @param data Memory to inspect
     * @param off Offset in memory to look at */
   override def peekAt[T <: Bits](data: Mem[T], off: Int): BigInt = {
-    val value = super.peekAt(data,off)
+    peekAt(data.asInstanceOf[Node],off)
+  }
+  def peekAt(data : Node, off: Int): BigInt = {
+    data match {
+      case _: Mem[_] =>
+      case _ => Error("Must peekAt memory")
+    }
+    val value = peekNode(data, Some(off))
     if (traceOn) println(s"  PEEK ${dumpName(data)}[${off}] -> 0x${value.toString(16)}")
     value
   }
-  
   /** Set the value of some memory
     * @param data The memory to write to
     * @param value The BigInt representing the bits to set

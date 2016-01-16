@@ -107,7 +107,7 @@ class DSPUInt extends DSPNum[DSPUInt] {
   /** Update the range of this DSPUInt instance. Range can be expanded until it exceeds
     * what is allowable by the DSPUInt bitwidth, which is fixed @ creation.
     */
-  protected def updateLimits(range: (BigInt,BigInt)): Unit = {
+  private[ChiselDSP] def updateLimits(range: (BigInt,BigInt)): Unit = {
     setRangeBits((BigInt(0),DSPUInt.toMax(getWidth)))
     setRange(range)
   }
@@ -131,8 +131,11 @@ class DSPUInt extends DSPNum[DSPUInt] {
   /** Used for bulk assigning + := */
   private[ChiselDSP] def assign(u: DSPUInt): DSPUInt = {
     reassign(u)
-    val (x,y) = matchWidth(u)
-    toT(y,List2Tuple(u.getRange))
+    if (getWidth == u.getWidth) u
+    else {
+      val (x, y) = matchWidth(u)
+      toT(y, List2Tuple(u.getRange))
+    }
   }
   
   /** Greater than */

@@ -1,6 +1,4 @@
-/** Fixed class customizations 
-  * TODO: Actually implement operators... :(
-  */
+/** Fixed class customizations */
 
 package ChiselDSP
 import Chisel._
@@ -181,7 +179,7 @@ class DSPFixed (private var fractionalWidth:Int = 0)  extends DSPQnm[DSPFixed] {
   /** Update the range of this DSPFixed instance. Range can be expanded until it exceeds
     * what is allowable by the DSPFixed bitwidth, which is fixed @ creation.
     */
-  protected def updateLimits(range: (BigInt,BigInt)): Unit = {
+  private[ChiselDSP] def updateLimits(range: (BigInt,BigInt)): Unit = {
     setRangeBits(DSPFixed.toRange(getWidth))
     setRange(range)
   }
@@ -241,8 +239,12 @@ class DSPFixed (private var fractionalWidth:Int = 0)  extends DSPQnm[DSPFixed] {
   private[ChiselDSP] def assign(f: DSPFixed): DSPFixed = {
     checkAlign(f)
     reassign(f)
-    val (x,y,xrange,yrange,fixedParams) = matchWidth(f)
-    fromSInt(y,fixedParams,List2Tuple(yrange))
+    if (getWidth == f.getWidth) f
+    else {
+      val (x, y, xrange, yrange, fixedParams) = matchWidth(f)
+      fromSInt(y, fixedParams, List2Tuple(yrange))
+    }
+    // TODO: Check that assigning between modules when widths don't match doesn't cause problems (UInt too)
   }
 
   /** Shorten # of integer bits -- get rid of MSBs by forcing the generator to use a smaller width

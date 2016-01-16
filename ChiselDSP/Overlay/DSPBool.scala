@@ -15,6 +15,9 @@ object DSPBool {
   /** Convert 1-bit Bits to a DSPBool */
   def apply(x: Bits): DSPBool = {
     if (x.getWidth != 1) Error("Node to be converted to DSPBool must have width = 1")
+    apply(x.toBool)
+  }
+  def apply(x: Bool): DSPBool = {
     val res = chiselCast(x){apply(x.dir)}
     res.assign()
   }
@@ -102,7 +105,7 @@ class DSPBool extends DSPBits[DSPBool]{
   }
   
   /** Bool range always [0,1] */
-  protected def updateLimits(range: (BigInt,BigInt)): Unit = {
+  private[ChiselDSP] def updateLimits(range: (BigInt,BigInt)): Unit = {
     setRangeBits(range)
     setRange(range)
   }

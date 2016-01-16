@@ -103,9 +103,8 @@ abstract class IOBundle(val outDlyMatch: Boolean = false) extends Bundle {
     named = true
   }
 
-  private var outDly = 0
   /** Checks to see that assigned outputs of the IO Bundle have the same delay; otherwise errors out */
-  def checkOutDly(): Unit ={
+  private[ChiselDSP] def checkOutDly(): Int ={
     if (outDlyMatch){
       val temp = flatten.map (x => x._2 match{
         case d : DSPBits[_] => if(d.dir == OUTPUT && d.isAssigned) d.getDelay() else -1
@@ -114,19 +113,25 @@ abstract class IOBundle(val outDlyMatch: Boolean = false) extends Bundle {
       val dly = temp.distinct.filter(_ != -1)
       val numDistinct = dly.length
       if (numDistinct > 1) Error("Assigned IO Bundle outputs don't have the same delay")
-      if (numDistinct == 1) outDly = dly.head
+      if (numDistinct == 1) dly.head else 0
     }
+    else 0
   }
 
-  /** Get output delay of bundle elements if tracked elements should all have the same delay */
+  // TODO: Get delay of elements of a Vec like you do for a bundle
+
+  /** Get output delay of bundle elements if tracked elements should all have the same delay. Note that the user
+    * can call the function before all of the outputs have been assigned, at which point it will only return
+    * the delay of assigned outputs! Caution must be used!
+    */
   def getOutDelay(): Int = {
     if (!outDlyMatch) Error("Cannot get IO Bundle output delay when not explicitly checked")
-    outDly
+    checkOutDly()
   }
 
 }
 
-/** Adds functionality to Module */
+/** Adds functionality to Module (inputDelay used in Info instantiation under DSPTypes) */
 abstract class DSPModule (val inputDelay:Int = 0, decoupledIO: Boolean = false, _clock: Option[Clock] = None,
                           _reset: Option[Bool] = None) extends ModuleOverride(_clock,_reset) {
 

@@ -216,7 +216,7 @@ class DSPDbl extends DSPQnm[DSPDbl] {
   }
   
   /** Dbl doesn't care about limits */
-  protected def updateLimits(range: (BigInt,BigInt)): Unit = {
+  private[ChiselDSP] def updateLimits(range: (BigInt,BigInt)): Unit = {
     setRangeBits(range)
     setRange(range)
   }

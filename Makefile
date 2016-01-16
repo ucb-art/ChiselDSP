@@ -3,7 +3,7 @@
 # Project Name
 PRJ = FFT
 # True -> tests with fixed point, else tests with double precision floating point
-FIXED = false
+FIXED = true
 
 # Setup environment with 'make reset'
 reset:
@@ -63,6 +63,7 @@ genmodule:
 
 # Compile to Verilog
 vlsi:
+	cd Verilog${PRJ}; rm * ; cd .. ;\
 	make default; make link; \
 	cd ChiselProject ; rm vlsi/generated-src/*.v; make vlsi PRJ=${PRJ}
 

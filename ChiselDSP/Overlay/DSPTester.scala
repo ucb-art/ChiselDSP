@@ -1,6 +1,5 @@
 /** Custom DSP tester -- shows values in Ints, Doubles instead of only hex.
-  * Handles Chisel data types and ChiselDSP data types.  
-  * TODO: Aggregate peek/poke, expect, custom finish. 
+  * Handles Chisel data types and ChiselDSP data types.
   */
 
 package ChiselDSP
@@ -16,6 +15,9 @@ object DSPTester {
     fixTolLSB = fixedTol
     floTolLSB = floTol
   }
+
+  /** To keep track of failed test cases */
+  private[ChiselDSP] var failedTests = Array.empty[String]
 }
 class DSPTester[+T <: Module](c: T, var traceOn: Boolean = true, var hexOn: Boolean = true,
                               var quitOnError: Boolean = false)
@@ -60,7 +62,10 @@ class DSPTester[+T <: Module](c: T, var traceOn: Boolean = true, var hexOn: Bool
   private def peek(data: ComplexBundle, disp:Boolean, pk:Boolean): Tuple3[ScalaComplex,Array[BigInt],String] = {
     val res = data.flatten map (x => peek(x._2,false,false))
     val names = data.flatten map (x => dumpName(x._2))
-    val name = names.head.replace("_real","")
+    val isLit = data.flatten.map(x => x._2.isLit).toList.reduce(_&&_)
+    val realName = names.head.replace("_real","")
+    val imagName = names.last.replace("_imag","")
+    val name = if (isLit) "*Complex Lit*" else if (realName == imagName) realName else names.head + ", " + names.last
     val command = if (pk) "PEEK" else "POKE"
     val out = Complex(res.head._1,res.last._1)
     val outBits = Array(res.head._2,res.last._2)
@@ -69,6 +74,7 @@ class DSPTester[+T <: Module](c: T, var traceOn: Boolean = true, var hexOn: Bool
     (out,outBits,msg)
   }
 
+  // TODO: peek vec of lits --> name = *Vec Lit*, peek Vec -- check that names before #'s all match, else print individually
   /** Convenient peek of a Vec of DSPBits */
   def peek[A <: DSPBits[A]](data: Vec[A]): Array[BigInt] = peek(data,traceOn,true)._1
   private def peek[A <: DSPBits[A]](data: Vec[A], disp:Boolean, pk:Boolean): Tuple2[Array[BigInt],String] = {
@@ -191,11 +197,17 @@ class DSPTester[+T <: Module](c: T, var traceOn: Boolean = true, var hexOn: Bool
     * @param data Memory to inspect
     * @param off Offset in memory to look at */
   override def peekAt[T <: Bits](data: Mem[T], off: Int): BigInt = {
-    val value = super.peekAt(data,off)
+    peekAt(data.asInstanceOf[Node],off)
+  }
+  def peekAt(data : Node, off: Int): BigInt = {
+    data match {
+      case _: Mem[_] =>
+      case _ => Error("Must peekAt memory")
+    }
+    val value = peekNode(data, Some(off))
     if (traceOn) println(s"  PEEK ${dumpName(data)}[${off}] -> 0x${value.toString(16)}")
     value
   }
-  
   /** Set the value of some memory
     * @param data The memory to write to
     * @param value The BigInt representing the bits to set
@@ -317,23 +329,20 @@ class DSPTester[+T <: Module](c: T, var traceOn: Boolean = true, var hexOn: Bool
     good
   }
 
-  /** To keep track of failed test cases */
-  private var failedTests = Array.empty[String]
-
   /** Error handling */
   private def handleError(exp: String, test: String, error: String): Boolean = {
     println(Console.RED + "  >>>> Does not match " + exp + (if (!error.isEmpty) ", " else "") + error
             + ", Time = " + t + Console.RESET)
     fail
-    if (!failedTests.contains(test) && test != "") failedTests = failedTests :+ test
+    if (!DSPTester.failedTests.contains(test) && test != "") DSPTester.failedTests = DSPTester.failedTests :+ test
     if (quitOnError) {println(Console.RED + "  Quitting on first error!");finish()}
     false
   }
 
   /** Complete the simulation and inspect all tests */
   override def finish() = {
-    if (failedTests.nonEmpty)
-      println(Console.RED + Console.BOLD + "\n\n  Failed test cases: [" + failedTests.mkString(", ") + "]\n")
+    if (DSPTester.failedTests.nonEmpty)
+      println(Console.RED + Console.BOLD + "\n  Failed test cases: [" + DSPTester.failedTests.mkString(", ") + "]\n")
     super.finish
   }
 

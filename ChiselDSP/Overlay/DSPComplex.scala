@@ -1,5 +1,4 @@
-/** New Complex 
-  * TODO: +,- (unary-),* Complex [ how many muls ], * Real, * Imag, Conj, abs 
+/** New Complex
   * (all variations, with delays, truncation/round, overflow)
   * Case class parameterization?
   */
@@ -12,8 +11,8 @@ object Complex {
   /** Create a new Complex number: real + imag*i
     * @tparam T the type to represent the complex number with, eg DSPFixed, DSPDbl
     */
-  def apply[T <: DSPQnm[T]](real: T, imag: T) : Complex[T] = new Complex(real, imag)
-  def apply[T <: DSPQnm[T]](gen: T) : Complex[T] = new Complex(gen.cloneType, gen.cloneType)
+  def apply[T <: DSPQnm[T]](real: T, imag: T) : Complex[T] = new Complex(real.cloneType, imag.cloneType)
+  def apply[T <: DSPQnm[T]](gen: => T) : Complex[T] = apply(gen,gen)
   
   /** Creates non-Chisel complex class if real, imag inputs are type Scala Double */
   def apply(real:Double, imag:Double) : ScalaComplex = new ScalaComplex(real, imag)
@@ -24,6 +23,7 @@ object Complex {
   def getFrac(): Int = opts.fracBits
   def getInt(): Int = opts.intBits
   def getAddPipe(): Double = opts.addPipe
+  def getMulPipe(): Int = opts.mulPipe
 
 }
 
@@ -49,6 +49,19 @@ case class ComplexParams (
 class ScalaComplex (var real:Double, var imag:Double){
   override def toString() = {real + (if (imag < 0) " - " + (-imag) else " + " + imag) + " i"}
   def toList() = List(real,imag)
+
+  /** Add */
+  def + (b: ScalaComplex) : ScalaComplex = Complex(real + b.real, imag + b.imag)
+  /** Subtract */
+  def - (b: ScalaComplex) : ScalaComplex = Complex(real - b.real, imag - b.imag)
+  /** Multiply */
+  def * (b: ScalaComplex) : ScalaComplex = {
+    val ac = real * b.real
+    val bd = imag * b.imag
+    val ad = real * b.imag
+    val bc = imag * b.real
+    Complex(ac-bd,ad+bc)
+  }
 }
 
 /** Complex number representation */
@@ -56,6 +69,22 @@ private[ChiselDSP] abstract class ComplexBundle extends Bundle {
   def Q : String
 }
 class Complex[T <: DSPQnm[T]](val real: T, val imag: T) extends ComplexBundle {
+
+  /** Get tracked delay of complex # */
+  def getDelay(): Int = {
+    if (real.getDelay != imag.getDelay) Error("Real and imaginary components have different delays")
+    real.getDelay
+  }
+
+  /** Pass delay */
+  private[ChiselDSP] def passDelay (in: Complex[T],offset: Int): Unit = {
+    real.passDelay(in.real,offset)
+    imag.passDelay(in.imag,offset)
+  }
+  private[ChiselDSP] def passDelay[T <: DSPBits[T]] (in: T,offset: Int): Unit = {
+    real.passDelay(in,offset)
+    imag.passDelay(in,offset)
+  }
 
   /** Returns a string containing the integer and fractional widths of the real + imaginary components*/
   def Q(): String = "[" + real.Q + "," + imag.Q + "]"
@@ -87,6 +116,7 @@ class Complex[T <: DSPQnm[T]](val real: T, val imag: T) extends ComplexBundle {
   
   /** Custom bitwise or for muxing */
   def /| (b: Complex[T]) : Complex[T] = Complex(real /| b.real, imag /| b.imag)
+  def | (b: Complex[T]) : Complex[T] = this /| b
 
   /** ARITHMETIC Right shift n */
   def >> (n: Int) : Complex[T] = Complex( real >> n, imag >> n)
@@ -126,7 +156,7 @@ class Complex[T <: DSPQnm[T]](val real: T, val imag: T) extends ComplexBundle {
     */
   def >= (b: Complex[T]): DSPBool = { (real >= b.real) & (imag >= b.imag) }
 
-  // TODO: Overflow handling for all operations below tis point
+  // TODO: Overflow handling for all operations below this point
 
   /** Trim real, imag components to n fractional bits with desired trim type */
   def trim(n: Int, tType: TrimType = Complex.opts.trimType): Complex[T] = {
@@ -134,6 +164,12 @@ class Complex[T <: DSPQnm[T]](val real: T, val imag: T) extends ComplexBundle {
     else if (tType == Round) Complex( real $$ n, imag $$ n)
     else this
   }
+
+  // TODO: Make shortenTo for Vec of complex or Vec of DSPQnm
+  /** Shorten # of integer bits -- get rid of MSBs by forcing the generator to use a smaller width
+    * CAREFUL: could eliminate useful bits!!!
+    */
+  def shortenTo(intWidth: Int): Complex[T] = Complex(real.shortenTo(intWidth),imag.shortenTo(intWidth))
 
   /** Complex add */
   def + (b: Complex[T], aPipe: Int = math.floor(Complex.opts.addPipe).toInt,
@@ -186,6 +222,7 @@ class Complex[T <: DSPQnm[T]](val real: T, val imag: T) extends ComplexBundle {
     prod.pipe(mPipe).trim(fracW + fracGrowth,tType)
   }
 
+  // TODO: Trim needs special handling for when inputs are certain lits --> i.e. growth might not be valid (see **)
   /** Multiply by real (im = false) OR imaginary (im = true),selected @ runtime */
   def *? (b: T, im: DSPBool, mPipe: Int = Complex.opts.mulPipe,
          ofType: OverflowType = Complex.opts.overflowType, tType: TrimType = Complex.opts.trimType,
@@ -221,5 +258,11 @@ class Complex[T <: DSPQnm[T]](val real: T, val imag: T) extends ComplexBundle {
     res.pipe(aPipe)
   }
   def * (b: Complex[T]) : Complex[T] = this * (b,ofType = Complex.opts.overflowType)
+
+  /** Forcibly update range of real, imaginary components */
+  private[ChiselDSP] def updateLimits(realRange: (BigInt,BigInt), imagRange: (BigInt,BigInt)): Unit = {
+    real.updateLimits(realRange)
+    imag.updateLimits(imagRange)
+  }
 
 }

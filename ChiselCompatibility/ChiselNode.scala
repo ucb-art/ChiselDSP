@@ -1,4 +1,4 @@
-/** Changed equals method for option support */
+/** Changed equals method for option support, got rid of private[Chisel] for component, changed to protected */
 
 /*
  Copyright (c) 2011, 2012, 2013, 2014 The Regents of the University of
@@ -160,7 +160,7 @@ abstract class Node extends Nameable {
   /* Assigned in Binding and Mod.reset */
   private[Chisel] var compOpt: Option[Module] = Module.getComponent
   /** Use the function componentOf instead*/
-  private[Chisel] def component: Module = compOpt getOrElse { throwException("< " + this + " > doesn't have its component, yet.") }
+  protected def component: Module = compOpt getOrElse { throwException("< " + this + " > doesn't have its component, yet.") }
   /** Get the module that this node is a part of or the top module if not assigned yet
     * @return The module that this node is a part of
     */

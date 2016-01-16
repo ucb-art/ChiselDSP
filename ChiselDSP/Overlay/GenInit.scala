@@ -1,7 +1,10 @@
+// TODO: Make multi JSON param file usable
+
 package ChiselDSP
 import Chisel._
 import org.json4s._
 import org.json4s.native.JsonMethods._
+import native.Serialization._
 
 /** Custom serializer to extract Complex TrimType from JSON */
 case object TrimTypeSer extends CustomSerializer[TrimType](format => (
@@ -46,8 +49,14 @@ class JSONParams (val complexInit: ComplexParams)
   * Returns isFixed (true if fixed mode, else double) & user parameters to be used
   */
 object Init {
+
+  def apply [T <: JSONParams](gen : => T, jsonName: String, args: Array[String])
+                             (implicit m: Manifest[T]): Tuple2[Boolean,T] = {
+    apply(gen,jsonName,args,List())
+  }
+
   def apply [T <: JSONParams, S <: CustomSerializer[_]](gen : => T, jsonName: String, args: Array[String],
-                                                        ser: List[S] = List())
+                                                        ser: List[S])
                                                        (implicit m: Manifest[T]) : Tuple2[Boolean,T] = {
     val jsonContents = scala.io.Source.fromFile("src/main/resources/" + jsonName + ".json").getLines.mkString
     val json = parse(jsonContents)
@@ -56,9 +65,23 @@ object Init {
     // How to serialize JSON
     implicit val formats = DefaultFormats ++ List(TrimTypeSer,OverflowTypeSer) ++ ser
     val p = json.extract[T]
+    apply(p,args,ser)
 
+  }
+
+  def apply [T <: JSONParams] (p: T, args: Array[String]) : Tuple2[Boolean,T] = apply(p,args,List())
+
+  def apply [T <: JSONParams, S <: CustomSerializer[_]]
+            (p: T, args: Array[String], ser: List[S]) : Tuple2[Boolean,T] = {
     // Set Complex params
     Complex.opts = p.complexInit
+
+    implicit val formats = DefaultFormats ++ List(TrimTypeSer,OverflowTypeSer) ++ ser
+
+    // Print JSON to file
+    val complexParamStr = "{\"complex\":" + write(p.complexInit) + ","
+    val newJSON = complexParamStr + write(p).substring(1) + "\n"
+    scala.tools.nsc.io.File("generator_out.json").appendAll(newJSON)
 
     // SBT parameters (used to set Fixed/Dbl)
     val paramsSBT = """-params_(.*)""".r.findFirstMatchIn(args(0))

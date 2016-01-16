@@ -15,6 +15,9 @@ object DSPBool {
   /** Convert 1-bit Bits to a DSPBool */
   def apply(x: Bits): DSPBool = {
     if (x.getWidth != 1) Error("Node to be converted to DSPBool must have width = 1")
+    apply(x.toBool)
+  }
+  def apply(x: Bool): DSPBool = {
     val res = chiselCast(x){apply(x.dir)}
     res.assign()
   }
@@ -53,12 +56,12 @@ class DSPBool extends DSPBits[DSPBool]{
  
   /** Implementation of := operator, assigns value to this DSPBool */
   override protected def colonEquals(that: Bits): Unit = that match {
-    case b: DSPBool => {
-      reassign(b)
-      super.colonEquals(b)
-    }
+    case b: DSPBool => super.colonEquals(assign(b))
     case _ => illegalAssignment(that)
   }
+
+  /** Used for bulk assigning + := */
+  private[ChiselDSP] def assign(b: DSPBool): DSPBool = {reassign(b);b}
   
   /** Bitwise and */
   def & (b: DSPBool): DSPBool = {
@@ -72,7 +75,7 @@ class DSPBool extends DSPBits[DSPBool]{
   def ? (b: DSPBool): DSPBool = this & b
   
   /** Bitwise or */
-  def | (b: DSPBool): DSPBool = {
+  def /| (b: DSPBool): DSPBool = {
     val out = {
       if (isLit) {if (isTrue) DSPBool(true) else b}
       else if (b.isLit) {if(b.isTrue) DSPBool(true) else this}
@@ -80,7 +83,6 @@ class DSPBool extends DSPBits[DSPBool]{
     }
     out.pass2to1(this,b)
   }
-  def /| (b: DSPBool): DSPBool = this | b
   
   /** Invert */
   def unary_!(): DSPBool = {
@@ -103,7 +105,7 @@ class DSPBool extends DSPBits[DSPBool]{
   }
   
   /** Bool range always [0,1] */
-  protected def updateLimits(range: (BigInt,BigInt)): Unit = {
+  private[ChiselDSP] def updateLimits(range: (BigInt,BigInt)): Unit = {
     setRangeBits(range)
     setRange(range)
   }

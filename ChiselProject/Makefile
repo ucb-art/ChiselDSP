@@ -1,17 +1,19 @@
 PRJ = FFT
-FIXED = false
+FIXED = true
 
 vlsi:
 	mkdir -p vlsi/generated-src
-	cd sbt; sbt "run -params_true --backend v --targetDir ../vlsi/generated-src"; mv ../vlsi/generated-src/*.v ../../Verilog${PRJ}/.
+	cd sbt; rm generator_out.json ;\
+	sbt "run -params_true --debugMem --backend v --targetDir ../vlsi/generated-src "; mv ../vlsi/generated-src/*.v ../../Verilog${PRJ}/. ;\
+	mv generator_out.json ../../Verilog${PRJ}/.
 
 test:
 	mkdir -p test/generated-src
-	cd sbt; sbt "run -params_${FIXED} --test --genHarness --compile --targetDir ../test/generated-src"
+	cd sbt; sbt "run -params_${FIXED} --test --debugMem --genHarness --compile --targetDir ../test/generated-src "
 
 debug:
 	mkdir -p test/generated-src
-	cd sbt; sbt "run -params_${FIXED} --test --genHarness --compile --debug --vcd --targetDir ../test/generated-src" | tee console_out
+	cd sbt; sbt "run -params_${FIXED} --test --debugMem --genHarness --compile --debug --vcd --targetDir ../test/generated-src " | tee console_out
 
 clean:
 	rm -rf sbt/target sbt/project vlsi/generated-src/* test/generated-src/* sbt/console_out sbt/*.h sbt/*.cpp 

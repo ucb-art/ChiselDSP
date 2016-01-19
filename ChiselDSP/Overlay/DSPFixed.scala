@@ -34,28 +34,27 @@ object DSPFixed {
   /** Creates a DSPFixed object from a constant Double. 
     * fixedParams = (intWidth,fracWidth), or alternatively, fracWidth, must be specified!
     * Qn.m --> n = intWidth, m = fracWidth, width = n + m + 1 (sign).
-    * Note that for Lits, the intWidth serves as a guide for maximum # of
-    * integer bits needed. If the Lit can be represented in fewer bits,
-    * the smaller # is used.
+    * intWidth is automatically determined for a given Lit + fracWidth if intWidth isn't specified.
     */
-  def apply(x: Double): DSPFixed = apply(x,Complex.getFixedParams)
+  def apply(x: Double): DSPFixed = apply(x,Complex.getFrac)
   def apply(x: Double, fixedParams: (Int, Int)): DSPFixed = apply(toFixed(x, fixedParams._2), fixedParams)
-  def apply(x: Double, fracWidth: Int): DSPFixed = {
-    val fixed = toFixed(x, fracWidth)
-    apply(fixed,fracWidth)
-  }
+  def apply(x: Double, fracWidth: Int): DSPFixed = apply(toFixed(x, fracWidth),fracWidth)
+
   /** Creates DSPFixed Literal after Double has been converted into a BigInt */
   private[ChiselDSP] def apply (x: BigInt, fracWidth:Int): DSPFixed = {
-    val intWidth = x.bitLength-fracWidth
-    apply(x,(intWidth.max(0),fracWidth))
+    val litVal = apply(NODIR, fracWidth, (x,x))
+    createLit(litVal,x,fracWidth)
   }
   private[ChiselDSP] def apply(x: BigInt, fixedParams: (Int, Int)): DSPFixed = {
-    val range = (x, x)
-    val litVal = apply(NODIR, fixedParams, range)
+    val litVal = apply(NODIR, fixedParams)
+    createLit(litVal,x,fixedParams._2)
+  }
+
+  private def createLit(litVal: DSPFixed, x: BigInt, fracWidth: Int): DSPFixed = {
     val res = Lit(x, litVal.getWidth) {litVal}
-    res.fractionalWidth = fixedParams._2
+    res.fractionalWidth = fracWidth
     res.asDirectionless
-    res.updateLimits(range)
+    res.updateLimits((x,x))
     res.assign()
   }
 

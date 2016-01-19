@@ -165,7 +165,7 @@ abstract class DSPBits [T <: DSPBits[T]] extends Bits {
   final def getInfo(): Info = info.copy()
 
   /** Copy info */
-  final protected def copyInfo[T <: DSPBits[_]](that: T) : T = {
+  final private[ChiselDSP] def copyInfo[T <: DSPBits[_]](that: T) : T = {
     info = that.getInfo
     this.asInstanceOf[T]
   }

@@ -8,12 +8,15 @@ import java.lang.Double.{longBitsToDouble, doubleToLongBits}
 import java.lang.Float.{intBitsToFloat, floatToIntBits}
 
 object DSPTester {
-  /** Expect tolerance by LSB's */
-  private[ChiselDSP] var fixTolLSB: Int = 1
-  private[ChiselDSP] var floTolLSB: Int = 1
-  def setTol(fixedTol: Int = fixTolLSB, floTol: Int = floTolLSB): Unit = {
-    fixTolLSB = fixedTol
-    floTolLSB = floTol
+  /** Expect tolerance
+    * fixTolBits --> # of bits you can be off by
+    * floTol --> decimal amount you can be off by
+    */
+  private[ChiselDSP] var fixTolBits: Int = 1
+  private[ChiselDSP] var floTolDec: Double = 0.000000000000001
+  def setTol(fixedTol: Int = fixTolBits, floTol: Double = floTolDec): Unit = {
+    fixTolBits = fixedTol
+    floTolDec = floTol
   }
 
   /** To keep track of failed test cases */
@@ -75,9 +78,9 @@ class DSPTester[+T <: Module](c: T, var traceOn: Boolean = true, var hexOn: Bool
   }
 
   // TODO: peek vec of lits --> name = *Vec Lit*, peek Vec -- check that names before #'s all match, else print individually
-  /** Convenient peek of a Vec of DSPBits */
-  def peek[A <: DSPBits[A]](data: Vec[A]): Array[BigInt] = peek(data,traceOn,true)._1
-  private def peek[A <: DSPBits[A]](data: Vec[A], disp:Boolean, pk:Boolean): Tuple2[Array[BigInt],String] = {
+  /** Convenient peek of a Vec of Bits */
+  def peek[A <: Bits](data: Vec[A]): Array[BigInt] = peek(data,traceOn,true)._1
+  private def peek[A <: Bits](data: Vec[A], disp:Boolean, pk:Boolean): Tuple2[Array[BigInt],String] = {
     val res = data.flatten.map(x => peek(x._2,false,false)._2).reverse
     val names = data.flatten.map(x => dumpName(x._2)).reverse
     val name = names.head.replace("_0","")
@@ -236,6 +239,7 @@ class DSPTester[+T <: Module](c: T, var traceOn: Boolean = true, var hexOn: Bool
   override def expect (data: Bits, expected: BigInt, msg: => String): Boolean = expect(data,expected,"",msg)
   override def expect (data: Bits, expected: Int, msg: => String): Boolean = expect(data,BigInt(expected),"",msg)
   override def expect (data: Bits, expected: Long, msg: => String): Boolean = expect(data,BigInt(expected),"",msg)
+  def expect(data: Bits, expected:Boolean): Boolean = expect(data,int(expected))
   override def expect(data: Bits, expected:Int): Boolean = expect(data,BigInt(expected))
   override def expect (data: Bits, expected: Long): Boolean = expect(data,BigInt(expected))
   override def expect(data: Bits, expected:BigInt): Boolean = expect(data,expected,"","")
@@ -259,10 +263,10 @@ class DSPTester[+T <: Module](c: T, var traceOn: Boolean = true, var hexOn: Bool
     out
   }
 
-  /** Expects for Vecs of DSPBits (bit representation) */
-  def expect[A <: DSPBits[A]](data: Vec[A], expected: Array[Int]): Boolean = expect(data,expected.map(BigInt(_)))
-  def expect[A <: DSPBits[A]](data: Vec[A], expected: Array[BigInt]):Boolean = expect(data,expected,"","")
-  def expect[A <: DSPBits[A]](data: Vec[A], expected: Array[BigInt], test: String, error: String): Boolean = {
+  /** Expects for Vecs of Bits (bit representation) */
+  def expect[A <: Bits](data: Vec[A], expected: Array[Int]): Boolean = expect(data,expected.map(BigInt(_)))
+  def expect[A <: Bits](data: Vec[A], expected: Array[BigInt]):Boolean = expect(data,expected,"","")
+  def expect[A <: Bits](data: Vec[A], expected: Array[BigInt], test: String, error: String): Boolean = {
     val (res,consolePeek) = peek(data,traceOn,true)
     val good = res.sameElements(expected)
     if (!good) {
@@ -284,34 +288,42 @@ class DSPTester[+T <: Module](c: T, var traceOn: Boolean = true, var hexOn: Bool
     val (good,tolerance) = checkDecimal(data,expected,dblVal,bitVal)
     if (!good) {
       if (!traceOn) println(consolePeek)
-      handleError(expected.toString,test,error + (if (!error.isEmpty) " " else "") + s"Tolerance = ${tolerance} LSBs")
+      handleError(expected.toString,test,error + (if (!error.isEmpty) " " else "") + s"Tolerance = ${tolerance}")
     }
     good
   }
 
   /** Check values with tolerance */
-  def checkDecimal(data: Bits, expected: Double, dblVal: Double, bitVal: BigInt): Tuple2[Boolean,Int] = {
+  def checkDecimal(data: Bits, expected: Double, dblVal: Double, bitVal: BigInt): Tuple2[Boolean,Double] = {
+    val fixTolBits = math.abs(DSPTester.fixTolBits)
+    val fixTolInt = DSPUInt.toMax(fixTolBits)
+    val floTolDec = math.abs(DSPTester.floTolDec)
+    // Error checking does a bad job of handling really small numbers,
+    // so let's just force the really small numbers to 0
+    val expected0 = if (math.abs(expected) < floTolDec/100) 0.0 else expected
+    val dblVal0 = if (math.abs(dblVal) < floTolDec/100) 0.0 else dblVal
     val expectedBits = data match {
-      case d1: Dbl => BigInt(doubleToLongBits(expected))
-      case d2: DSPDbl => BigInt(doubleToLongBits(expected))
-      case f0: Flo => BigInt(floatToIntBits(expected.floatValue))
-      case f1: Fixed => DSPFixed.toFixed(expected,f1.getFractionalWidth)
-      case f2: DSPFixed => DSPFixed.toFixed(expected,f2.getFracWidth)
+      case d1: Dbl => BigInt(doubleToLongBits(expected0))
+      case d2: DSPDbl => BigInt(doubleToLongBits(expected0))
+      case f0: Flo => BigInt(floatToIntBits(expected0.floatValue))
+      case f1: Fixed => DSPFixed.toFixed(expected0,f1.getFractionalWidth)
+      case f2: DSPFixed => DSPFixed.toFixed(expected0,f2.getFracWidth)
       case _ => Error("Node type should be *Dbl, *Fixed, or Flo for expect"); BigInt(0)
     }
     // Allow for some tolerance in error checking
-    val tolerance = math.abs(data match {
-      case _: Fixed | _: DSPFixed => DSPTester.fixTolLSB
-      case _ => DSPTester.floTolLSB
-    })
+    val (tolerance,tolDec) = data match {
+      case f1: Fixed => (fixTolInt,DSPFixed.toDouble(fixTolInt,f1.getFractionalWidth))
+      case f2: DSPFixed => (fixTolInt,DSPFixed.toDouble(fixTolInt,f2.getFracWidth))
+      case _ => (BigInt(doubleToLongBits(floTolDec)),floTolDec)
+    }
     val good = {
-      if (dblVal != expected) {
+      if (dblVal0 != expected0) {
         val gotDiff = (bitVal - expectedBits).abs
         (gotDiff <= tolerance)
       }
       else true
     }
-    (good,tolerance)
+    (good,tolDec)
   }
 
   /** Compare Complex */

@@ -15,23 +15,26 @@ abstract class GenDSPModule[T <: DSPQnm[T]](gen : => T, inputDelay:Int = 0, deco
   /** Converts a double value to a constant DSPFixed (using [intWidth,fracWidth] parameters)
     * or DSPDbl (ignoring parameters).
     */
-  def double2T[A <: DSPQnm[A]](x: Double, fixedParams: (Int,Int) = null): T = {
-    val default = (fixedParams == null)
+  def double2T[A <: DSPQnm[A]](x: Double, fixedParams: (Int,Int)): T = {
     val out = gen.asInstanceOf[A] match {
-      case f: DSPFixed => {
-        val intWidth = if (default) f.getIntWidth else fixedParams._1
-        val fracWidth = if (default) f.getFracWidth else fixedParams._2
-        DSPFixed(x, (intWidth,fracWidth))
-      }
+      case f: DSPFixed => DSPFixed(x, fixedParams)
       case d: DSPDbl => DSPDbl(x)
       case _ => gen.error("Illegal generic type. Should be either DSPDbl or DSPFixed.")
     }
     out.asInstanceOf[T] 
   }
   def double2T[A <: DSPQnm[A]](x: Double, fracWidth: Int): T = {
-    val fixed = DSPFixed.toFixed(x, fracWidth)
-    val intWidth = fixed.bitLength-fracWidth
-    double2T(x,(intWidth,fracWidth))
+    val out = gen.asInstanceOf[A] match {
+      case f: DSPFixed => DSPFixed(x, fracWidth)
+      case d: DSPDbl => DSPDbl(x)
+      case _ => gen.error("Illegal generic type. Should be either DSPDbl or DSPFixed.")
+    }
+    out.asInstanceOf[T]
+  }
+
+  // TODO: Change frac to gen.getFracWidth?
+  def double2T[A <: DSPQnm[A]](x: Double): T = {
+    double2T(x,Complex.getFrac)
   }
 
   /** Allows you to customize each T (DSPFixed or DSPDbl) for parameters like 

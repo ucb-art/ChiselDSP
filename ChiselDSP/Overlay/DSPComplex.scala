@@ -11,8 +11,8 @@ object Complex {
   /** Create a new Complex number: real + imag*i
     * @tparam T the type to represent the complex number with, eg DSPFixed, DSPDbl
     */
-  def apply[T <: DSPQnm[T]](real: T, imag: T) : Complex[T] = new Complex(real.cloneType, imag.cloneType)
-  def apply[T <: DSPQnm[T]](gen: => T) : Complex[T] = apply(gen,gen)
+  def apply[T <: DSPQnm[T]](real: T, imag: T) : Complex[T] = new Complex(real, imag)
+  def apply[T <: DSPQnm[T]](gen: => T) : Complex[T] = apply(gen.cloneType,gen.cloneType)
   
   /** Creates non-Chisel complex class if real, imag inputs are type Scala Double */
   def apply(real:Double, imag:Double) : ScalaComplex = new ScalaComplex(real, imag)

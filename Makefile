@@ -3,7 +3,7 @@
 # Project Name
 PRJ = FFT
 # True -> tests with fixed point, else tests with double precision floating point
-FIXED = true
+FIXED = false
 
 # Setup environment with 'make reset'
 reset:
@@ -35,7 +35,7 @@ setup:
 # Setup project templates
 prj:
 	make default; if [ -d "ChiselPrj${PRJ}" ]; then exit 1; fi ;\
-	mkdir -p ChiselPrj${PRJ}; mkdir -p Verilog${PRJ} ; \
+	mkdir -p ChiselPrj${PRJ}; \
 	cp -R ChiselDSP/Project/* ChiselPrj${PRJ}/. ; \
 	grep -rl '**IMPORTS' ChiselPrj${PRJ}/ | \
 	xargs sed -i '.old' -e '/**IMPORTS/ {' -e 'r ChiselPrj${PRJ}/imports.txt' -e 'd' -e '}' ;\
@@ -61,11 +61,15 @@ genmodule:
 	sed -i '.old' -e 's/C____/${MODNAME}/g' scala/${MODNAME}.scala ; \
 	find . -name "*.old" -type f -delete
 
-# Compile to Verilog
-vlsi:
-	cd Verilog${PRJ}; rm * ; cd .. ;\
+# Compile to ASIC Verilog
+asic:
 	make default; make link; \
-	cd ChiselProject ; rm vlsi/generated-src/*.v; make vlsi PRJ=${PRJ}
+	cd ChiselProject ; make asic PRJ=${PRJ}
+
+# Compile to FPGA Verilog
+fpga:
+	make default; make link; \
+	cd ChiselProject ; make fpga PRJ=${PRJ}
 
 # Run Chisel Debug (fixed or not should be specified)
 debug:

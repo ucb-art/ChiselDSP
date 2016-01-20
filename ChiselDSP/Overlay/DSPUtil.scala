@@ -25,34 +25,39 @@ object Trim {
 
 /** Register that keeps track of additional info */
 object Reg {
-  def apply [T <: Data](x: T, clock: Clock = null) : T = {
+  def apply [T <: Data](x: T): T = apply(x,null)
+  def apply [T <: Data](x: T, clock: Clock) : T = {
     val out = x match {
       case v: Vec[_] => Vec(v.map(apply(_,clock)))
       case t: DSPBits[_] => t.reg(clock)
       case c: Complex[_] => c.reg(clock)
-      case bn: BaseN => BaseN(bn.map(_.reg(clock)),bn.rad)
       case b: Bits => Chisel.Reg(x,x,null,clock)
       case _ => Error("Incompatible element type for Reg.")
     }
     out.asInstanceOf[T]
   }
+  def apply(x: BaseN): BaseN = apply(x,null)
+  def apply(x: BaseN, clock: Clock): BaseN = BaseN(x.map(_.reg(clock)),x.rad)
+
 }
 
 /** Pipe (x, n, [optional] en)
   * Delay all signals in x by n cycles (optional enable en)
   */
 object Pipe {
-  def apply[T <: Data](x: T, n: Int, en: DSPBool = DSPBool(true)): T = {
+  def apply[T <: Data](x: T, n: Int): T = apply(x,n,DSPBool(true))
+  def apply[T <: Data](x: T, n: Int, en: DSPBool): T = {
     val out = x match {
       case v: Vec[_] => Vec(v.map(apply(_, n, en)))
       case t: DSPBits[_] => t.pipe(n, en)
       case c: Complex[_] => c.pipe(n, en)
-      case bn: BaseN => BaseN(bn.map(_.pipe(n,en)),bn.rad)
       case b: Bits => {en.doNothing(); ShiftRegister(x,n,en.toBool)}
       case _ => Error("Incompatible element type for Pipe.")
     }
     out.asInstanceOf[T]
   }
+  def apply(x: BaseN, n: Int): BaseN = apply(x,n,DSPBool(true))
+  def apply(x: BaseN, n: Int, en: DSPBool): BaseN = BaseN(x.map(_.pipe(n,en)),x.rad)
 }
 
 //----------------------------------------------------

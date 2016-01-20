@@ -175,7 +175,7 @@ abstract class Counter(countParams: CountParams) extends DSPModule(inputDelay = 
   * oCtrl.change indicates if mod will wrap on the next cycle (count + inc > modVal)
   */
 object ModCounter{
-  def apply(countMax: Int, incMax: Int, inputDelay: Int = 0, nameExt: String = "") : Counter = {
+  def apply(countMax: Int, incMax: Int, inputDelay: Int = 0, nameExt: String = "") : ModCounter = {
     val countParams = CountParams(countMax = countMax, incMax = incMax, wrapCtrl = External,
                                   countType = UpMod, inputDelay = inputDelay)
     DSPModule(new ModCounter(countParams), nameExt)

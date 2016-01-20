@@ -1,5 +1,5 @@
-PRJ = BaseNExample
-FIXED = false
+PRJ = FFT
+FIXED = true
 BACKEND = v
 
 fpga:

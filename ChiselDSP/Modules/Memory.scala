@@ -21,8 +21,8 @@ class MemIO[T <: Data](gen : => T, depth: Int, conflictHandling: Boolean = true)
   * @param outReg is true when read output is delayed 1 clock cycle else false when the read is combinational
   * @tparam T
   */
-class Memory[T <: Data](gen : => T, depth: Int, outReg: Boolean = true, val conflictHandling: Boolean = true)
-      extends DSPModule {
+class Memory[T <: Data](gen : => T, depth: Int, outReg: Boolean = true, val conflictHandling: Boolean = true,
+                        inDelay: Int = 0) extends DSPModule(inputDelay = inDelay) {
 
   val delay = if (outReg) 1 else 0
 

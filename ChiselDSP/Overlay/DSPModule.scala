@@ -1,4 +1,5 @@
 /** Chisel Module Class Extension */
+// TODO: Might not need "flatten" in x.flatten.map (clean up?)
 
 package ChiselDSP
 import scala.collection.mutable.Stack

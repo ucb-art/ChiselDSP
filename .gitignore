@@ -3,6 +3,7 @@ ChiselPrj*/
 Verilog*/
 .nfs*
 !ChiselPrjDemo/
+!ChiselPrjBaseNExample/
 *.trc
 *.dmp
 *.phd

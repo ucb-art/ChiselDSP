@@ -25,7 +25,8 @@ object Trim {
 
 /** Register that keeps track of additional info */
 object Reg {
-  def apply [T <: Data](x: T, clock: Clock = null) : T = {
+  def apply [T <: Data](x: T): T = apply(x,null)
+  def apply [T <: Data](x: T, clock: Clock) : T = {
     val out = x match {
       case v: Vec[_] => Vec(v.map(apply(_,clock)))
       case t: DSPBits[_] => t.reg(clock)
@@ -35,13 +36,17 @@ object Reg {
     }
     out.asInstanceOf[T]
   }
+  def apply(x: BaseN): BaseN = apply(x,null)
+  def apply(x: BaseN, clock: Clock): BaseN = BaseN(x.map(_.reg(clock)),x.rad)
+
 }
 
 /** Pipe (x, n, [optional] en)
   * Delay all signals in x by n cycles (optional enable en)
   */
 object Pipe {
-  def apply[T <: Data](x: T, n: Int, en: DSPBool = DSPBool(true)): T = {
+  def apply[T <: Data](x: T, n: Int): T = apply(x,n,DSPBool(true))
+  def apply[T <: Data](x: T, n: Int, en: DSPBool): T = {
     val out = x match {
       case v: Vec[_] => Vec(v.map(apply(_, n, en)))
       case t: DSPBits[_] => t.pipe(n, en)
@@ -51,6 +56,8 @@ object Pipe {
     }
     out.asInstanceOf[T]
   }
+  def apply(x: BaseN, n: Int): BaseN = apply(x,n,DSPBool(true))
+  def apply(x: BaseN, n: Int, en: DSPBool): BaseN = BaseN(x.map(_.pipe(n,en)),x.rad)
 }
 
 //----------------------------------------------------
@@ -117,6 +124,10 @@ object Mux {
       case (tc: DSPUInt, fc: DSPUInt) => (fc ? !sel) /| (tc ? sel)
       case (tc: DSPFixed, fc: DSPFixed) => (fc ? !sel) /| (tc ? sel)
       case (tc: DSPDbl, fc: DSPDbl) => (fc ? !sel) /| (tc ? sel)
+      case (tc: BaseN, fc: BaseN) => {
+        tc.sameType(fc)
+        BaseN(tc.zip(fc).map{case (t,f) => Mux(sel,t,f)},tc.rad)
+      }
       case (_,_) => {Error("Unsupported mux type"); tc}
     }).asInstanceOf[T]
   }
@@ -127,6 +138,7 @@ object Mux {
   def apply (sel: Bool, tc: Flo, fc: Flo) : Flo = Chisel.Mux(sel,tc,fc)
   def apply (sel: Bool, tc: Dbl, fc: Dbl) : Dbl = Chisel.Mux(sel,tc,fc)
   def apply [T <: DSPQnm[T]] (sel: DSPBool, tc: Complex[T], fc: Complex[T]) : Complex[T] = (fc ? !sel) /| (tc ? sel)
+
 }
 
 /** Short [DSPUInt] Mod (x,n,[optional] dly)

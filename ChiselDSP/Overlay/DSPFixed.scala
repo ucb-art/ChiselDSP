@@ -46,6 +46,9 @@ object DSPFixed {
     createLit(litVal,x,fracWidth)
   }
   private[ChiselDSP] def apply(x: BigInt, fixedParams: (Int, Int)): DSPFixed = {
+    val supportedRange = toRange(paramsToWidth(fixedParams))
+    if ( x < supportedRange._1 || x > supportedRange._2)
+      Error("Constant can't be represented with integer width specified")
     val litVal = apply(NODIR, fixedParams)
     createLit(litVal,x,fixedParams._2)
   }

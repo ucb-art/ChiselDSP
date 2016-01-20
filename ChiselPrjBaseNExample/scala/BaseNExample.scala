@@ -38,11 +38,29 @@ class BaseNExample[T <: DSPQnm[T]](gen : => T) extends GenDSPModule (gen) {
   val t10 = BaseN(23,4,32).toRad42()
   debug(t10)
 
-  val x = DSPModule(new BaseNLUT(List(14,13),3))
+  val x = DSPModule(new BaseNLUT(List(17,13),3))
   x.io.addr := DSPUInt(0)
 
-  val t11 = x.io.dout.mask(DSPUInt(2))
+  val t11 = x.io.dout.maskWithMaxCheck(DSPUInt(2))._1
   debug(t11)
 
+  println("2048 " + BaseN.toIntList(2047,4))
+
+  val t12 = DSPUInt(13).toBools
+  debug(t12)
+
+  val t13 = BaseN(58,4,63).maskWithMaxCheck(DSPUInt(5))._1
+  val t14 = BaseN(58,4,63).maskWithMaxCheck(DSPUInt(5))._2
+  debug(t13)
+  debug(t14)
+
+  val t15 = DSPUInt(31,63).toBools
+  val t16 = t15.tail.foldLeft(t15.head.toUInt)((x,y) => Cat(x.toUInt,y.toUInt))
+  val t17 = t15.head
+  val t18 = BaseN(58,4,63)
+  val t19 = DSPBool(true)
+  debug(t16)
+  debug(t18)
+  debug(t19)
 
 }

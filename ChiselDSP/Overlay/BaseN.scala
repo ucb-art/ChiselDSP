@@ -18,6 +18,9 @@ object MixRad {
 
 object BaseN {
 
+  // Support a finite # of bases to make prime check, etc. easier
+  val supportedBases = List(List(2,4),List(3),List(5),List(7),List(11))
+
   // TODO: Possibly reverse toIntList (?) and subsequent to index 0 = least significant digit
   // always check x, r, etc. are positive
 
@@ -44,9 +47,10 @@ object BaseN {
   }
 
   /** Converts a constant into BaseN Vec representation (least significant digit indexed with 0) */
-  def apply(x: Int, r:Int, max:Int = -1): BaseN = {
+  def apply(x: Int, r:Int): BaseN = apply(x,r,-1)
+  def apply(x: Int, r:Int, max:Int): BaseN = {
     val temp = toDSPUIntList(x,r,max).reverse
-    new BaseN(i => temp.head.cloneType,temp,rad=r)
+    BaseN(temp,r)
   }
 
   // TODO: Check the concatenation preserves isLit
@@ -70,14 +74,19 @@ object BaseN {
     val numDigits = x.getWidth/digitWidth
     if (x.getWidth % digitWidth != 0) Error("# of bits should be a multiple of digit width")
     val temp = (0 until numDigits).map(i => DSPUInt(x((i+1)*digitWidth-1,i*digitWidth),r-1))
-    new BaseN(i => temp.head.cloneType,temp,rad=r)
+    BaseN(temp,r)
   }
 
   /** Create a new BaseN (to be assigned) specifying radix and max value */
   def apply(dir: IODirection, rad: Int, max: Int): BaseN = {
     val maxDigits = toIntList(max, rad).length
     val temp = (0 until maxDigits).map(i => DSPUInt(dir,rad-1))
-    new BaseN(i => temp.head.cloneType,temp,rad=rad)
+    BaseN(temp,rad)
+  }
+
+  /** Converts list, etc. of DSPUInts to BaseN */
+  def apply(elts: Iterable[DSPUInt], rad: Int): BaseN = {
+    new BaseN(i => elts.head.cloneType,elts,rad=rad)
   }
 
   // TODO: Vec, BaseN Vec to Bits
@@ -90,22 +99,30 @@ object BaseN {
 /** BaseN type extends Vec */
 class BaseN(gen: (Int) => DSPUInt, elts: Iterable[DSPUInt], val rad: Int) extends Vec(gen,elts){
 
+  if (!BaseN.supportedBases.flatten.contains(rad)) Error("Radix not supported!")
+
   val digitWidth = DSPUInt.toBitWidth(rad-1)
   val bitWidth = digitWidth*length
+
+  /** Check for same base + same digit length */
+  def sameType(b: BaseN): Unit = {
+    if (length != b.length) Error("BaseN Vec lengths must match!")
+    if (rad != b.rad) Error("Operation can only be performed when both values have the same base!")
+  }
 
   /** Helper function for handling radices that are powers of 2 */
   private def rad2NtoDSPUInt(): DSPUInt = {
     // TODO: Check Vec elements have the same delay, separate out 4^n1*2 case
     val max = DSPUInt.toMax(bitWidth)
-    val temp = reverse
-    val res = temp.tail.foldLeft(temp.head.toUInt)((x,y) => Cat(x,y))
+    foreach{_.doNothing()}
+    val res = tail.foldLeft(head.toUInt)((b,a) => Cat(a,b))
     val out = DSPUInt(res,max)
-    out.passDelay(temp.head,0)
+    out.passDelay(head,0)
   }
 
   /** Equality check */
   def === (b: BaseN): DSPBool = {
-    if (length != b.length) Error("BaseN Vec lengths must match!")
+    sameType(b)
     val eqs = (this, b).zipped.map( _ === _ )
     eqs.tail.foldLeft(eqs.head)(_ & _)
   }
@@ -118,7 +135,7 @@ class BaseN(gen: (Int) => DSPUInt, elts: Iterable[DSPUInt], val rad: Int) extend
 
   /** Sum (that always wraps) */
   def + (b: BaseN): BaseN = {
-    if (rad != b.rad) Error("The two signals being summed must use the same radix!")
+    sameType(b)
     // Any radix that is a power of 2 doesn't require mods (can rely on simple bit manipulation)
     if (rad % 2 == 0){
       // TODO: Handle + 1 Lit separately b/c BaseN doesn't track lits ? -- or make it track lits
@@ -141,7 +158,7 @@ class BaseN(gen: (Int) => DSPUInt, elts: Iterable[DSPUInt], val rad: Int) extend
       })
       // Get sum digits
       val res = resWithCarry.map(x => x._1)
-      new BaseN(i => res.head.cloneType,res,rad=rad)
+      BaseN(res,rad)
     }
   }
 
@@ -165,12 +182,53 @@ class BaseN(gen: (Int) => DSPUInt, elts: Iterable[DSPUInt], val rad: Int) extend
     out
   }
 
-  /** Only keep the lowest numDigits # of digits and zero out the rest (equivalent to taking a Mod) */
-  def mask(numDigits: DSPUInt): BaseN = {
-    val res = zipWithIndex.map{case (e,i) => {
-      Mux(numDigits > DSPUInt(i),e,DSPUInt(0,max = rad-1))
-    }}
-    new BaseN(i => res.head.cloneType,res,rad=rad)
+  // TODO: Handle Iterable[T], Vec[T] in addition to BaseN
+  /** Makes sure that reassignment only occurs when radices are the same */
+  def <> (src: BaseN) : Unit = {
+    sameType(src)
+    super.<>(src)
   }
+  def := (src: BaseN) : Unit = {
+    sameType(src)
+    super.:=(src)
+  }
+
+  /** Only keep the lowest numPrimeDigits # of (prime) digits and zero out the rest (equivalent to taking a Mod) */
+  def maskWithMaxCheck(numPrimeDigits: DSPUInt): Tuple2[BaseN,DSPBool] = {
+    if (rad %2 != 0 || rad == 2) {
+      val (modOut,maxOut) = zipWithIndex.map {
+        case (e,i) => {
+          val activeDigit = numPrimeDigits > DSPUInt(i)
+          val mod = Mux(activeDigit,e,DSPUInt(0,rad-1))
+          val max = Mux(activeDigit,DSPUInt(rad-1),DSPUInt(0,rad-1))
+          (mod,max)
+        }
+      }.unzip
+      val res = BaseN(modOut,rad)
+      val max = BaseN(maxOut,rad)
+      val eqMax = res === max
+      (res, eqMax)
+    }
+    else{
+      // Stylize radix-4 as radix-2
+      val intVal = rad2NtoDSPUInt.toBools
+      val temp = intVal.zipWithIndex.map {
+        case (e,i) => {
+          val activeDigit = (numPrimeDigits > DSPUInt(i)).toBool
+          val mod = Mux(activeDigit,e,Bool(false))
+          val max = Mux(activeDigit,Bool(true),Bool(false))
+          (mod.toUInt,max.toUInt)
+        }
+      }
+      val (modOut,maxOut) = temp.tail.foldLeft(temp.head)( (b,a) => (Cat(a._1,b._1),Cat(a._2,b._2)))
+      val eqMax = DSPBool(modOut === maxOut).passDelay(this.head,0)
+      val out = BaseN(DSPUInt(modOut,DSPUInt.toMax(bitWidth)),rad)
+      out.foreach{_.passDelay(head,0)}
+      (out,eqMax)
+    }
+  }
+
+  // TODO: For increments of 1, can check if the previous value was maxed by looking at ANDing all of the carry outs...,
+  // Also, the above Max Check will not work for [9,...,9,3], etc.
 
 }

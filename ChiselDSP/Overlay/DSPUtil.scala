@@ -30,6 +30,7 @@ object Reg {
       case v: Vec[_] => Vec(v.map(apply(_,clock)))
       case t: DSPBits[_] => t.reg(clock)
       case c: Complex[_] => c.reg(clock)
+      case bn: BaseN => BaseN(bn.map(_.reg(clock)),bn.rad)
       case b: Bits => Chisel.Reg(x,x,null,clock)
       case _ => Error("Incompatible element type for Reg.")
     }
@@ -46,6 +47,7 @@ object Pipe {
       case v: Vec[_] => Vec(v.map(apply(_, n, en)))
       case t: DSPBits[_] => t.pipe(n, en)
       case c: Complex[_] => c.pipe(n, en)
+      case bn: BaseN => BaseN(bn.map(_.pipe(n,en)),bn.rad)
       case b: Bits => {en.doNothing(); ShiftRegister(x,n,en.toBool)}
       case _ => Error("Incompatible element type for Pipe.")
     }
@@ -117,6 +119,10 @@ object Mux {
       case (tc: DSPUInt, fc: DSPUInt) => (fc ? !sel) /| (tc ? sel)
       case (tc: DSPFixed, fc: DSPFixed) => (fc ? !sel) /| (tc ? sel)
       case (tc: DSPDbl, fc: DSPDbl) => (fc ? !sel) /| (tc ? sel)
+      case (tc: BaseN, fc: BaseN) => {
+        tc.sameType(fc)
+        BaseN(tc.zip(fc).map{case (t,f) => Mux(sel,t,f)},tc.rad)
+      }
       case (_,_) => {Error("Unsupported mux type"); tc}
     }).asInstanceOf[T]
   }
@@ -127,6 +133,7 @@ object Mux {
   def apply (sel: Bool, tc: Flo, fc: Flo) : Flo = Chisel.Mux(sel,tc,fc)
   def apply (sel: Bool, tc: Dbl, fc: Dbl) : Dbl = Chisel.Mux(sel,tc,fc)
   def apply [T <: DSPQnm[T]] (sel: DSPBool, tc: Complex[T], fc: Complex[T]) : Complex[T] = (fc ? !sel) /| (tc ? sel)
+
 }
 
 /** Short [DSPUInt] Mod (x,n,[optional] dly)

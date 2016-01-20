@@ -19,5 +19,13 @@ class BaseNExampleTests[T <: BaseNExample[_ <: DSPQnm[_]]](c: T) extends DSPTest
   peek(c.t10)
   peek(c.x.io.dout)
   peek(c.t11)
+  peek(c.t12)
+  peek(c.t13)
+  peek(c.t14)
+  peek(c.t15)
+  peek(c.t16)
+  peek(c.t17)
+  peek(c.t18)
+  peek(c.t19)
 
 }

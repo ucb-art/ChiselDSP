@@ -288,6 +288,7 @@ abstract class DSPBits [T <: DSPBits[T]] extends Bits {
     res.asInstanceOf[T]
   }
 
+  // TODO: Lit handling?
   /** Equality check */
   def === (b: T): DSPBool = {
     val out = DSPBool(this.toBits === b.toBits)

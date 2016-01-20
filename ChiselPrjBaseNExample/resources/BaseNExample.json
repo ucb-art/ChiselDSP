@@ -1,0 +1,12 @@
+{
+  "complex":{
+    "intBits":1,
+    "fracBits":14,
+    "use4Muls":true,
+    "mulPipe":3,
+    "addPipe":0.3,
+    "trimType":"Truncate",
+    "overflowType":"Wrap",
+    "mulFracGrowth":1
+  }
+}

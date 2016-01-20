@@ -41,6 +41,6 @@ class DSPMem[T <: Data](n: Int, out: T, outReg: Boolean) extends Mem[T](() => ou
     doWrite(addr.toUInt, en.toBool, dataIn, None)
   }
   def write(addr: DSPUInt, dataIn: T): Unit = write(addr,dataIn,DSPBool(true))
-  override def write(addr: UInt, dataIn: T): Unit = {Error("Write address should be of type DSPUInt"); out}
+  override def write(addr: UInt, dataIn: T): Unit = Error("Write address should be of type DSPUInt")
 
 }

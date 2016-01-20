@@ -18,9 +18,17 @@ object DSPUInt {
   }
 
   /** Creates a DSPUInt object from a constant BigInt (or Int casted to BigInt) */
-  def apply(x: BigInt): DSPUInt = {
-    val range = (x,x)
-    val res = Lit(x, toBitWidth(x)){apply(NODIR, range)}
+  def apply(x: BigInt): DSPUInt = createLit(x,(x,x))
+
+  /** Creates a DSPUInt object from a constant BigInt (or Int casted to BigInt) with padded bits based off of max*/
+  def apply(x: BigInt, max: BigInt): DSPUInt = {
+    if (x > max || x < 0) Error("Constant must be between [0,max]")
+    createLit(x, (0,max))
+  }
+
+  private def createLit(x: BigInt, range: => (BigInt,BigInt)): DSPUInt = {
+    val litVal = apply(NODIR,range)
+    val res = Lit(x, litVal.getWidth) {litVal}
     res.asDirectionless
     res.updateLimits(range)
     res.assign()

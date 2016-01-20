@@ -23,8 +23,10 @@ object DSPTester {
   private[ChiselDSP] var failedTests = Array.empty[String]
 }
 class DSPTester[+T <: Module](c: T, var traceOn: Boolean = true, var hexOn: Boolean = true,
-                              var quitOnError: Boolean = false)
-                              extends Tester(c, false, 16){
+                              var quitOnError: Boolean = false, var base: Int = 16)
+                              extends Tester(c, false, base){
+
+  // TODO: Support alternative bases (besides hex)
 
   /** Show/hide tester console outputs */
   def show(){traceOn = true}
@@ -89,6 +91,7 @@ class DSPTester[+T <: Module](c: T, var traceOn: Boolean = true, var hexOn: Bool
     if (disp) println(msg)
     (res,msg)
   }
+  // TODO: Peek BaseN should reverse the order (0 is least significant digit, but should be on the right)
 
   /** Cluster some peek-specific processing */
   private def peekInit(data: Bits, peek: Boolean): Tuple2[BigInt,String] = {

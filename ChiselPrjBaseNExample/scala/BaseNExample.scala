@@ -63,4 +63,8 @@ class BaseNExample[T <: DSPQnm[T]](gen : => T) extends GenDSPModule (gen) {
   debug(t18)
   debug(t19)
 
+  val arr2D = List(List(1,32,7),List(4,2,15))
+  val lut = DSPModule(new IntLUT2D(arr2D))
+  lut.io.addr := DSPUInt(1)
+
 }

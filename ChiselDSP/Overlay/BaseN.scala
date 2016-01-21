@@ -99,6 +99,9 @@ object BaseN {
 /** BaseN type extends Vec */
 class BaseN(gen: (Int) => DSPUInt, elts: Iterable[DSPUInt], val rad: Int) extends Vec(gen,elts){
 
+  /** Clone type ! */
+  override def cloneType: this.type = BaseN(elts.map(x => x.cloneType),rad).asInstanceOf[this.type]
+
   if (!BaseN.supportedBases.flatten.contains(rad)) Error("Radix not supported!")
 
   val digitWidth = DSPUInt.toBitWidth(rad-1)
@@ -163,9 +166,9 @@ class BaseN(gen: (Int) => DSPUInt, elts: Iterable[DSPUInt], val rad: Int) extend
   }
 
   // TODO: More generic than 4,2 (i.e. can be 8,4,2) -- rad % 2 == 0 && rad != 2
-  // Also, should return MixedRad rather than Vec
+  // Also, should return MixedRad (?) rather than BaseN
   /** Converts Base 4 to Mixed Radix Base [4,...,4,2] with least significant base (2) indexed @ 0 */
-  def toRad42(): Vec[DSPUInt] = {
+  def toRad42(): BaseN = {
     if (rad != 4) Error("Conversion to mixed radix [4,...,4,2] requires that the input BaseN rad = 4")
     val intVal = rad2NtoDSPUInt
     // Special case for separating out radix 2
@@ -174,9 +177,11 @@ class BaseN(gen: (Int) => DSPUInt, elts: Iterable[DSPUInt], val rad: Int) extend
     val w = if (rad4Int.getWidth % 2 != 0) rad4Int.getWidth + 1 else rad4Int.getWidth
     val rad4IntPadded = DSPUInt(rad4Int,DSPUInt.toMax(w))
     val rad4s = BaseN(rad4IntPadded,rad)
-    // Break out radix 2
-    val rad2 = DSPUInt(intVal(0),1)
-    val out = Vec(rad2 :: rad4s.toList)
+    // Break out radix 2 (keep same width for Mux, etc. consistency)
+    val rad2 = DSPUInt(intVal(0),rad-1)
+    // Note: want to keep the same digit length
+    val out = BaseN(rad2 :: rad4s.toList.init,rad = rad)
+    if (out.length != length) Error("Conversion output should have the same # of digits")
     // TODO: Check delay for each element
     out.foreach{_.passDelay(head,0)}
     out
@@ -226,6 +231,14 @@ class BaseN(gen: (Int) => DSPUInt, elts: Iterable[DSPUInt], val rad: Int) extend
       out.foreach{_.passDelay(head,0)}
       (out,eqMax)
     }
+  }
+
+  /** Pad Base N representation to numDigits # of digits */
+  def padTo(numDigits: Int): BaseN = {
+    val padLength = (numDigits-length).max(0)
+    val pad = Vec(padLength,DSPUInt(0,max = rad-1))
+    // Least significant digit indexed by 0
+    BaseN(this ++ pad,rad = rad)
   }
 
   // TODO: For increments of 1, can check if the previous value was maxed by looking at ANDing all of the carry outs...,

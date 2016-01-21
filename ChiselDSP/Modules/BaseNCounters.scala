@@ -34,7 +34,7 @@ class BaseNCountCtrl (p: BaseNCountParams) extends IOBundle {
   val wrap = if (p.externalWrap) Some(DSPBool(INPUT)) else None
 }
 
-/** Counterc that accumulates in Base N notation */
+/** Counter that accumulates in Base N notation */
 abstract class BaseNCounter (p: BaseNCountParams) extends DSPModule (inputDelay = p.inDelay) {
 
   override val io = new BaseNCountIO(p)

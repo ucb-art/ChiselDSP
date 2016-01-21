@@ -27,8 +27,13 @@ object BaseN {
   /** Converts a decimal representation of the number x into a List of
     * Ints representing the base-r interpretation of x (least significant digit on the right)
     */
-  def toIntList(x: Int, r: Int): List[Int] = {
+  private def toIntListInternal(x: Int, r: Int): List[Int] = {
     if (x == 0) Nil else toIntList(x / r, r) :+ (x % r)
+  }
+  def toIntList(x: Int, r:Int): List[Int] = {
+    val temp = toIntListInternal(x,r)
+    // Should return non-empty list
+    if (temp.isEmpty) List(0) else temp
   }
   /** Zero pads List[Int] base-r representation */
   def toIntList(x: Int, r:Int, max:Int): List[Int] = {
@@ -62,7 +67,11 @@ object BaseN {
   def toBits(x: Int, r:Int, max:Int = -1): Bits = {
     val digitWidth = DSPUInt.toBitWidth(r-1)
     val digits = toDSPUIntList(x,r,max).map(x => x.litValue())
-    val lit = digits.tail.foldLeft(digits.head)((x,y) => (x << digitWidth) + y)
+    val lit = {
+      if (digits.length > 1)
+        digits.tail.foldLeft(digits.head)((x,y) => (x << digitWidth) + y)
+      else digits.head
+    }
     UInt(lit,width=digits.length*digitWidth)
   }
 

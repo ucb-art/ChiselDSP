@@ -28,13 +28,16 @@ object BaseN {
     * Ints representing the base-r interpretation of x (least significant digit on the right)
     */
   private def toIntListInternal(x: Int, r: Int): List[Int] = {
-    if (x == 0) Nil else toIntList(x / r, r) :+ (x % r)
+    if (x == 0) Nil else toIntListInternal(x / r, r) :+ (x % r)
   }
   def toIntList(x: Int, r:Int): List[Int] = {
     val temp = toIntListInternal(x,r)
     // Should return non-empty list
     if (temp.isEmpty) List(0) else temp
   }
+  /** Returns # of Base N digits needed to represent the number */
+  def numDigits(x: Int, r:Int): Int = toIntListInternal(x,r).length
+
   /** Zero pads List[Int] base-r representation */
   def toIntList(x: Int, r:Int, max:Int): List[Int] = {
     val intList = toIntList(x,r)

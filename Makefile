@@ -61,15 +61,25 @@ genmodule:
 	sed -i '.old' -e 's/C____/${MODNAME}/g' scala/${MODNAME}.scala ; \
 	find . -name "*.old" -type f -delete
 
+# Generate memory
+memgen:
+	cd Verilog${PRJ}/fpga && \
+    if [ -a ${PRJ}_0.conf ]; then \
+    	sed -i '' -e 's*^*../../VLSIHelpers/vlsi_mem_gen *' ${PRJ}_0.conf && \
+    	sed -i '' -e 's*$$* >> ${PRJ}_0.v*' ${PRJ}_0.conf && \
+   		sh ${PRJ}_0.conf ; \
+   	fi
+
+# TODO: swap back fpga/asic
 # Compile to ASIC Verilog
 asic:
 	make default; make link; \
-	cd ChiselProject ; make asic PRJ=${PRJ}
+	cd ChiselProject ; make fpga PRJ=${PRJ}; cd .. ; make memgen PRJ=${PRJ}
 
 # Compile to FPGA Verilog
 fpga:
 	make default; make link; \
-	cd ChiselProject ; make fpga PRJ=${PRJ}
+	cd ChiselProject ; make asic PRJ=${PRJ}
 
 # Run Chisel Debug (fixed or not should be specified)
 debug:

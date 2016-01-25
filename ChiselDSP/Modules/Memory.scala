@@ -19,24 +19,47 @@ class MemIO[T <: Data](gen : => T, depth: Int, conflictHandling: Boolean = true)
   * @param gen is the type of data stored in memory
   * @param depth is the depth of the memory
   * @param outReg is true when read output is delayed 1 clock cycle else false when the read is combinational
+  * @param seqRead is trea when the read address is delayed 1 clock cycle
   * @tparam T
   */
-class Memory[T <: Data](gen : => T, depth: Int, outReg: Boolean = true, val conflictHandling: Boolean = true,
+class Memory[T <: Data](gen : => T, depth: Int, outReg: Boolean = true, seqRead: Boolean = false,
+                        val conflictHandling: Boolean = true,
                         inDelay: Int = 0) extends DSPModule(inputDelay = inDelay) {
 
-  val delay = if (outReg) 1 else 0
+  val preDly = (if (seqRead) 1 else 0)
+  val postDly = (if (outReg) 1 else 0)
+  val delay = preDly + postDly
 
-  override val io = new MemIO(gen,depth,conflictHandling)
-  val mem = DSPMem(depth,gen,outReg)
-  // Output is registered if outReg is true
-  val dOut = mem.read(io.rAddr)
-  // Sequential write with enable
-  mem.write(io.wAddr, io.dIn, io.WE)
+  override val io = new MemIO(gen, depth, conflictHandling)
+
+  val (dOut,wAddr,dIn,we) = {
+    if (!seqRead) {
+      // Out last by either 0 or 1 clock
+      val mem = DSPMem(depth, gen, outReg)
+      // Sequential write with enable
+      mem.write(io.wAddr, io.dIn, io.WE)
+      // Output is registered if outReg is true
+      val out = mem.read(io.rAddr)
+      (out,io.wAddr,io.dIn,io.WE)
+    }
+    else {
+      // TODO: Make custom SeqMem that passes delay, range, etc.
+      // Out late by 1 or 2 clocks
+      val mem = SeqMem(depth, gen)
+      val wAddrNew = io.wAddr.pipe(1)
+      val dInNew = Pipe(io.dIn,1)
+      val WENew = io.WE.pipe(1)
+      mem.doWrite(wAddrNew.toUInt,WENew.toBool,dInNew,None)
+      val temp = mem.read(io.rAddr.toUInt)
+      val out = if (outReg) Pipe(temp,1) else temp
+      (out,wAddrNew,dInNew,WENew)
+    }
+  }
 
   // Conflict handling for sequential read where passThrough = whether to pass write data to
   // read out on the next clock cycle if write and read addresses are the same.
-  val inDly = Pipe(io.dIn,delay)
-  val reroute = ((io.rAddr === io.wAddr) & io.WE & io.passThrough.getOrElse(DSPBool(false))).pipe(delay)
-  io.dOut := Mux(reroute,inDly,dOut)
+  val inDly = Pipe(dIn,postDly)
+  val reroute = ((wAddr === io.rAddr.pipe(preDly)) & we & io.passThrough.getOrElse(DSPBool(false)).pipe(preDly))
+  io.dOut := Mux(reroute.pipe(postDly),inDly,dOut)
 
 }

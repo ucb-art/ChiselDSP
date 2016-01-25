@@ -27,6 +27,7 @@ class DSPTester[+T <: Module](c: T, var traceOn: Boolean = true, var hexOn: Bool
                               extends Tester(c, false, base){
 
   // TODO: Support alternative bases (besides hex)
+  // TODO: Error if method argument = false (i.e. comparing two peeked results)
 
   /** Show/hide tester console outputs */
   def show(){traceOn = true}

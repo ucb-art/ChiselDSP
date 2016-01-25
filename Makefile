@@ -15,7 +15,7 @@ clean:
 	find . -name "javacore*" -type f -delete ;\
 	find . -name "*.trc" -type f -delete ;\
 	find . -name "*.dmp" -type f -delete ;\
-	cd ChiselProject; make clean ;\
+	cd ChiselProject; rm -f sbt/generator_out.json; make clean ;\
 	rm -rf target
 
 # Remove all project environment files

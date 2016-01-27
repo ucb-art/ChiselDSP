@@ -38,8 +38,8 @@ prj:
 	mkdir -p ChiselPrj${PRJ}; \
 	cp -R ChiselDSP/Project/* ChiselPrj${PRJ}/. ; \
 	grep -rl '**IMPORTS' ChiselPrj${PRJ}/ | \
-	xargs sed -i '.old' -e '/**IMPORTS/ {' -e 'r ChiselPrj${PRJ}/imports.txt' -e 'd' -e '}' ;\
-	grep -rl 'T____' ChiselPrj${PRJ}/ | xargs sed -i '.old' -e 's/T____/${PRJ}/g' ; \
+	xargs sed -i'.old' -e '/**IMPORTS/ {' -e 'r ChiselPrj${PRJ}/imports.txt' -e 'd' -e '}' ;\
+	grep -rl 'T____' ChiselPrj${PRJ}/ | xargs sed -i'.old' -e 's/T____/${PRJ}/g' ; \
 	cd ChiselPrj${PRJ} ; mv resources/T____.json resources/${PRJ}.json ; mv scala/T____.scala scala/${PRJ}.scala ; \
 	mv scala/T____Tester.scala scala/${PRJ}Tester.scala ; \
 	cd ..; find . -name "*.old" -type f -delete
@@ -51,22 +51,22 @@ MODNAME = XXX
 module:
 	make default; if [ -f "ChiselPrj${PRJ}/scala/${MODNAME}.scala" ]; then exit 1; fi ;\
 	cd ChiselPrj${PRJ}; cp templates/S____.scala scala/${MODNAME}.scala ; \
-	sed -i '.old' -e 's/S____/${MODNAME}/g' scala/${MODNAME}.scala ; \
+	sed -i'.old' -e 's/S____/${MODNAME}/g' scala/${MODNAME}.scala ; \
 	find . -name "*.old" -type f -delete
 
 # Make creating new generic module files easier (to support float/fixed)
 genmodule:
 	make default; if [ -f "ChiselPrj${PRJ}/scala/${MODNAME}.scala" ]; then exit 1; fi ;\
 	cd ChiselPrj${PRJ}; cp templates/C____.scala scala/${MODNAME}.scala ; \
-	sed -i '.old' -e 's/C____/${MODNAME}/g' scala/${MODNAME}.scala ; \
+	sed -i'.old' -e 's/C____/${MODNAME}/g' scala/${MODNAME}.scala ; \
 	find . -name "*.old" -type f -delete
 
 # Generate memory
 memgen:
 	cd Verilog${PRJ}/fpga && \
     if [ -a ${PRJ}_0.conf ]; then \
-    	sed -i '' -e 's*^*../../VLSIHelpers/vlsi_mem_gen *' ${PRJ}_0.conf && \
-    	sed -i '' -e 's*$$* >> ${PRJ}_0.v*' ${PRJ}_0.conf && \
+    	sed -i'' -e 's*^*../../VLSIHelpers/vlsi_mem_gen *' ${PRJ}_0.conf && \
+    	sed -i'' -e 's*$$* >> ${PRJ}_0.v*' ${PRJ}_0.conf && \
    		sh ${PRJ}_0.conf ; \
    	fi
 
@@ -87,10 +87,10 @@ debug:
 	cd ChiselProject ; make debug PRJ=${PRJ} FIXED=${FIXED}
 	
 default:
-	sed -i '.old' -e 's/^FIXED = .*/FIXED = ${FIXED}/g' Makefile; \
-	sed -i '.old' -e 's/^FIXED = .*/FIXED = ${FIXED}/g' ChiselProject/Makefile; \
-	sed -i '.old' -e 's/^PRJ = .*/PRJ = ${PRJ}/g' Makefile; \
-	sed -i '.old' -e 's/^PRJ = .*/PRJ = ${PRJ}/g' ChiselProject/Makefile; find . -name "*.old" -type f -delete
+	sed -i'.old' -e 's/^FIXED = .*/FIXED = ${FIXED}/g' Makefile; \
+	sed -i'.old' -e 's/^FIXED = .*/FIXED = ${FIXED}/g' ChiselProject/Makefile; \
+	sed -i'.old' -e 's/^PRJ = .*/PRJ = ${PRJ}/g' Makefile; \
+	sed -i'.old' -e 's/^PRJ = .*/PRJ = ${PRJ}/g' ChiselProject/Makefile; find . -name "*.old" -type f -delete
 
 link:
 	cd ChiselProject/sbt/src/main; rm -f scala; ln -s ../../../../ChiselPrj${PRJ}/scala/ scala; \

@@ -1,4 +1,4 @@
-PRJ = FFT
+PRJ = Demo
 FIXED = false
 BACKEND = v
 

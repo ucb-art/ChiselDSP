@@ -1,4 +1,4 @@
-PRJ = FFT
+PRJ = BaseNExample
 FIXED = false
 BACKEND = v
 

@@ -413,13 +413,14 @@ class DSPFixed (private var fractionalWidth:Int = 0)  extends DSPQnm[DSPFixed] {
       val truncated = this $ n
       val roundingBit = this(truncateAmount-1)
       // Possible overflow
-      val resShort =  truncated.toUInt + roundingBit.toUInt
+      val resShort =  Cat(Bits(0,1),truncated) + roundingBit
       val newRange = (truncated.getRange.min-1,truncated.getRange.max+1)
       val out = fromSInt(resShort.toSInt,n,newRange)
       out.updateGeneric(this)
     }
   }
 
+  // TODO: When rounding up from 3.8 to 4, it overflows
   /** Gets integer portion of DSPFixed. Optional rounding mode. */
   def toInt(r: TrimType): DSPFixed = {
     if (r == Truncate) this $ 0

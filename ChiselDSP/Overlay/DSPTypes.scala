@@ -25,9 +25,9 @@ abstract class DSPQnm[T <: DSPBits[T]] extends DSPNum[T] {
   def $ (n: Int) = this.asInstanceOf[T]
   /** Round to n bits */
   def $$ (n: Int, of: OverflowType) = this.asInstanceOf[T]
-  def $$ (n: Int) : T = this $$ (n, of = Wrap)
+  def $$ (n: Int) : T = this $$ (n, of = Complex.opts.overflowType)
   /** Get integer portion as DSPFixed */
-  def toInt(): DSPFixed = toInt(r = Truncate)
+  def toInt(): DSPFixed = toInt(r = Complex.opts.trimType)
   def toInt(r: TrimType): DSPFixed
 
   def Q : String

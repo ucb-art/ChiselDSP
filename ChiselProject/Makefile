@@ -1,4 +1,4 @@
-PRJ = Demo
+PRJ = BaseNExample
 FIXED = false
 BACKEND = v
 

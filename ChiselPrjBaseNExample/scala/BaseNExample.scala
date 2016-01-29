@@ -54,8 +54,9 @@ class BaseNExample[T <: DSPQnm[T]](gen : => T) extends GenDSPModule (gen) {
   debug(t13)
   debug(t14)
 
-  val abc = DSPModule(new IntLUT2Bools(List(5,17),0))
-  abc.io.addr := DSPUInt(1)
+  val abc = DSPModule(new IntLUT2Bools(List(5,17),2))
+  abc.io.addr(0) := DSPUInt(1)
+  abc.io.addr(1) := DSPUInt(0)
 
   val t15 = DSPUInt(31,63).toBools
   val t16 = t15.tail.foldLeft(t15.head.toUInt)((x,y) => Cat(x.toUInt,y.toUInt))
@@ -69,6 +70,7 @@ class BaseNExample[T <: DSPQnm[T]](gen : => T) extends GenDSPModule (gen) {
   val arr2D = List(List(1,32,7),List(4,2,15))
   val lut = DSPModule(new IntLUT2D(arr2D))
   lut.io.addr := DSPUInt(1)
+
 
   val tx = DSPFixed(3.8,15).toInt(Round)
   debug(tx)

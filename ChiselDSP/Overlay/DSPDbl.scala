@@ -23,6 +23,12 @@ object DSPDbl {
     res.init("", fixWidth(64))
     res
   }
+
+  /** Creates a DSPDbl object from a set of bits */
+  def apply(x: Bits): DSPDbl = {
+    val res = chiselCast(x){DSPDbl(x.dir)}
+    res.assign()
+  }
   
 }
 
@@ -35,10 +41,7 @@ class DSPDbl extends DSPQnm[DSPDbl] {
   }
 
   /** Convert Bits to a DSPDbl by reinterpreting the Bits */
-  private def toT(x: Bits) : DSPDbl = {
-    val res = chiselCast(x){DSPDbl(x.dir)}
-    res.assign()
-  }
+  private def toT(x: Bits) : DSPDbl = DSPDbl(x)
 
   /** For converting inputs to Dbl */
   protected def dbl() : Dbl = chiselCast(this){Dbl(this.dir)}

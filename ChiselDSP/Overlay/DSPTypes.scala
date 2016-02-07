@@ -104,7 +104,10 @@ abstract class DSPBits [T <: DSPBits[T]] extends Bits {
   def infoString(): String = (getWidth + " bits")
 
   /** Info associated with signal, initialize tracked signal pipe delay on a per module basis */
-  private var info = Info(dly = Module.current.asInstanceOf[DSPModule].inputDelay)
+  private var info = Info(dly = Module.current match {
+    case m : DSPModule => m.inputDelay
+    case _ => 0
+  })
 
   /** Marks the signal as being used to prevent invalid future updates */
   final protected def use() {info.isUsed = true} 

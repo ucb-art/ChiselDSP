@@ -9,7 +9,7 @@
     "overflowType":"Wrap",
     "mulFracGrowth":1
   },
-  "demoXXX":{
+  "demo":{
     "QAMn":[2,4,16,64,256],
     "frameSizes":[128,256,512,1024,2048],
     "softDemod":true

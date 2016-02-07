@@ -26,6 +26,7 @@ class DemoIO(p:DemoParams) extends IOBundle {
   val b0 = Bits(INPUT,width=5)
   val b1 = Bool(INPUT)
   val u1 = UInt(INPUT,width=5)
+  val u3 = UInt(INPUT,width=5)
   val s1 = SInt(INPUT,width=5)
   val s2 = DSPSInt(INPUT,(-3,3))
   val f1 = Fixed(INPUT,width = 17, fracWidth = 15)  // width = int width + frac width + 1 (sign)
@@ -226,6 +227,11 @@ class Demo [T <: DSPQnm[T]](gen : => T, p: DemoParams) extends GenDSPModule (gen
   debug(comp2)
   testIO.genT := Trim(comp,Complex.getFrac,tType = Truncate)
 
+  val asdf = UInt(OUTPUT,width=5)
+  asdf := i.u1
+  asdf := i.u3
+  debug(asdf)
+
 }
 
 /** Composition of your generator parameters (with default values!) */
@@ -316,5 +322,6 @@ class DemoTests[T <: Demo[_ <: DSPQnm[_]]](c: T) extends DSPTester(c) {
   peek(c.comp)
   peek(c.testIO.genT)
   peek(c.comp2)
+  peek(c.asdf)
 
 }

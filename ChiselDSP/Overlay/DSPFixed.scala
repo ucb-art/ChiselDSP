@@ -151,7 +151,12 @@ class DSPFixed (private var fractionalWidth:Int = 0)  extends DSPQnm[DSPFixed] {
   /** Clone this instantiation */
   override def cloneType: this.type = {
     val out = DSPFixed(dir,(getIntWidth,getFracWidth))
+    // TODO: Maybe should just copy delay? (see below cloneType)
     out.copyInfo(this).asInstanceOf[this.type]
+  }
+  override def cloneType(fixedParams:(Int,Int)): this.type = {
+    val out = DSPFixed(dir,fixedParams)
+    out.passDelay(this).asInstanceOf[this.type]
   }
 
   /** Convert SInt to a DSPFixed by reinterpreting the Bits */
@@ -565,6 +570,12 @@ class DSPFixed (private var fractionalWidth:Int = 0)  extends DSPQnm[DSPFixed] {
       }
     }
     out.pass2to1(this,b)
+  }
+
+  /** Restrict range of input */
+  def clamp(max:Double): DSPFixed = clamp(DSPFixed(max,getFracWidth))
+  def clamp (range: => (Double,Double)): DSPFixed = {
+    clamp((DSPFixed(range._1,getFracWidth),DSPFixed(range._2,getFracWidth)))
   }
 
 }

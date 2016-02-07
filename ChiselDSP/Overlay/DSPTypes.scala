@@ -5,6 +5,8 @@ package ChiselDSP
 import Chisel._
 import scala.collection.mutable.Map
 
+// TODO: Force delay values?
+
 /** User override for whether to check delay */
 object CheckDelay {
   private var check = true
@@ -31,10 +33,29 @@ abstract class DSPQnm[T <: DSPBits[T]] extends DSPNum[T] {
   def toInt(r: TrimType): DSPFixed
 
   def Q : String
+
+  /** Allows type to be cloned, but with different fixedParams (only for DSPFixed) */
+  def cloneType(fixedParams:(Int,Int)): this.type = cloneType
+
+  /** Restrict range of input */
+  def clamp(max:Double): T
+  def clamp (range: => (Double,Double)): T
+
 }
 
 /** Allow numeric operations */
 abstract class DSPNum[T <: DSPBits[T]] extends DSPBits[T] {
+
+  /** Force to be in range */
+  def clamp(max: T): T = {
+    val clampCond = this > max
+    Mux(clampCond,max,this.asInstanceOf[T])
+  }
+  def clamp (range: (T,T)): T = {
+    val thisOrMax = clamp(range._2)
+    val clampCond = this < range._1
+    Mux(clampCond,range._1,thisOrMax)
+  }
 
   /** Don't allow non-2^n divides (not synthesizable on FPGA -- designer should think carefully!) */
   private[ChiselDSP] def /  (b: T): T = error("/ not allowed.").asInstanceOf[T]
@@ -342,5 +363,10 @@ abstract class DSPBits [T <: DSPBits[T]] extends Bits {
   }
 
   // TODO: Check bundle := passes params properly
+
+  /** Print more informative stack trace when there is an illegal assignment */
+  override protected def illegalAssignment(that: Any): Unit = {
+    Error(":= not defined on L " + this.getClass + " and R " + that.getClass)
+  }
 
 }

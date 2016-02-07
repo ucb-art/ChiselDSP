@@ -380,6 +380,11 @@ class DSPUInt extends DSPNum[DSPUInt] {
     val out = toT(this,List2Tuple(getRange),(newMin,newMax)) 
     out.updateGeneric(this) 
   }
+  def shorten(newRange: (BigInt,BigInt)): DSPUInt = {
+    val out = toT(this,List2Tuple(getRange),newRange)
+    out.updateGeneric(this)
+  }
+  def shorten(newRange: => (Int,Int)): DSPUInt = shorten(BigInt(newRange._1),BigInt(newRange._2))
 
   /** Lengthen # of bits by setting larger maximum */
   def lengthen(newMax: BigInt): DSPUInt = {
@@ -387,5 +392,9 @@ class DSPUInt extends DSPNum[DSPUInt] {
     val out = toT(this,(getRange.min,newMax))
     out.updateGeneric(this)
   }
-  
+
+  /** Restrict range of input */
+  def clamp(max:Int): DSPUInt = clamp(DSPUInt(max))
+  def clamp (range: => (Int,Int)): DSPUInt = clamp((DSPUInt(range._1),DSPUInt(range._2)))
+
 }

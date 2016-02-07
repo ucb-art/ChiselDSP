@@ -1,5 +1,5 @@
 PRJ = Demo
-FIXED = false
+FIXED = true
 BACKEND = v
 
 fpga:

@@ -58,14 +58,19 @@ object Init {
   def apply [T <: JSONParams, S <: CustomSerializer[_]](gen : => T, jsonName: String, args: Array[String],
                                                         ser: List[S])
                                                        (implicit m: Manifest[T]) : Tuple2[Boolean,T] = {
-    val jsonContents = scala.io.Source.fromFile("src/main/resources/" + jsonName + ".json").getLines.mkString
-    val json = parse(jsonContents)
-    Status("User parameters: " + pretty(render(json)))
+    try {
+      val jsonContents = scala.io.Source.fromFile("src/main/resources/" + jsonName + ".json").getLines.mkString
+      val json = parse(jsonContents)
+      Status("User parameters: " + pretty(render(json)))
 
-    // How to serialize JSON
-    implicit val formats = DefaultFormats ++ List(TrimTypeSer,OverflowTypeSer) ++ ser
-    val p = json.extract[T]
-    apply(p,args,ser)
+      // How to serialize JSON
+      implicit val formats = DefaultFormats ++ List(TrimTypeSer, OverflowTypeSer) ++ ser
+      val p = json.extract[T]
+      apply(p,args,ser)
+    }
+    catch {
+      case ex: Exception => apply(gen,args,ser)
+    }
 
   }
 

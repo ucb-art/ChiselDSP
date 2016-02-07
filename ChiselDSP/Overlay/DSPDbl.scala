@@ -210,7 +210,8 @@ class DSPDbl extends DSPQnm[DSPDbl] {
   def toInt(r: TrimType): DSPFixed = {
     val res = {
       if (r == Truncate) floor
-      else if (r == Round) round
+      // Note: NoTrim maps to round when doing toInt
+      else if (r == Round | r == NoTrim) round
       else error("Invalid trim type for toInt")
     }
     val sintVal = res.dbl().toSInt()
@@ -223,6 +224,12 @@ class DSPDbl extends DSPQnm[DSPDbl] {
     setRangeBits(range)
     setRange(range)
   }
-  updateLimits((BigInt(0),BigInt(0))) 
+  updateLimits((BigInt(0),BigInt(0)))
+
+  /** Restrict range of input */
+  def clamp(max:Double): DSPDbl = clamp(DSPDbl(max))
+  def clamp (range: => (Double,Double)): DSPDbl = {
+    clamp((DSPDbl(range._1),DSPDbl(range._2)))
+  }
   
 }

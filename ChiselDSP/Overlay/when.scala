@@ -23,6 +23,13 @@ class whenDSP (prevCond: DSPBool) {
     Chisel.when.execWhen((!prevCond & cond).toBool){ block }
     new whenDSP(prevCond | cond)
   }
+
+  /** Invalid: elsewhen condition should be DSPBool */
+  def elsewhen (cond: Bool)(block: => Unit): whenDSP = {
+    Error ("Condition in elsewhen should be of type DSPBool to match when condition type")
+    this.asInstanceOf[whenDSP]
+  }
+
   /** execute block by default */
   def otherwise (block: => Unit) {
     val chiselWhen = new Chisel.when(prevCond.toBool)

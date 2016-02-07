@@ -3,8 +3,6 @@
   <component name="ChangeListManager">
     <list default="true" id="9595d754-400a-43c8-b000-cec8f2a2c299" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ChiselDSP/Modules/IntLUT2Bools.scala" afterPath="$PROJECT_DIR$/ChiselDSP/Modules/IntLUT2Bools.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ChiselPrjBaseNExample/scala/BaseNExample.scala" afterPath="$PROJECT_DIR$/ChiselPrjBaseNExample/scala/BaseNExample.scala" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ChiselPrjFFT/scala/FFTTester.scala" afterPath="$PROJECT_DIR$/ChiselPrjFFT/scala/FFTTester.scala" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ChiselPrjFFT/scala/FFT_OLD.scala" afterPath="$PROJECT_DIR$/ChiselPrjFFT/scala/FFT_OLD.scala" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ChiselPrjFFT/scala/old/FFT_Main.scala" afterPath="$PROJECT_DIR$/ChiselPrjFFT/scala/old/FFT_Main.scala" />
@@ -157,51 +155,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="generalConstants.scala" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/ChiselPrjFFT/scala/old/generalConstants.scala">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-10.0">
-              <caret line="24" column="19" selection-start-line="24" selection-start-column="19" selection-end-line="24" selection-end-column="19" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="IntLUT2Bools.scala" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/ChiselDSP/Modules/IntLUT2Bools.scala">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.62211984">
-              <caret line="26" column="33" selection-start-line="26" selection-start-column="33" selection-end-line="26" selection-end-column="33" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="Main.scala" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/ChiselPrjFFT/scala/Main.scala">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-13.333333">
-              <caret line="25" column="32" selection-start-line="25" selection-start-column="24" selection-end-line="25" selection-end-column="32" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="Params.scala" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/ChiselPrjFFT/scala/new/Params.scala">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-3.2962964">
-              <caret line="79" column="11" selection-start-line="79" selection-start-column="11" selection-end-line="79" selection-end-column="11" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="FFT_Main.scala" pinned="false" current-in-tab="false">
+      <file leaf-file-name="FFT_Main.scala" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/ChiselPrjFFT/scala/old/FFT_Main.scala">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-3.1851852">
-              <caret line="60" column="31" selection-start-line="60" selection-start-column="31" selection-end-line="60" selection-end-column="31" />
+            <state vertical-scroll-proportion="0.16359447">
+              <caret line="67" column="6" selection-start-line="67" selection-start-column="6" selection-end-line="67" selection-end-column="6" />
               <folding />
             </state>
           </provider>
@@ -210,7 +168,7 @@
     </leaf>
   </component>
   <component name="Git.Settings">
-    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/ChiselPrjFFT" />
   </component>
   <component name="GradleLocalSettings">
     <option name="externalProjectsViewState">
@@ -249,7 +207,6 @@
         <option value="$PROJECT_DIR$/VerilogFFT/fpga/FFT_0.conf" />
         <option value="$PROJECT_DIR$/ChiselDSP/Overlay/BaseN.scala" />
         <option value="$PROJECT_DIR$/VLSIHelpers/.gitignore" />
-        <option value="$PROJECT_DIR$/ChiselPrjFFT/scala/Main.scala" />
         <option value="$PROJECT_DIR$/VerilogFFT/fpga/FFT_0.v" />
         <option value="$PROJECT_DIR$/README.md" />
         <option value="$PROJECT_DIR$/VLSIHelpers/vlsi_mem_gen" />
@@ -259,18 +216,19 @@
         <option value="$PROJECT_DIR$/ChiselPrjFFT/scala/new/WFTA.scala" />
         <option value="$PROJECT_DIR$/ChiselPrjFFT/scala/new/Params.scala" />
         <option value="$PROJECT_DIR$/ChiselPrjFFT/resources/FFT.json" />
-        <option value="$PROJECT_DIR$/ChiselPrjFFT/scala/FFTTester.scala" />
-        <option value="$PROJECT_DIR$/ChiselPrjFFT/scala/FFT_OLD.scala" />
         <option value="$PROJECT_DIR$/.gitignore" />
         <option value="$PROJECT_DIR$/Makefile" />
         <option value="$PROJECT_DIR$/ChiselPrjFFT/scala/old/schedule.scala" />
         <option value="$PROJECT_DIR$/ChiselPrjBaseNExample/scala/BaseNExampleTester.scala" />
-        <option value="$PROJECT_DIR$/ChiselDSP/Overlay/DSPFixed.scala" />
         <option value="$PROJECT_DIR$/ChiselDSP/Overlay/DSPTypes.scala" />
-        <option value="$PROJECT_DIR$/ChiselPrjFFT/scala/old/FFT_Main.scala" />
         <option value="$PROJECT_DIR$/ChiselDSP/Overlay/DSPDbl.scala" />
         <option value="$PROJECT_DIR$/ChiselDSP/Modules/IntLUT2Bools.scala" />
         <option value="$PROJECT_DIR$/ChiselPrjBaseNExample/scala/BaseNExample.scala" />
+        <option value="$PROJECT_DIR$/ChiselDSP/Overlay/DSPFixed.scala" />
+        <option value="$PROJECT_DIR$/ChiselPrjFFT/scala/FFT_OLD.scala" />
+        <option value="$PROJECT_DIR$/ChiselPrjFFT/scala/FFTTester.scala" />
+        <option value="$PROJECT_DIR$/ChiselPrjFFT/scala/Main.scala" />
+        <option value="$PROJECT_DIR$/ChiselPrjFFT/scala/old/FFT_Main.scala" />
       </list>
     </option>
   </component>
@@ -409,6 +367,50 @@
             <PATH_ELEMENT>
               <option name="myItemId" value="scala" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ChiselEnvironment" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ChiselEnvironment" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ChiselPrjFFT" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="scala" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="FFTTester.scala" />
+              <option name="myItemType" value="org.jetbrains.plugins.scala.components.ScalaDefsProjectViewProvider$ScalaFileTreeNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ChiselEnvironment" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ChiselEnvironment" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ChiselPrjFFT" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="scala" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="FFT_OLD.scala" />
+              <option name="myItemType" value="org.jetbrains.plugins.scala.components.ScalaDefsProjectViewProvider$ScalaFileTreeNode" />
             </PATH_ELEMENT>
           </PATH>
           <PATH>
@@ -1581,14 +1583,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/ChiselPrjFFT/scala/FFTTester.scala">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-1.1111112">
-          <caret line="274" column="36" selection-start-line="274" selection-start-column="36" selection-end-line="274" selection-end-column="36" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/.gitignore">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.3440367">
@@ -1629,26 +1623,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/ChiselPrjFFT/scala/FFT_OLD.scala">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-50.555557">
-          <caret line="371" column="119" selection-start-line="371" selection-start-column="111" selection-end-line="371" selection-end-column="119" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/ChiselDSP/Modules/BaseNLUT.scala">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.8986175">
           <caret line="26" column="43" selection-start-line="26" selection-start-column="43" selection-end-line="26" selection-end-column="43" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/ChiselDSP/Overlay/DSPFixed.scala">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.5896806">
-          <caret line="423" column="66" selection-start-line="423" selection-start-column="66" selection-end-line="423" selection-end-column="66" />
           <folding />
         </state>
       </provider>
@@ -1693,14 +1671,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/ChiselPrjFFT/resources/FFT.json">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.3089245">
-          <caret line="9" column="21" selection-start-line="2" selection-start-column="6" selection-end-line="9" selection-end-column="21" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/ChiselDSP/Overlay/DSPComplex.scala">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="-0.34562212">
@@ -1741,30 +1711,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/ChiselPrjFFT/scala/old/FFT_Main.scala">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-3.1851852">
-          <caret line="60" column="31" selection-start-line="60" selection-start-column="31" selection-end-line="60" selection-end-column="31" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/ChiselPrjFFT/scala/old/generalConstants.scala">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-10.0">
-          <caret line="24" column="19" selection-start-line="24" selection-start-column="19" selection-end-line="24" selection-end-column="19" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/ChiselPrjFFT/scala/new/Params.scala">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-3.2962964">
-          <caret line="79" column="11" selection-start-line="79" selection-start-column="11" selection-end-line="79" selection-end-column="11" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/ChiselPrjBaseNExample/scala/BaseNExample.scala">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.10138249">
@@ -1773,18 +1719,74 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/ChiselDSP/Modules/IntLUT2Bools.scala">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.8294931">
+          <caret line="31" column="1" selection-start-line="31" selection-start-column="1" selection-end-line="31" selection-end-column="1" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ChiselDSP/Overlay/DSPFixed.scala">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.4791155">
+          <caret line="155" column="0" selection-start-line="155" selection-start-column="0" selection-end-line="155" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ChiselPrjFFT/resources/FFT.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.41189933">
+          <caret line="12" column="18" selection-start-line="12" selection-start-column="18" selection-end-line="12" selection-end-column="18" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ChiselPrjFFT/scala/old/generalConstants.scala">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.06912442">
+          <caret line="52" column="25" selection-start-line="52" selection-start-column="25" selection-end-line="52" selection-end-column="25" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ChiselPrjFFT/scala/FFT_OLD.scala">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.5852535">
+          <caret line="900" column="41" selection-start-line="900" selection-start-column="41" selection-end-line="900" selection-end-column="41" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ChiselPrjFFT/scala/FFTTester.scala">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.2764977">
+          <caret line="9" column="17" selection-start-line="9" selection-start-column="17" selection-end-line="9" selection-end-column="17" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/ChiselPrjFFT/scala/Main.scala">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-13.333333">
+        <state vertical-scroll-proportion="0.7258065">
           <caret line="25" column="32" selection-start-line="25" selection-start-column="24" selection-end-line="25" selection-end-column="32" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/ChiselDSP/Modules/IntLUT2Bools.scala">
+    <entry file="file://$PROJECT_DIR$/ChiselPrjFFT/scala/new/Params.scala">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.62211984">
-          <caret line="26" column="33" selection-start-line="26" selection-start-column="33" selection-end-line="26" selection-end-column="33" />
+        <state vertical-scroll-proportion="0.20506912">
+          <caret line="79" column="11" selection-start-line="79" selection-start-column="11" selection-end-line="79" selection-end-column="11" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ChiselPrjFFT/scala/old/FFT_Main.scala">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.16359447">
+          <caret line="67" column="6" selection-start-line="67" selection-start-column="6" selection-end-line="67" selection-end-column="6" />
           <folding />
         </state>
       </provider>

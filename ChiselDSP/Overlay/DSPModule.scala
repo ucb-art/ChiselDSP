@@ -38,6 +38,7 @@ abstract class GenDSPModule[T <: DSPQnm[T]](gen : => T, inputDelay:Int = 0, deco
     double2T(x,Complex.getFrac)
   }
 
+  // TODO: Get rid of this?
   /** Allows you to customize each T (DSPFixed or DSPDbl) for parameters like 
     * integer width and fractional width (in the DSPFixed case) 
     */
@@ -72,7 +73,11 @@ abstract class GenDSPModule[T <: DSPQnm[T]](gen : => T, inputDelay:Int = 0, deco
   * Note that all inputs should have the same delay.
   */
 abstract class IOBundle(val outDlyMatch: Boolean = false) extends Bundle {
-  Module.current.asInstanceOf[DSPModule].ios.push(this)
+
+  Module.current match {
+    case a: DSPModule => a.ios.push(this)
+    case _ =>
+  }
 
   /** Name IO bundle + elements. For a custom bundle name,
     * setName should be called within the module.
@@ -169,7 +174,7 @@ object DSPModule {
   /** Instantiates module with detailed name (from class/object name + [optional] extension) 
     * + adds IO pins as necessary 
     */
-  def apply[T <: DSPModule](m: => T, nameExt: String = ""): T = {
+  def apply[T <: Module](m: => T, nameExt: String = ""): T = {
     val thisModule = Module(m)
     var currentName = thisModule.name
     if (currentName == "") currentName = thisModule.getClass.getName.toString.split('.').last
@@ -180,21 +185,28 @@ object DSPModule {
     // Name module (used for Verilog file name)
     thisModule.setName(newName)
 
-    val ios2 = thisModule.ios.clone
-    while (!thisModule.ios.isEmpty) {
-      val ioSet = thisModule.ios.pop
-      // 'io' is handled separately in your normal Chisel fashion.
-      if(!ioSet.equals(thisModule.io)) {
-        val ioName = ioSet.getClass.getName.toString.split('.').last.split('$').last
-        ioSet.setNameIO(ioName)
+    // Supports both Chisel.Module (do nothing) and DSPModule (custom IO)
+    thisModule match {
+      case a: DSPModule => {
+        val ios2 = a.ios.clone
+        while (!a.ios.isEmpty) {
+          val ioSet = a.ios.pop
+          // 'io' is handled separately in your normal Chisel fashion.
+          if(!ioSet.equals(a.io)) {
+            val ioName = ioSet.getClass.getName.toString.split('.').last.split('$').last
+            ioSet.setNameIO(ioName)
+          }
+        }
+        while (!ios2.isEmpty) {
+          val ioSet = ios2.pop
+          ioSet.checkOutDly()
+          // Need to add pin after correctly designating pin name
+          if(!ioSet.equals(a.io)) a.createIO(ioSet)
+        }
       }
+      case _ =>
     }
-    while (!ios2.isEmpty) {
-      val ioSet = ios2.pop
-      ioSet.checkOutDly()
-      // Need to add pin after correctly designating pin name
-      if(!ioSet.equals(thisModule.io)) thisModule.createIO(ioSet)
-    }
+
     thisModule
   }
  

@@ -7,6 +7,7 @@ import Chisel.{Complex => _, Mux => _, Reg => _, RegNext => _, RegInit => _, Pip
                Module => _, ModuleOverride => _, when => _, switch => _, is => _, unless => _, Round => _,  _}
 import ChiselDSP._
 // ------- Imports END -- OK TO MODIFY BELOW
+import BackwardsCompatibility._
 
 /** Parameters externally passed via JSON file (can add defaults) */
 case class DemoParams (
@@ -232,6 +233,13 @@ class Demo [T <: DSPQnm[T]](gen : => T, p: DemoParams) extends GenDSPModule (gen
   asdf := i.u3
   debug(asdf)
 
+  // Check that backwards compatible implicits work (i.e. when 'when' expects Bool, it's ok to use DSPBool as condition)
+  when (i.b1){        // Condition is Bool (requires elsewhen condition to be Bool)
+    asdf := i.u1
+  }.elsewhen(i.b2){   // Should cast DSPBool as Bool
+    asdf := i.u3
+  }
+
 }
 
 /** Composition of your generator parameters (with default values!) */
@@ -323,5 +331,7 @@ class DemoTests[T <: Demo[_ <: DSPQnm[_]]](c: T) extends DSPTester(c) {
   peek(c.testIO.genT)
   peek(c.comp2)
   peek(c.asdf)
+  poke(c.i.b2,true)
+  poke(c.i.u3,2)
 
 }

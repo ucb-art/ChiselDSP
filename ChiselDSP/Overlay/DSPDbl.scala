@@ -210,7 +210,8 @@ class DSPDbl extends DSPQnm[DSPDbl] {
   def toInt(r: TrimType): DSPFixed = {
     val res = {
       if (r == Truncate) floor
-      else if (r == Round) round
+      // Note: NoTrim maps to round when doing toInt
+      else if (r == Round | r == NoTrim) round
       else error("Invalid trim type for toInt")
     }
     val sintVal = res.dbl().toSInt()

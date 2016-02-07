@@ -31,6 +31,9 @@ abstract class DSPQnm[T <: DSPBits[T]] extends DSPNum[T] {
   def toInt(r: TrimType): DSPFixed
 
   def Q : String
+
+  /** Allows type to be cloned, but with different fixedParams (only for DSPFixed) */
+  def cloneType(fixedParams:(Int,Int)): this.type = cloneType
 }
 
 /** Allow numeric operations */
@@ -342,5 +345,10 @@ abstract class DSPBits [T <: DSPBits[T]] extends Bits {
   }
 
   // TODO: Check bundle := passes params properly
+
+  /** Print more informative stack trace when there is an illegal assignment */
+  override protected def illegalAssignment(that: Any): Unit = {
+    Error(":= not defined on L " + this.getClass + " and R " + that.getClass)
+  }
 
 }

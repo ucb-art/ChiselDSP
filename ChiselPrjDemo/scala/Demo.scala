@@ -240,6 +240,12 @@ class Demo [T <: DSPQnm[T]](gen : => T, p: DemoParams) extends GenDSPModule (gen
     asdf := i.u3
   }
 
+  // Check clone gen type works (variable fixedParams)
+  val lol = gen.cloneType()
+  println("default " + lol.Q)
+  val lol2 = gen.cloneType((1,3))
+  println("new " + lol2.Q)
+
 }
 
 /** Composition of your generator parameters (with default values!) */

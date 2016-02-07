@@ -572,5 +572,11 @@ class DSPFixed (private var fractionalWidth:Int = 0)  extends DSPQnm[DSPFixed] {
     out.pass2to1(this,b)
   }
 
+  /** Restrict range of input */
+  def clamp(max:Double): DSPFixed = clamp(DSPFixed(max,getFracWidth))
+  def clamp (range: => (Double,Double)): DSPFixed = {
+    clamp((DSPFixed(range._1,getFracWidth),DSPFixed(range._2,getFracWidth)))
+  }
+
 }
 

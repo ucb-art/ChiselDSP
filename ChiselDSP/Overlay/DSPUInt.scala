@@ -387,5 +387,9 @@ class DSPUInt extends DSPNum[DSPUInt] {
     val out = toT(this,(getRange.min,newMax))
     out.updateGeneric(this)
   }
-  
+
+  /** Restrict range of input */
+  def clamp(max:Int): DSPUInt = clamp(DSPUInt(max))
+  def clamp (range: => (Int,Int)): DSPUInt = clamp((DSPUInt(range._1),DSPUInt(range._2)))
+
 }

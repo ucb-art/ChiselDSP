@@ -224,6 +224,12 @@ class DSPDbl extends DSPQnm[DSPDbl] {
     setRangeBits(range)
     setRange(range)
   }
-  updateLimits((BigInt(0),BigInt(0))) 
+  updateLimits((BigInt(0),BigInt(0)))
+
+  /** Restrict range of input */
+  def clamp(max:Double): DSPDbl = clamp(DSPDbl(max))
+  def clamp (range: => (Double,Double)): DSPDbl = {
+    clamp((DSPDbl(range._1),DSPDbl(range._2)))
+  }
   
 }

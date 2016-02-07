@@ -34,10 +34,26 @@ abstract class DSPQnm[T <: DSPBits[T]] extends DSPNum[T] {
 
   /** Allows type to be cloned, but with different fixedParams (only for DSPFixed) */
   def cloneType(fixedParams:(Int,Int)): this.type = cloneType
+
+  /** Restrict range of input */
+  def clamp(max:Double): T
+  def clamp (range: => (Double,Double)): T
+
 }
 
 /** Allow numeric operations */
 abstract class DSPNum[T <: DSPBits[T]] extends DSPBits[T] {
+
+  /** Force to be in range */
+  def clamp(max: T): T = {
+    val clampCond = this > max
+    Mux(clampCond,max,this.asInstanceOf[T])
+  }
+  def clamp (range: (T,T)): T = {
+    val thisOrMax = clamp(range._2)
+    val clampCond = this < range._1
+    Mux(clampCond,range._1,thisOrMax)
+  }
 
   /** Don't allow non-2^n divides (not synthesizable on FPGA -- designer should think carefully!) */
   private[ChiselDSP] def /  (b: T): T = error("/ not allowed.").asInstanceOf[T]

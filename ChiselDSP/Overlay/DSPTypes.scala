@@ -5,6 +5,8 @@ package ChiselDSP
 import Chisel._
 import scala.collection.mutable.Map
 
+// TODO: Force delay values?
+
 /** User override for whether to check delay */
 object CheckDelay {
   private var check = true

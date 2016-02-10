@@ -6,6 +6,8 @@
 package ChiselDSP
 import Chisel._
 
+// TODO: Check real,imag have same delay?
+
 object Complex {
 
   /** Create a new Complex number: real + imag*i
@@ -109,7 +111,10 @@ class Complex[T <: DSPQnm[T]](val real: T, val imag: T) extends ComplexBundle {
   def pipe (n: Int, en: DSPBool = DSPBool(true)): Complex[T] = Complex(real.pipe(n,en),imag.pipe(n,en))
 
   /** Register that keeps track of additional info */
-  def reg(clock: Clock = null): Complex[T] = Complex(real.reg(clock),imag.reg(clock))
+  def reg(init: Complex[T] = null.asInstanceOf[Complex[T]], clock: Clock = null): Complex[T] = {
+    if (init != null) Complex(real.reg(init.real,clock),imag.reg(init.imag,clock))
+    else Complex(real.reg(clock = clock),imag.reg(clock = clock))
+  }
   
   /** Select function: s = true -> this; else 0 */
   def ? (s: DSPBool) : Complex[T] = Complex(real ? s, imag ? s)

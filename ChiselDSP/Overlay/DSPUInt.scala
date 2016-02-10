@@ -107,7 +107,7 @@ class DSPUInt extends DSPNum[DSPUInt] {
     if (rangeOverride == null) DSPUInt(x,opRange)
     else {
       val min = rangeOverride._1.max(opRange._1)
-      val max = rangeOverride._2.min(opRange._2) 
+      val max = rangeOverride._2.min(opRange._2)
       DSPUInt(x,(min,max))
     }
   }

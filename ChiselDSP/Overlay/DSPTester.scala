@@ -151,6 +151,7 @@ class DSPTester[+T <: Module](c: T, var traceOn: Boolean = true, var hexOn: Bool
   def poke(node: DSPUInt, x: BigInt): BigInt = poke(node, x, traceOn)
   def poke(node: DSPQnm[_], x: Double): Double = poke(node, x, traceOn)
   def poke(node: Fixed, x: Double): Double = poke(node, x, traceOn)
+  def poke(node: DSPFixed, x: Int): BigInt = poke(node, BigInt(x))
   def poke(node: DSPFixed, x: BigInt): BigInt = {
     if (node.getFracWidth != 0) Error("Poking DSPFixed (fractional width non-zero) with integer value")
     poke(node, x, traceOn)

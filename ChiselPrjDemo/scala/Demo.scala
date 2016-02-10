@@ -87,7 +87,7 @@ class Demo [T <: DSPQnm[T]](gen : => T, p: DemoParams) extends GenDSPModule (gen
   o.setName("o")
 
   // Delay offset by how long it takes to finish computation (n)
-  // Note: Instead of doing Reg(x) or Pipe(x,n) do x.reg() or x.pipe(n) to keep meta info
+  // Note: Instead of doing RegNext(x) or Pipe(x,n) do x.reg() or x.pipe(n) to keep meta info
   val pipeTest = demoIO.offsetIn.pipe(5)
   debug(pipeTest)
   demoIO.offsetOut := pipeTest - DSPUInt(3)
@@ -246,6 +246,58 @@ class Demo [T <: DSPQnm[T]](gen : => T, p: DemoParams) extends GenDSPModule (gen
   val lol2 = gen.cloneType((1,3))
   println("new " + lol2.Q)
 
+  val testReg = Chisel.Reg(init = i.u1)
+  debug(testReg)
+  testReg := testReg + UInt(1)
+
+  val testPipe = Pipe(i.s2,2)
+  debug(testPipe)
+  println(testPipe)
+
+  // testPipe := testPipe >> 2 should complain about combinational loop (testPipe represents the node at the output)
+  // Similarly, when using RegNext(x) or x.reg(), you can't feed back
+
+  val testReg3 = RegNext(testPipe,init=DSPSInt(-3))
+  println(testReg3.getDelay())
+  debug(testReg3)
+
+  val testReg2 = RegInit(DSPSInt(5,(-7,7)))
+  println(testReg2.getInfo())
+  val temp = testReg2 + DSPSInt(1)
+  println(temp.getInfo())
+  val temp2 = temp.shorten(testReg2.getRange)
+  println(temp2.getInfo())
+  testReg2 := temp2
+  println(testReg2.getInfo())
+
+  debug(testReg2)
+
+  val complexReg = RegInit(Complex(double2T(3.5),double2T(-3.5)))
+  println(complexReg.real.getInfo())
+  complexReg := complexReg >> 1
+  println(complexReg.real.getInfo())
+  debug(complexReg)
+
+
+
+
+
+
+
+
+
+
+  val complexTestn = gen.cloneType() //DSPFixed(3.3,fracWidth=10)//Complex(double2T(3.5),double2T(-3.5))
+  println(complexTestn.getInfo())
+  debug(complexTestn)
+
+
+
+
+
+
+
+
 }
 
 /** Composition of your generator parameters (with default values!) */
@@ -283,7 +335,27 @@ class DemoTests[T <: Demo[_ <: DSPQnm[_]]](c: T) extends DSPTester(c) {
 
   hide()                    // Hide tester output from console
   show()
+
+  poke(c.i.u1,2)
+  peek(c.testReg)
+  peek(c.testReg2)
+  peek(c.complexReg)
+  peek(c.i.u1)
   reset(5)                  // Hold reset for 5 cycles (reset is default Chisel reset; unused in Demo module)
+
+  peek(c.complexReg)
+  peek(c.testReg)
+  peek(c.testReg2)
+  peek(c.i.u1)
+  step()
+  peek(c.complexReg)
+  peek(c.testReg)
+  peek(c.testReg2)
+  step()
+  peek(c.testReg2)
+  peek(c.complexReg)
+  peek(c.i.u1)
+
   step(5)                   // Step 5 cycles
   peek(c.lits)              // Peek elements of a bundle
   peek(c.testFixed)         // Peek internal Fixed value
@@ -303,8 +375,10 @@ class DemoTests[T <: Demo[_ <: DSPQnm[_]]](c: T) extends DSPTester(c) {
   poke(c.demoIO.symbolIn.real,3.3)
   poke(c.demoIO.symbolIn.imag,-3.3)
   peek(c.complexTest)
-  step
+  peek(c.complexReg)
+  step()
   peek(c.complexTest)
+  peek(c.complexReg)
   poke(c.demoIO.symbolIn,Complex(1.5,-1.5))
   peek(c.complexTest)
   step
@@ -339,5 +413,22 @@ class DemoTests[T <: Demo[_ <: DSPQnm[_]]](c: T) extends DSPTester(c) {
   peek(c.asdf)
   poke(c.i.b2,true)
   poke(c.i.u3,2)
+  for (x <- 0 until 10){
+    peek(c.testReg)
+    step()
+  }
+
+  poke(c.i.s2,-1)
+  peek(c.testPipe)
+  expect(c.testPipe,-1)
+  step(2)
+  peek(c.testPipe)
+  expect(c.testPipe,-1)
+  peek(c.testReg3)
+  step()
+  peek(c.testReg3)
+  poke(c.i.s1,-2)
+  step()
+  peek(c.testReg2)
 
 }

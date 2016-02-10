@@ -75,4 +75,13 @@ class BaseNExample[T <: DSPQnm[T]](gen : => T) extends GenDSPModule (gen) {
   val tx = DSPFixed(3.8,15).toInt(Round)
   debug(tx)
 
+  val regTest = RegInit(BaseN(58,4,63))
+  debug(regTest)
+  regTest := regTest + BaseN(1,4,63)
+
+  val regTest2 = RegNext(BaseN(58,4,63))
+  // This will not compile since RegNext doesn't support reassignment (error message isn't helpful though...) :
+  // regTest2 := regTest2 + BaseN(1,4,63)
+  debug(regTest2)
+
 }

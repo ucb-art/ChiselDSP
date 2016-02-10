@@ -578,5 +578,25 @@ class DSPFixed (private var fractionalWidth:Int = 0)  extends DSPQnm[DSPFixed] {
     clamp((DSPFixed(range._1,getFracWidth),DSPFixed(range._2,getFracWidth)))
   }
 
+  // TODO: Redundant List2Tuple
+  /** Shorten range for DSPSInt */
+  def shorten(newRange: List[BigInt]): DSPFixed = {
+    if (newRange.length != 2) Error("Range list can only have 2 values")
+    shorten(List2Tuple(newRange))
+  }
+
+  // TODO: Combine better with shortenTo and min,max update (like in DSPUInt)
+  def shorten(newRange: (BigInt,BigInt)): DSPFixed = {
+    if (getFracWidth != 0) Error("Can only use shorten on DSPSInt (fractional width = 0), not DSPFixed")
+    val newWidth = DSPFixed.rangeToWidth(newRange)
+    if (newWidth > getWidth) Error("New width must be <= old DSPSInt width.")
+    val min = newRange._1.max(getRange.min)
+    val max = newRange._2.min(getRange.max)
+    val out = fromSInt(this.toSInt,getFracWidth,(min,max))
+    out.updateGeneric(this)
+  }
+
+  // TODO: Shorten for Fixed, in general (not just DSPSInt)
+
 }
 

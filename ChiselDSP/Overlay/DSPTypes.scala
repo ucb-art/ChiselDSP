@@ -299,12 +299,11 @@ abstract class DSPBits [T <: DSPBits[T]] extends Bits {
   }
 
   /** Register that keeps track of additional info */
-  final def reg(clock: Clock = null): T = {
+  final def reg(init: T = null.asInstanceOf[T], clock: Clock = null): T = {
     val res = {
       if (isLit) this
       else {
-        val temp = (if (clock == null) RegNext(this) else RegNext(this,clock)).toBits
-        val out = chiselCast(temp){this.cloneType}
+        val out = RegNext.apply_dsp(this,init,clock)
         // Delay = 0 because we only care about explicit pipe delays
         out.passThrough(this)
       }

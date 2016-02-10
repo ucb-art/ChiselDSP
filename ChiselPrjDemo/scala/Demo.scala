@@ -278,6 +278,14 @@ class Demo [T <: DSPQnm[T]](gen : => T, p: DemoParams) extends GenDSPModule (gen
   println(complexReg.real.getInfo())
   debug(complexReg)
 
+  val qwerty = RegInit(DSPUInt(2,3))
+  qwerty := (qwerty + DSPUInt(1)).shorten(qwerty.getRange)
+
+
+
+
+
+
 
 
 

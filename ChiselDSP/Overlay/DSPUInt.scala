@@ -26,6 +26,9 @@ object DSPUInt {
     createLit(x, (0,max))
   }
 
+  // TODO: Allow range, not just max for creating Lits
+  // Lit UInt passed through DSPUInt cast should still return Lit
+
   private def createLit(x: BigInt, range: => (BigInt,BigInt)): DSPUInt = {
     val litVal = apply(NODIR,range)
     val res = Lit(x, litVal.getWidth) {litVal}

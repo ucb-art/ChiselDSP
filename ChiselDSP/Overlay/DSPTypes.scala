@@ -41,6 +41,10 @@ abstract class DSPQnm[T <: DSPBits[T]] extends DSPNum[T] {
   def clamp(max:Double): T
   def clamp (range: => (Double,Double)): T
 
+  /** Get integer width (used for DSPFixed) */
+  def getIntWidth(): Int = 0
+  def getFracWidth(): Int = 0
+
 }
 
 /** Allow numeric operations */

@@ -3,9 +3,8 @@
   <component name="ChangeListManager">
     <list default="true" id="9595d754-400a-43c8-b000-cec8f2a2c299" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ChiselDSP/Overlay/DSPDbl.scala" afterPath="$PROJECT_DIR$/ChiselDSP/Overlay/DSPDbl.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ChiselDSP/Overlay/DSPUtil.scala" afterPath="$PROJECT_DIR$/ChiselDSP/Overlay/DSPUtil.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ChiselPrjDemo/scala/Demo.scala" afterPath="$PROJECT_DIR$/ChiselPrjDemo/scala/Demo.scala" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ChiselDSP/Overlay/DSPFixed.scala" afterPath="$PROJECT_DIR$/ChiselDSP/Overlay/DSPFixed.scala" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ChiselDSP/Overlay/DSPTypes.scala" afterPath="$PROJECT_DIR$/ChiselDSP/Overlay/DSPTypes.scala" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ChiselPrjFFT/scala/FFT_OLD.scala" afterPath="$PROJECT_DIR$/ChiselPrjFFT/scala/FFT_OLD.scala" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ChiselPrjFFT/scala/old/Accumulator.scala" afterPath="$PROJECT_DIR$/ChiselPrjFFT/scala/old/Accumulator.scala" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ChiselPrjFFT/scala/old/Calculation_Control.scala" afterPath="$PROJECT_DIR$/ChiselPrjFFT/scala/old/Calculation_Control.scala" />
@@ -166,8 +165,8 @@
       <file leaf-file-name="FFTTester.scala" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/ChiselPrjFFT/scala/FFTTester.scala">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.6132075">
-              <caret line="225" column="0" selection-start-line="225" selection-start-column="0" selection-end-line="225" selection-end-column="0" />
+            <state vertical-scroll-proportion="0.5660377">
+              <caret line="222" column="17" selection-start-line="222" selection-start-column="17" selection-end-line="222" selection-end-column="17" />
               <folding />
             </state>
           </provider>
@@ -209,7 +208,6 @@
         <option value="$PROJECT_DIR$/Makefile" />
         <option value="$PROJECT_DIR$/ChiselPrjFFT/scala/old/schedule.scala" />
         <option value="$PROJECT_DIR$/ChiselDSP/Modules/IntLUT2Bools.scala" />
-        <option value="$PROJECT_DIR$/ChiselPrjFFT/scala/FFTTester.scala" />
         <option value="$PROJECT_DIR$/ChiselPrjFFT/scala/Main.scala" />
         <option value="$PROJECT_DIR$/ChiselPrjFFT/scala/old/FFT_Main.scala" />
         <option value="$PROJECT_DIR$/ChiselPrjDemo/resources/Demo.json" />
@@ -220,14 +218,12 @@
         <option value="$PROJECT_DIR$/ChiselDSP/Overlay/GenInit.scala" />
         <option value="$PROJECT_DIR$/ChiselCompatibility/ChiselRegNext.scala" />
         <option value="$PROJECT_DIR$/ChiselDSP/Overlay/DSPComplex.scala" />
-        <option value="$PROJECT_DIR$/ChiselDSP/Overlay/DSPTypes.scala" />
         <option value="$PROJECT_DIR$/ChiselDSP/Overlay/DSPTester.scala" />
         <option value="$PROJECT_DIR$/ChiselDSP/Overlay/DSPSInt.scala" />
         <option value="$PROJECT_DIR$/ChiselPrjBaseNExample/scala/BaseNExampleTester.scala" />
         <option value="$PROJECT_DIR$/ChiselPrjBaseNExample/scala/BaseNExample.scala" />
         <option value="$PROJECT_DIR$/ChiselDSP/Overlay/DSPUInt.scala" />
         <option value="$PROJECT_DIR$/ChiselDSP/Overlay/DSPModule.scala" />
-        <option value="$PROJECT_DIR$/ChiselDSP/Overlay/DSPFixed.scala" />
         <option value="$PROJECT_DIR$/ChiselDSP/Overlay/DSPUtil.scala" />
         <option value="$PROJECT_DIR$/ChiselDSP/Overlay/DSPDbl.scala" />
         <option value="$PROJECT_DIR$/ChiselPrjDemo/scala/Demo.scala" />
@@ -237,6 +233,9 @@
         <option value="$PROJECT_DIR$/ChiselPrjFFT/scala/old/Accumulator.scala" />
         <option value="$PROJECT_DIR$/ChiselPrjFFT/scala/old/Calculation_Control.scala" />
         <option value="$PROJECT_DIR$/ChiselPrjFFT/scala/old/MemoryBankInterface.scala" />
+        <option value="$PROJECT_DIR$/ChiselDSP/Overlay/DSPFixed.scala" />
+        <option value="$PROJECT_DIR$/ChiselDSP/Overlay/DSPTypes.scala" />
+        <option value="$PROJECT_DIR$/ChiselPrjFFT/scala/FFTTester.scala" />
       </list>
     </option>
   </component>
@@ -550,6 +549,82 @@
             <PATH_ELEMENT>
               <option name="myItemId" value="scala" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ChiselEnvironment" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ChiselEnvironment" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ChiselDSP" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ChiselEnvironment" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ChiselEnvironment" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ChiselDSP" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="Overlay" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ChiselEnvironment" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ChiselEnvironment" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ChiselDSP" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="Overlay" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="DSPTypes.scala" />
+              <option name="myItemType" value="org.jetbrains.plugins.scala.components.ScalaDefsProjectViewProvider$ScalaFileTreeNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ChiselEnvironment" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ChiselEnvironment" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ChiselDSP" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="Overlay" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="DSPFixed.scala" />
+              <option name="myItemType" value="org.jetbrains.plugins.scala.components.ScalaDefsProjectViewProvider$ScalaFileTreeNode" />
             </PATH_ELEMENT>
           </PATH>
         </subPane>
@@ -1336,14 +1411,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/ChiselDSP/Overlay/DSPTypes.scala">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.33142856">
-          <caret line="267" column="14" selection-start-line="267" selection-start-column="4" selection-end-line="267" selection-end-column="14" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/ChiselDSP/Overlay/DSPSInt.scala">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.51724136">
@@ -1379,14 +1446,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.72148544">
           <caret line="117" column="7" selection-start-line="117" selection-start-column="7" selection-end-line="117" selection-end-column="7" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/ChiselDSP/Overlay/DSPFixed.scala">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.7161804">
-          <caret line="51" column="24" selection-start-line="51" selection-start-column="24" selection-end-line="51" selection-end-column="24" />
           <folding />
         </state>
       </provider>
@@ -1483,10 +1542,26 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/ChiselDSP/Overlay/DSPFixed.scala">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-6.9496856">
+          <caret line="17" column="7" selection-start-line="17" selection-start-column="7" selection-end-line="17" selection-end-column="7" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ChiselDSP/Overlay/DSPTypes.scala">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.8018868">
+          <caret line="46" column="0" selection-start-line="46" selection-start-column="0" selection-end-line="46" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/ChiselPrjFFT/scala/FFTTester.scala">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.6132075">
-          <caret line="225" column="0" selection-start-line="225" selection-start-column="0" selection-end-line="225" selection-end-column="0" />
+        <state vertical-scroll-proportion="0.5660377">
+          <caret line="222" column="17" selection-start-line="222" selection-start-column="17" selection-end-line="222" selection-end-column="17" />
           <folding />
         </state>
       </provider>

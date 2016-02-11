@@ -170,8 +170,8 @@ class DSPFixed (private var fractionalWidth:Int = 0)  extends DSPQnm[DSPFixed] {
   def Q(): String = "+/-Q"+getIntWidth+"."+getFracWidth
 
   /** Get widths */
-  def getIntWidth(): Int = getWidth-getFracWidth-1
-  def getFracWidth(): Int = fractionalWidth
+  override def getIntWidth(): Int = getWidth-getFracWidth-1
+  override def getFracWidth(): Int = fractionalWidth
 
   type T = DSPFixed
 

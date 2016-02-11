@@ -1,9 +1,9 @@
 # TODO: Swap out imports to latest every time 'make debug', 'make vlsi' are run; error out if import Chisel._ is used
 
 # Project Name
-PRJ = Demo
+PRJ = FFT
 # True -> tests with fixed point, else tests with double precision floating point
-FIXED = false
+FIXED = true
 
 # Setup environment with 'make reset'
 reset:

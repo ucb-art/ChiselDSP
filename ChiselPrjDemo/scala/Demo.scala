@@ -62,7 +62,7 @@ class Demo [T <: DSPQnm[T]](gen : => T, p: DemoParams) extends GenDSPModule (gen
     // only be 1 bit wide (using the sign bit)
     // When performing hard decoding, n = 0, m = ??? -- you should determine what ??? is (15 is a placeholder)
     val m = if (p.softDemod) 15 else 0
-    val demodOut = Vec(DSPUInt.toBitWidth(p.QAMn.max-1), T(OUTPUT,(0,m)))
+    val demodOut = Vec(DSPUInt.toBitWidth(p.QAMn.max-1), gen.cloneType((0,m))).asOutput
     // If the bits of demodOut are interpreted as signed BigInt rather than fixed (i.e. renormalize wrt LSB), 
     // a large positive number is a very confident 0, and a small positive number is a less confident 0.
     // Negative #'s are associated with confidence for being a 1. We chose the sign of the LLR as positive <-> 0
@@ -226,7 +226,7 @@ class Demo [T <: DSPQnm[T]](gen : => T, p: DemoParams) extends GenDSPModule (gen
   debug(comp)
   val comp2 = demoIO.symbolIn.real.toInt()
   debug(comp2)
-  testIO.genT := Trim(comp,Complex.getFrac,tType = Truncate)
+  testIO.genT := Trim(comp,testIO.genT.getFracWidth,tType = Truncate)
 
   val asdf = UInt(OUTPUT,width=5)
   asdf := i.u1
@@ -289,6 +289,12 @@ class Demo [T <: DSPQnm[T]](gen : => T, p: DemoParams) extends GenDSPModule (gen
   val complexTestn = gen
   println(complexTestn.getInfo())
   debug(complexTestn)
+
+  println("Dbl " + DSPDbl(-3.3).litValue())
+  println("Fixed " + DSPFixed(-3.3,10).litValue())
+
+  val complexLUT = DSPModule(new ComplexLUT(List(Complex(3.3,-3.3),Complex(-0.5,0.5)),gen))
+  complexLUT.io.addr := DSPUInt(1)
 
 }
 
@@ -422,5 +428,6 @@ class DemoTests[T <: Demo[_ <: DSPQnm[_]]](c: T) extends DSPTester(c) {
   poke(c.i.s1,-2)
   step()
   peek(c.testReg2)
+  peek(c.complexLUT.io.dout)
 
 }

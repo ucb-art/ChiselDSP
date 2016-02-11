@@ -9,7 +9,7 @@ import Chisel._
   * max = maximum value in LUT
   */
 class BaseNLUTIO (depth: Int, rad: Int, max: Int) extends IOBundle {
-  val addr = DSPUInt(INPUT,depth-1)
+  val addr = DSPUInt(INPUT,(depth-1).max(0))
   val dout = BaseN(OUTPUT,rad = rad, max = max)
 }
 

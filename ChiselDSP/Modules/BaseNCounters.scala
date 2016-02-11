@@ -50,7 +50,7 @@ abstract class BaseNCounter (p: BaseNCountParams) extends DSPModule (inputDelay 
   val newOnClk = Mux(iCtrl.change,nextCount,io.out)
   val count = Mux(iCtrl.reset,zero,newOnClk)
   // TODO: Check critical path with maskWithMaxCheck
-  val (out,eqMax) = Reg(count).maskWithMaxCheck(io.primeDigits)
+  val (out,eqMax) = RegNext(count).maskWithMaxCheck(io.primeDigits)
   io.out := out
 
   oCtrl.reset := iCtrl.reset

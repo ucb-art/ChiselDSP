@@ -145,6 +145,12 @@ abstract class DSPBits [T <: DSPBits[T]] extends Bits {
   final def isAssigned() : Boolean = getInfo.isAssigned
   /** Returns the signal. Marks it as used */
   final def doNothing() : this.type = {use(); this}
+
+  /** Overrides existing range info without checks! (Be careful!) */
+  private[ChiselDSP] def rangeOverride(range:(BigInt,BigInt)): Unit = {
+    info.range("max") = range._2
+    info.range("min") = range._1
+  }
  
   /** Update ranging [min,max] -- subclasses need to compute rangeBits first */
   final protected def setRange(range: (BigInt,BigInt)): Unit = {

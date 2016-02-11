@@ -3,7 +3,7 @@ import Chisel._
 
 /** LUT IO for Int LUTs --> Vec of DSPBools */
 class IntLUT2BoolsIO (depth: Int, boolLength: Int, numPorts: Int) extends IOBundle {
-  val addr = Vec(numPorts,DSPUInt(INPUT,depth-1))
+  val addr = Vec(numPorts,DSPUInt(INPUT,(depth-1).max(0)))
   val dout = Vec(numPorts,Vec(boolLength,DSPBool(OUTPUT)))
 }
 
@@ -27,6 +27,6 @@ class IntLUT2Bools (ints: List[Int], numPorts: Int = 1, inDelay: Int = 0) extend
       res.passDelay(io.addr(0),0)
     }))
   ))
-  io.dout := outVecDSPBools
+  if (depth > 0) io.dout := outVecDSPBools
 
 }

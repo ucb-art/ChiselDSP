@@ -231,5 +231,7 @@ class DSPDbl extends DSPQnm[DSPDbl] {
   def clamp (range: => (Double,Double)): DSPDbl = {
     clamp((DSPDbl(range._1),DSPDbl(range._2)))
   }
+
+  // TODO: Have double check range too? Maybe not error, but keep track of range at least
   
 }

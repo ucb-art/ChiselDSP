@@ -111,6 +111,11 @@ object RegInit {
     }
     (init match {
       case init: Complex[_] => Complex(RegInit(init.real,clock),RegInit(init.imag,clock))
+      case init: DSPFixed => {
+        val out = apply_dsp(init,clock)
+        out.updateLimits(DSPFixed.toRange(out.getWidth))
+        out
+      }
       case init: DSPBits[_] => apply_dsp(init,clock)
       case init: Bits => apply_dsp(init,clock)
       case init: BaseN => BaseN(init.map(RegInit(_,clock)),init.rad)

@@ -272,31 +272,23 @@ class Demo [T <: DSPQnm[T]](gen : => T, p: DemoParams) extends GenDSPModule (gen
 
   debug(testReg2)
 
+  // NOTE IF YOU WANT TO REASSIGN TO A REGISTER, INITIALIZE IT USING REGINIT (otherwise, you'll
+  // get combinational loop error)
+
   val complexReg = RegInit(Complex(double2T(3.5),double2T(-3.5)))
-  println(complexReg.real.getInfo())
-  complexReg := complexReg >> 1
-  println(complexReg.real.getInfo())
+  println("Real " + complexReg.real.getInfo() + " Imag " + complexReg.imag.getInfo())
+  val complexRegTemp = complexReg >> 1
+  println("Real " + complexRegTemp.real.getInfo() + " Imag " + complexRegTemp.imag.getInfo())
+  complexReg := complexRegTemp
+  println("Real " + complexReg.real.getInfo() + " Imag " + complexReg.imag.getInfo())
   debug(complexReg)
 
+  val qwerty = RegInit(DSPUInt(2,3))
+  qwerty := (qwerty + DSPUInt(1)).shorten(qwerty.getRange)
 
-
-
-
-
-
-
-
-
-  val complexTestn = gen.cloneType() //DSPFixed(3.3,fracWidth=10)//Complex(double2T(3.5),double2T(-3.5))
+  val complexTestn = gen
   println(complexTestn.getInfo())
   debug(complexTestn)
-
-
-
-
-
-
-
 
 }
 

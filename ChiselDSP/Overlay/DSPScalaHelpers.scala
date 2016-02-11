@@ -10,3 +10,14 @@ object List2Tuple {
     (x.head,x.last)
   }
 }
+
+// TODO: Which is better? ZeroPadLit as string or shift by "digit width" for concatenation?
+/** Returns a string with a Lit padded (with 0's) to the desired bitwidth */
+object ZeroPadLit{
+  def apply(x: Bits): String = {
+    if (!x.isLit) Error("ZeroPadLit only works on literals!")
+    val width = x.getWidth
+    val stringVal = x.litValue().toString(2)
+    List.fill(x.getWidth - stringVal.length)("0").mkString("").concat(stringVal)
+  }
+}

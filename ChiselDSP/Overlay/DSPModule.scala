@@ -13,6 +13,10 @@ abstract class GenDSPModule[T <: DSPQnm[T]](gen : => T, inputDelay:Int = 0, deco
                                             _clock: Option[Clock] = None, _reset: Option[Bool] = None
                                            ) extends DSPModule(inputDelay, decoupledIO, _clock, _reset) {
 
+  val fixedParams = (gen.getIntWidth,gen.getFracWidth)
+
+  // TODO: Cleaner conversion is use Lit with cloneType (need more options for cloneType)
+
   /** Converts a double value to a constant DSPFixed (using [intWidth,fracWidth] parameters)
     * or DSPDbl (ignoring parameters).
     */
@@ -33,27 +37,15 @@ abstract class GenDSPModule[T <: DSPQnm[T]](gen : => T, inputDelay:Int = 0, deco
     out.asInstanceOf[T]
   }
 
-  // TODO: Change frac to gen.getFracWidth?
   def double2T[A <: DSPQnm[A]](x: Double): T = {
-    double2T(x,Complex.getFrac)
+    double2T(x,gen.getFracWidth)
   }
 
-  // TODO: Get rid of this?
-  /** Allows you to customize each T (DSPFixed or DSPDbl) for parameters like 
-    * integer width and fractional width (in the DSPFixed case) 
-    */
-  def T[A <: DSPQnm[A]](dir: IODirection, fixedParams: (Int,Int) = null): T = {
-    val default = (fixedParams == null)
-    val out =  gen.asInstanceOf[A] match {
-      case f: DSPFixed => {
-        val intWidth = if (default) f.getIntWidth else fixedParams._1
-        val fracWidth = if (default) f.getFracWidth else fixedParams._2
-        DSPFixed(dir, (intWidth,fracWidth))
-      }
-      case d: DSPDbl => DSPDbl(dir)
-      case _ => gen.error("Illegal generic type. Should be either DSPDbl or DSPFixed.")
-    }
-    out.asInstanceOf[T] 
+  /** Cast Chisel bits type as Gen (DSPFixed or DSPDbl)*/
+  def genCast(x: Bits): T = {
+    val res = chiselCast(x){gen.cloneType()}
+    res.dir = x.dir
+    res.assign()
   }
 
   /** Returns (Fixed, floating point) type used */

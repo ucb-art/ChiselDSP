@@ -196,6 +196,7 @@ object SRA {
 
 //----------------------------------------------------
 
+// TODO: Mux on 2 Vecs (of the same length)
 /** Mux (sel,tc,fc)
   * sel = (false,true) --> (fc,tc)
   */

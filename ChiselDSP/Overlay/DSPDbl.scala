@@ -11,10 +11,13 @@ object DSPDbl {
 
   /** Creates a DSPDbl object from a constant Double */
   def apply(x: Double): DSPDbl = {
-    val res = Lit(java.lang.Double.doubleToLongBits(x), 64){ DSPDbl() }
+    val res = Lit(toLongBits(x), 64){ DSPDbl() }
     res.asDirectionless
     res.assign()
   }
+
+  /** Gets BigInt representation of Double */
+  def toLongBits(x:Double): BigInt = java.lang.Double.doubleToLongBits(x)
 
   /** Creates a DSPDbl object with specified IO direction */
   def apply(dir: IODirection = NODIR): DSPDbl = {

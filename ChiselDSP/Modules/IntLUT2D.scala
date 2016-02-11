@@ -3,7 +3,7 @@ import Chisel._
 
 /** LUT IO for 2D Int LUTs */
 class IntLUT2DIO (depth: Int, colMax: List[Int]) extends IOBundle {
-  val addr = DSPUInt(INPUT,depth-1)
+  val addr = DSPUInt(INPUT,(depth-1).max(0))
   val dout = Vec(colMax.map(x => DSPUInt(OUTPUT,x)))
 }
 
@@ -18,8 +18,9 @@ class IntLUT2D (ints: List[List[Int]], inDelay: Int = 0) extends DSPModule (inpu
   override val io = new IntLUT2DIO (depth, colMax)
   val LUT = Vec(ints.map(x => {
     // Concatenate elements of a row so that the zero-indexed element is the right-most
-    val row = x.zipWithIndex.map{ case (e,i) => { DSPUInt(e,colMax(i)) }}
-    row.tail.foldLeft(row.head.toUInt)((b,a) => Cat(a,b))
+    val row = x.zipWithIndex.map{ case (e,i) => {ZeroPadLit(DSPUInt(e,colMax(i)))}}
+    val entry = row.tail.foldLeft(row.head)((b,a) => a.concat(b))
+    Lit("b".concat(entry),entry.length){UInt(width=entry.length)}
   }))
   io.addr.doNothing()
   val readBits = LUT(io.addr.toUInt)
@@ -34,6 +35,6 @@ class IntLUT2D (ints: List[List[Int]], inDelay: Int = 0) extends DSPModule (inpu
   val colMinIdx = colBitsSums.zip(colBits).map{case (h,l) => h - l}
   val out = colMaxIdx.zip(colMinIdx).zipWithIndex.map{ case (bits,i) => DSPUInt(readBits(bits._1,bits._2), colMax(i))}
   out.foreach(x => x.passDelay(io.addr,0))
-  io.dout := out
+  if (depth > 0) io.dout := out
 
 }

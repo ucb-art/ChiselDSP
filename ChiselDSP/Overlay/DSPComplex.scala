@@ -270,4 +270,18 @@ class Complex[T <: DSPQnm[T]](val real: T, val imag: T) extends ComplexBundle {
     imag.updateLimits(imagRange)
   }
 
+  // TODO: Make warning instead of error?
+  /** Get fractional width of real,imag parts */
+  def getFracWidth(): Int = {
+    if (real.getFracWidth != imag.getFracWidth) Error("Real and imaginary fractional widths are not the same!")
+    real.getFracWidth
+  }
+
+  /** Get integer width of real,imag parts */
+  def getIntWidth(): Int = {
+    if (real.getIntWidth != imag.getIntWidth) Error("Real and imaginary integer widths are not the same!")
+    real.getIntWidth
+  }
+
+
 }

@@ -21,12 +21,15 @@ object DSPTester {
 
   /** To keep track of failed test cases */
   private[ChiselDSP] var failedTests = Array.empty[String]
+  /** Should a Verilog TB be generated? */
+  private[ChiselDSP] var verilogTester = false
 }
 
-// TODO: SBT Run parameter verilogTester (and only in FIXED mode), 't' make private? (user can't change in their
-// top TB)
+// TODO: Move XDC, Makefrag out of tester, 't' make private? (user can't change in their
+// top TB), VCD?
 
-class DSPTester[+T <: ModuleOverride](c: T, verilogTester:Boolean = true, var traceOn: Boolean = true,
+class DSPTester[+T <: ModuleOverride](c: T, verilogTester:Boolean = DSPTester.verilogTester,
+                                      var traceOn: Boolean = !DSPTester.verilogTester,
                                       var hexOn: Boolean = true, var quitOnError: Boolean = false, var base: Int = 16)
   extends Tester(c, false, base){
 
@@ -35,8 +38,17 @@ class DSPTester[+T <: ModuleOverride](c: T, verilogTester:Boolean = true, var tr
     n.name.replace(c.name+"__","")
   }
 
+  /** Specifying whether an input/output node is signed for Verilog TB */
+  def isSigned(n: Node): String = {
+    n match {
+      case _: SInt | _ : Flo | _: Dbl | _: DSPDbl | _: Fixed | _: DSPFixed => " signed "
+      case _ => ""
+    }
+  }
+
   val tb = new java.io.BufferedWriter(new java.io.FileWriter("tb.v"))
   val xdc = new java.io.BufferedWriter(new java.io.FileWriter("constraints.xdc"))
+  val mk = new java.io.BufferedWriter(new java.io.FileWriter("Makefrag"))
 
   val resets = c.getResets.values.toList
 
@@ -44,6 +56,7 @@ class DSPTester[+T <: ModuleOverride](c: T, verilogTester:Boolean = true, var tr
   if (!verilogTester){
     tb.close()
     xdc.close()
+    mk.close()
   }
   else {
 
@@ -53,15 +66,23 @@ class DSPTester[+T <: ModuleOverride](c: T, verilogTester:Boolean = true, var tr
     val mainClk = Driver.implicitClock
     val clocks = Driver.clocks
 
+    val clkPeriodns = Clock.getPeriodx100ps/10.0
+    val clksTo120ns = math.round(120/clkPeriodns).intValue
+
     // Write constraints file for FPGA
-    clocks foreach (clk => xdc write "create_clock -name %s -period 2 %s\n".format(clk.name,clk.name))
+    clocks foreach (clk => xdc write "create_clock -name %s -period %f %s\n".format(clk.name,clkPeriodns,clk.name))
     xdc.close()
+
+    // Makefrag info for ASIC
+    mk write "VLSITOP=%s\n".format(c.name)
+    mk write "clock_period=%f".format(clkPeriodns)
+    mk.close()
 
     // Setup TB
     tb write "`timescale 100ps / 100ps\n"
-    tb write "`define CLK_PERIOD 20\n"
+    tb write "`define CLK_PERIOD %d\n".format(Clock.getPeriodx100ps)
     tb write "`define CLK_DELTA 2\n"
-    tb write "`define RESET_TIME (60*`CLK_PERIOD + 3*`CLK_PERIOD/2 + `CLK_DELTA)\n"
+    tb write "`define RESET_TIME (%d*`CLK_PERIOD + 3*`CLK_PERIOD/2 + `CLK_DELTA)\n".format(clksTo120ns)
     tb write "`define expect(nodeName, nodeVal, expVal, cycle) if (nodeVal !== expVal) begin " +
       "\\\n  $display(\"\\t ASSERTION ON %s FAILED @ CYCLE = %d, 0x%h != EXPECTED 0x%h\", " +
       "\\\n  nodeName,cycle,nodeVal,expVal); $stop; end\n\n"
@@ -81,9 +102,9 @@ class DSPTester[+T <: ModuleOverride](c: T, verilogTester:Boolean = true, var tr
 
     // Initialize inputs/outputs + setup DUT
     tb write "  // Module INPUTS\n"
-    ins   foreach (node => tb write "  reg[%d:0] %s = 0;\n".format(node.getWidth-1, getIOName(node)))
+    ins   foreach (node => tb write "  reg%s[%d:0] %s = 0;\n".format(isSigned(node),node.getWidth-1, getIOName(node)))
     tb write "  // Module OUTPUTS\n"
-    outs  foreach (node => tb write "  wire[%d:0] %s;\n".format(node.getWidth-1, getIOName(node)))
+    outs  foreach (node => tb write "  wire%s[%d:0] %s;\n".format(isSigned(node),node.getWidth-1, getIOName(node)))
     tb write "\n  // DUT Instantiation\n"
     // TODO: Check name consistency
     tb write "  %s %s(\n".format(c.moduleName, c.name)

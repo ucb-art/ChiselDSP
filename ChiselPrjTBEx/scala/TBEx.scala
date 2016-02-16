@@ -41,6 +41,6 @@ class TBEx[T <: DSPQnm[T]](gen : => T) extends GenDSPModule (gen) {
   o.count3 := io.count.toSInt
   o.count4 := DSPSInt(o.count3,(-128,127))
 
-  o.fix := i.fix
+  o.fix := i.fix.reg()
 
 }

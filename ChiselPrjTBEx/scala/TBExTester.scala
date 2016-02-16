@@ -6,11 +6,13 @@ import Chisel.{Complex => _, _}
 class TBExTests[T <: TBEx[_ <: DSPQnm[_]]](c: T) extends DSPTester(c) {
 
   poke(c.i.fix,-.25)
-  expect(c.o.fix,-.25)
 
   poke(c.io.addVal,1)
   poke(c.io.upDown,false)
   step(2)
+
+  expect(c.o.fix,-.25)
+
   poke(c.io.addVal,2)
   step(5)
   poke(c.io.upDown,true)

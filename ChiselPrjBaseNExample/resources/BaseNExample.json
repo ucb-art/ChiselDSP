@@ -8,5 +8,8 @@
     "trimType":"Truncate",
     "overflowType":"Wrap",
     "mulFracGrowth":1
+  },
+  "clock":{
+    "periodx100ps":39
   }
 }

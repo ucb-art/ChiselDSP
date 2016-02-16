@@ -300,8 +300,9 @@ class Demo [T <: DSPQnm[T]](gen : => T, p: DemoParams) extends GenDSPModule (gen
 
 /** Composition of your generator parameters (with default values!) */
 case class GeneratorParams(complex: ComplexParams = ComplexParams(),
+                           clock: ClockParams = ClockParams(),
                            demo: DemoParams = DemoParams()       // Add your parameters here
-                          ) extends JSONParams(complex)
+                          ) extends JSONParams(complex,clock)
 
 object Main {
 

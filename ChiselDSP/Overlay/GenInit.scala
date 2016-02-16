@@ -39,7 +39,7 @@ case object OverflowTypeSer extends CustomSerializer[OverflowType](format => (
 ))
 
 /** All user-defined case classes for generator parameterization should extend JSONParams */
-class JSONParams (val complexInit: ComplexParams)
+class JSONParams (val complexInit: ComplexParams, val clockInit: ClockParams)
 
 /** Initial setup (get user parameters from JSON file, determine whether to run in fixed or double mode)
   * gen = case class you want to extract the JSON to
@@ -80,20 +80,27 @@ object Init {
             (p: T, args: Array[String], ser: List[S]) : Tuple2[Boolean,T] = {
     // Set Complex params
     Complex.opts = p.complexInit
+    // Set Clock params
+    Clock.opts = p.clockInit
 
     implicit val formats = DefaultFormats ++ List(TrimTypeSer,OverflowTypeSer) ++ ser
 
     // Print JSON to file
     val userParams = write(p).substring(1)
-    val complexParamStr = "{\"complex\":" + write(p.complexInit) + (if (userParams.length > 1) "," else "")
-    val newJSON = complexParamStr + userParams + "\n"
+    val reqParamStr = "{\"complex\":" + write(p.complexInit) + "," +
+      "\"clock\":" + write(p.clockInit) +
+      (if (userParams.length > 1) "," else "")
+    val newJSON = reqParamStr + userParams + "\n"
     scala.tools.nsc.io.File("generator_out.json").appendAll(newJSON)
 
-    // SBT parameters (used to set Fixed/Dbl)
-    val paramsSBT = """-params_(.*)""".r.findFirstMatchIn(args(0))
+    // SBT parameters (used to set Fixed/Dbl, whether to generate Verilog TB)
+    val paramsSBT = """-params_(.*)_(.*)""".r.findFirstMatchIn(args(0))
     val isFixed = paramsSBT.get.group(1).toBoolean
+    DSPTester.verilogTester = paramsSBT.get.group(2).toBoolean
+
     val mode = if (isFixed) "fixed point" else "double precision floating point"
     Status("Compiling in " + mode + " mode")
+    if (DSPTester.verilogTester) Status("Generating Verilog TB")
     (isFixed,p)
   }
 }

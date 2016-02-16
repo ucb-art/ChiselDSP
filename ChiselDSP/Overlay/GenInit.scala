@@ -84,8 +84,9 @@ object Init {
     implicit val formats = DefaultFormats ++ List(TrimTypeSer,OverflowTypeSer) ++ ser
 
     // Print JSON to file
-    val complexParamStr = "{\"complex\":" + write(p.complexInit) + ","
-    val newJSON = complexParamStr + write(p).substring(1) + "\n"
+    val userParams = write(p).substring(1)
+    val complexParamStr = "{\"complex\":" + write(p.complexInit) + (if (userParams.length > 1) "," else "")
+    val newJSON = complexParamStr + userParams + "\n"
     scala.tools.nsc.io.File("generator_out.json").appendAll(newJSON)
 
     // SBT parameters (used to set Fixed/Dbl)

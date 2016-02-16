@@ -1,9 +1,9 @@
 # TODO: Swap out imports to latest every time 'make debug', 'make vlsi' are run; error out if import Chisel._ is used
 
 # Project Name
-PRJ = FFT
+PRJ = TBEx
 # True -> tests with fixed point, else tests with double precision floating point
-FIXED = false
+FIXED = true
 
 # Setup environment with 'make reset'
 reset:
@@ -63,23 +63,23 @@ genmodule:
 
 # Generate memory
 memgen:
-	cd Verilog${PRJ}/fpga && \
-    if [ -a ${PRJ}_0.conf ]; then \
-    	sed -i'' -e 's*^*../../VLSIHelpers/vlsi_mem_gen *' ${PRJ}_0.conf && \
-    	sed -i'' -e 's*$$* >> ${PRJ}_0.v*' ${PRJ}_0.conf && \
-   		sh ${PRJ}_0.conf ; \
-   	fi
+	cd Verilog${PRJ}/asic && \
+    if [ -a ${PRJ}.conf ]; then \
+    	sed -i'' -e 's*^*../../VLSIHelpers/vlsi_mem_gen *' ${PRJ}.conf && \
+    	sed -i'' -e 's*$$* >> ${PRJ}.v*' ${PRJ}.conf && \
+   		sh ${PRJ}.conf ; \
+   	fi ;\
+   	find . -name "*-e" -type f -delete
 
-# TODO: swap back fpga/asic
 # Compile to ASIC Verilog
 asic:
 	make default; make link; \
-	cd ChiselProject ; make fpga PRJ=${PRJ}; cd .. ; make memgen PRJ=${PRJ}
+	cd ChiselProject ; make asic PRJ=${PRJ}; cd .. ; make memgen PRJ=${PRJ}
 
 # Compile to FPGA Verilog
 fpga:
 	make default; make link; \
-	cd ChiselProject ; make asic PRJ=${PRJ}
+	cd ChiselProject ; make fpga PRJ=${PRJ}
 
 # Run Chisel Debug (fixed or not should be specified)
 debug:

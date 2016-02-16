@@ -21,10 +21,105 @@ object DSPTester {
 
   /** To keep track of failed test cases */
   private[ChiselDSP] var failedTests = Array.empty[String]
+  /** Should a Verilog TB be generated? */
+  private[ChiselDSP] var verilogTester = false
 }
-class DSPTester[+T <: Module](c: T, var traceOn: Boolean = true, var hexOn: Boolean = true,
-                              var quitOnError: Boolean = false, var base: Int = 16)
-                              extends Tester(c, false, base){
+
+// TODO: Move XDC, Makefrag out of tester, 't' make private? (user can't change in their
+// top TB), VCD?
+
+class DSPTester[+T <: ModuleOverride](c: T, verilogTester:Boolean = DSPTester.verilogTester,
+                                      var traceOn: Boolean = !DSPTester.verilogTester,
+                                      var hexOn: Boolean = true, var quitOnError: Boolean = false, var base: Int = 16)
+  extends Tester(c, false, base){
+
+  /** Helper function for retrieving IO name for Verilog TB creation */
+  def getIOName(n: Node): String = {
+    n.name.replace(c.name+"__","")
+  }
+
+  /** Specifying whether an input/output node is signed for Verilog TB */
+  def isSigned(n: Node): String = {
+    n match {
+      case _: SInt | _ : Flo | _: Dbl | _: DSPDbl | _: Fixed | _: DSPFixed => " signed "
+      case _ => ""
+    }
+  }
+
+  val tb = new java.io.BufferedWriter(new java.io.FileWriter("tb.v"))
+  val xdc = new java.io.BufferedWriter(new java.io.FileWriter("constraints.xdc"))
+  val mk = new java.io.BufferedWriter(new java.io.FileWriter("Makefrag"))
+
+  val resets = c.getResets.values.toList
+
+  // Only save "universal Verilog TB" if asked to save it
+  if (!verilogTester){
+    tb.close()
+    xdc.close()
+    mk.close()
+  }
+  else {
+
+    // Get signals
+    val ins = for ((n, io) <- c.wires if io.dir == INPUT && io.isTopLevelIO) yield io
+    val outs = for ((n, io) <- c.wires if io.dir == OUTPUT && io.isTopLevelIO) yield io
+    val mainClk = Driver.implicitClock
+    val clocks = Driver.clocks
+
+    val clkPeriodns = Clock.getPeriodx100ps/10.0
+    val clksTo120ns = math.round(120/clkPeriodns).intValue
+
+    // Write constraints file for FPGA
+    clocks foreach (clk => xdc write "create_clock -name %s -period %f %s\n".format(clk.name,clkPeriodns,clk.name))
+    xdc.close()
+
+    // Makefrag info for ASIC
+    mk write "VLSITOP=%s\n".format(c.name)
+    mk write "clock_period=%f".format(clkPeriodns)
+    mk.close()
+
+    // Setup TB
+    tb write "`timescale 100ps / 100ps\n"
+    tb write "`define CLK_PERIOD %d\n".format(Clock.getPeriodx100ps)
+    tb write "`define CLK_DELTA 2\n"
+    tb write "`define RESET_TIME (%d*`CLK_PERIOD + 3*`CLK_PERIOD/2 + `CLK_DELTA)\n".format(clksTo120ns)
+    tb write "`define expect(nodeName, nodeVal, expVal, cycle) if (nodeVal !== expVal) begin " +
+      "\\\n  $display(\"\\t ASSERTION ON %s FAILED @ CYCLE = %d, 0x%h != EXPECTED 0x%h\", " +
+      "\\\n  nodeName,cycle,nodeVal,expVal); $stop; end\n\n"
+    tb write "module ModuleTB;\n\n"
+    tb write "  integer cycle = 0;\n"
+
+    // Setup clocks + resets
+    clocks foreach (clk => tb write "  reg %s = 0;\n".format(clk.name))
+    resets foreach (rst => tb write "  reg %s = 1;\n".format(rst.name))
+    // TODO: Support multiple clock domains! + multiple resets?
+    if (clocks.size > 1) Error("Only 1 clock supported currently :( ")
+    clocks foreach (clk => tb write "  always #(`CLK_PERIOD/2) %s = ~%s;\n".format(clk.name, clk.name))
+    tb write "\n  initial begin\n"
+    tb write "    #(`RESET_TIME - `CLK_DELTA)\n"
+    tb write "    forever #`CLK_PERIOD cycle = cycle + 1;\n"
+    tb write "  end\n\n"
+
+    // Initialize inputs/outputs + setup DUT
+    tb write "  // Module INPUTS\n"
+    ins   foreach (node => tb write "  reg%s[%d:0] %s = 0;\n".format(isSigned(node),node.getWidth-1, getIOName(node)))
+    tb write "  // Module OUTPUTS\n"
+    outs  foreach (node => tb write "  wire%s[%d:0] %s;\n".format(isSigned(node),node.getWidth-1, getIOName(node)))
+    tb write "\n  // DUT Instantiation\n"
+    // TODO: Check name consistency
+    tb write "  %s %s(\n".format(c.moduleName, c.name)
+    c.getClocks foreach (clk => tb write "    .%s(%s),\n".format(clk.name, clk.name))
+    resets   foreach (rst => tb write "    .%s(%s),\n".format(rst.name, rst.name))
+    tb write ((ins ++ outs) map (node => "    .%s(%s)".format(getIOName(node), getIOName(node))) mkString ",\n")
+    tb write "\n  );\n\n"
+
+    // Start dumping test vectors
+    tb write "  initial begin\n"
+    resets foreach (rst => tb write "\n    #`RESET_TIME %s = 0;\n".format(rst.name))
+
+  }
+  // Tester starts with reset (but don't count cycles during reset)
+  super.reset(5)
 
   // TODO: Support alternative bases (besides hex)
   // TODO: Error if method argument = false (i.e. comparing two peeked results)
@@ -97,13 +192,20 @@ class DSPTester[+T <: Module](c: T, var traceOn: Boolean = true, var hexOn: Bool
   /** Cluster some peek-specific processing */
   private def peekInit(data: Bits, peek: Boolean): Tuple2[BigInt,String] = {
     val res = super.peek(data)
+    val ioName = getIOName(data)
+    val isDbl = data match {
+      case _: DSPDbl | _: Dbl | _: Flo => true
+      case _ => false
+    }
+    if (verilogTester && data.isTopLevelIO && peek && !isDbl)
+      tb write "    `expect(\"%s\",%s,%d,cycle)\n".format(ioName,ioName,res)
     val resBits = if (data.isLit || (data.dir == INPUT && data.isTopLevelIO)) signed_fix(data, res) else res
     val command = if (peek) "PEEK" else "POKE"
     val name = if (data.isLit) "*Lit*" else dumpName(data)
     val infoStart = "  %s %s -> ".format(command,name)
     (resBits, infoStart)
   }
-  
+
   /** More general handling of peek for all possible data types */
   private def peek (data: Bits, disp: Boolean, peek: Boolean) : Tuple3[Double,BigInt,String] = {
     val (resBits, infoStart) = peekInit(data,peek)
@@ -189,16 +291,24 @@ class DSPTester[+T <: Module](c: T, var traceOn: Boolean = true, var hexOn: Bool
       case d1: Dbl => super.poke(d1,x)
       case d2: DSPDbl => super.poke(node, BigInt(doubleToLongBits(x)))
       case f0: Flo => super.poke(f0,x.floatValue)
-      case f1: Fixed => super.poke(node, DSPFixed.toFixed(x,f1.getFractionalWidth))
-      case f2: DSPFixed => super.poke(node, DSPFixed.toFixed(x,f2.getFracWidth))
+      case f1: Fixed => pokeTB(node, DSPFixed.toFixed(x,f1.getFractionalWidth))
+      case f2: DSPFixed => pokeTB(node, DSPFixed.toFixed(x,f2.getFracWidth))
       case _ => Error("Poke value not valid for node type")
     }
     peek(node,disp,false)._1
   }
   /** x is the bit representation of the poked value */
   private def poke(node:Bits, x: BigInt, disp:Boolean): BigInt = {
-    super.poke(node,x)
+    pokeTB(node,x)
     peek(node,disp,false)._2
+  }
+
+  /** Poke with VerilogTB */
+  private def pokeTB(node:Bits, x: BigInt): Unit = {
+    val ioName = getIOName(node)
+    if (verilogTester && node.isTopLevelIO && node.dir == INPUT)
+      tb write "    %s = %d;\n".format(ioName,x)
+    super.poke(node,x)
   }
 
   /** Peek at the value of some memory at an index
@@ -231,13 +341,18 @@ class DSPTester[+T <: Module](c: T, var traceOn: Boolean = true, var hexOn: Bool
   override def step(n: Int) {
     val newT = t + n
     if (traceOn) println(s"STEP ${n}x -> ${newT}")
-    super.step(n) 
+    super.step(n)
+    if (verilogTester) tb write "    #(%d*`CLK_PERIOD) ".format(n)
   }
   
   /** Hold reset for n cycles */
   override def reset(n: Int = 1) {
-    if (traceOn) println(s"RESET ${n}")
+    val newT = t + n
+    if (traceOn) println(s"RESET ${n}x -> ${newT}")
     super.reset(n)
+    t += n
+    if (verilogTester)
+      resets foreach (rst => tb write "    %s = 1; #(%d*`CLK_PERIOD) %s = 0;\n".format(rst.name,n,rst.name))
   }
 
   /** Compare peek result with desired value in bit representation */
@@ -358,6 +473,13 @@ class DSPTester[+T <: Module](c: T, var traceOn: Boolean = true, var hexOn: Bool
 
   /** Complete the simulation and inspect all tests */
   override def finish() = {
+    // Close out testbench
+    if (verilogTester){
+      tb write "\n    #`CLK_PERIOD $display(\"\\t **Ran through all test vectors**\"); $finish;\n"
+      tb write "\n  end\n"
+      tb write "endmodule"
+      tb.close()
+    }
     if (DSPTester.failedTests.nonEmpty)
       println(Console.RED + Console.BOLD + "\n  Failed test cases: [" + DSPTester.failedTests.mkString(", ") + "]\n")
     super.finish

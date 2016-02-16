@@ -9,6 +9,9 @@
     "overflowType":"Wrap",
     "mulFracGrowth":1
   },
+  "clock":{
+    "periodx100ps":39
+  },
   "demo":{
     "QAMn":[2,4,16,64,256],
     "frameSizes":[128,256,512,1024,2048],

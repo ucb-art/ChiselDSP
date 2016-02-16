@@ -18,6 +18,11 @@ abstract class ModuleOverride(_clock: Option[Clock] = None, _reset: Option[Bool]
     }
   }
 
+  // TODO: Move accessors to Chisel.Module?
+  /** For ChiselDSP to get resets, clocks */
+  def getResets = resets
+  def getClocks = clocks
+
   private def assignIO[T <: Data](pin: T, name: String, b: Bundle): Unit = {
     for ((n, io) <- pin.flatten) {
       io.compOpt = Some(this)

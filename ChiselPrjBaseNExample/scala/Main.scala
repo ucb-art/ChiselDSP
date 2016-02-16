@@ -2,8 +2,8 @@ package BaseNExample
 import ChiselDSP._
 
 /** Composition of generator input parameters */
-case class GeneratorParams(complex: ComplexParams = ComplexParams()
-                          ) extends JSONParams(complex)
+case class GeneratorParams(complex: ComplexParams = ComplexParams(), clock: ClockParams = ClockParams()
+                          ) extends JSONParams(complex, clock)
 
 object Main {
 

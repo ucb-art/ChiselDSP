@@ -10,4 +10,7 @@ target
 sbt/ChiselCompatibility/target 
 sbt/ChiselDSP_Modules/target 
 sbt/ChiselDSP_Overlay/target
+constraints.xdc
+Makefrag
+tb.v
 generator_out.json

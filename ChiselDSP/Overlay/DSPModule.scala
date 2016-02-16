@@ -186,7 +186,8 @@ object DSPModule {
           // 'io' is handled separately in your normal Chisel fashion.
           if(!ioSet.equals(a.io)) {
             val ioName = ioSet.getClass.getName.toString.split('.').last.split('$').last
-            ioSet.setNameIO(ioName)
+            // If anonymous class, then ioName will be all digits
+            ioSet.setNameIO(if (ioName forall Character.isDigit) "" else ioName)
           }
         }
         while (!ios2.isEmpty) {

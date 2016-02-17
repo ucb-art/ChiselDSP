@@ -26,7 +26,7 @@ object DSPTester {
 }
 
 // TODO: Move XDC, Makefrag out of tester, 't' make private? (user can't change in their
-// top TB), VCD?
+// top TB), VCD? Switch to Handlebars?
 
 class DSPTester[+T <: ModuleOverride](c: T, verilogTester:Boolean = DSPTester.verilogTester,
                                       var traceOn: Boolean = !DSPTester.verilogTester,

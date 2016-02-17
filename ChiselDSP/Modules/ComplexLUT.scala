@@ -12,7 +12,7 @@ class ComplexLUTIO [T <: DSPQnm[T]](depth: Int, gen : => T) extends IOBundle {
 
 /** LUT that calculates outputs from a list of Scala Complex's */
 class ComplexLUT [T <: DSPQnm[T]](cx: List[ScalaComplex], gen : => T, inDelay: Int = 0) extends
-      GenDSPModule (gen, inputDelay = inDelay) {
+GenDSPModule (gen, inputDelay = inDelay) {
 
   // TODO: Make 0 length lists have optional IO = None; allow real,imag widths to be different (based off of range)
 
@@ -23,12 +23,13 @@ class ComplexLUT [T <: DSPQnm[T]](cx: List[ScalaComplex], gen : => T, inDelay: I
   io.addr.doNothing()
 
   // TODO: Bring out pad lit function
-
+  // TODO: Debug combined R,I Fixed
   // TODO: Don't separate DSPFixed and DSPDbl (get weird compilation error with DSPDbl -- use of undeclared identifier)
   val temp = {
     if (depth > 0) {
       gen match {
         case gen: DSPFixed => {
+          /*
           // Concatenate + store real,imag values in a LUT
           val LUT = Vec(cx.map(x => {
             val real = double2T(x.real, fixedParams)
@@ -45,6 +46,12 @@ class ComplexLUT [T <: DSPQnm[T]](cx: List[ScalaComplex], gen : => T, inDelay: I
           val real = genCast(out(out.getWidth - 1, out.getWidth >> 1))
           val imag = genCast(out((out.getWidth >> 1) - 1, 0))
           Complex(real, imag)
+          */
+          val LUTr = Vec(cx.map(x => double2T(x.real, fixedParams)))
+          val LUTi = Vec(cx.map(x => double2T(x.imag, fixedParams)))
+          val outr = LUTr(io.addr.toUInt)
+          val outi = LUTi(io.addr.toUInt)
+          Complex(outr, outi)
         }
         case gen: DSPDbl => {
           val LUTr = Vec(cx.map(x => double2T(x.real, fixedParams)))

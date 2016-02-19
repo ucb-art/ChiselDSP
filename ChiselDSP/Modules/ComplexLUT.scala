@@ -47,15 +47,15 @@ GenDSPModule (gen, inputDelay = inDelay) {
           val imag = genCast(out((out.getWidth >> 1) - 1, 0))
           Complex(real, imag)
           */
-          val LUTr = Vec(cx.map(x => double2T(x.real, fixedParams)))
-          val LUTi = Vec(cx.map(x => double2T(x.imag, fixedParams)))
+          val LUTr = Vec(cx.map(x => double2T(x.real)))
+          val LUTi = Vec(cx.map(x => double2T(x.imag)))
           val outr = LUTr(io.addr.toUInt)
           val outi = LUTi(io.addr.toUInt)
           Complex(outr, outi)
         }
         case gen: DSPDbl => {
-          val LUTr = Vec(cx.map(x => double2T(x.real, fixedParams)))
-          val LUTi = Vec(cx.map(x => double2T(x.imag, fixedParams)))
+          val LUTr = Vec(cx.map(x => double2T(x.real)))
+          val LUTi = Vec(cx.map(x => double2T(x.imag)))
           val outr = LUTr(io.addr.toUInt)
           val outi = LUTi(io.addr.toUInt)
           Complex(outr, outi)
@@ -63,7 +63,7 @@ GenDSPModule (gen, inputDelay = inDelay) {
       }
     }
     else {
-      Complex(double2T(0.0, fixedParams), double2T(0.0, fixedParams))
+      Complex(double2T(0.0), double2T(0.0))
     }
   }
 

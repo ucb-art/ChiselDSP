@@ -38,7 +38,7 @@ abstract class GenDSPModule[T <: DSPQnm[T]](gen : => T, inputDelay:Int = 0, deco
   }
 
   def double2T[A <: DSPQnm[A]](x: Double): T = {
-    double2T(x,gen.getFracWidth)
+    double2T(x,gen.getIntWidth,gen.getFracWidth)
   }
 
   /** Cast Chisel bits type as Gen (DSPFixed or DSPDbl)*/

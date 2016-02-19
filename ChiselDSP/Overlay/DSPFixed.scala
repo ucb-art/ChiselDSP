@@ -257,7 +257,7 @@ class DSPFixed (private var fractionalWidth:Int = 0)  extends DSPQnm[DSPFixed] {
   /** Shorten # of integer bits -- get rid of MSBs by forcing the generator to use a smaller width
     * CAREFUL: could eliminate useful bits!!!
     */
-  override def shortenTo(intWidth: Int): DSPFixed = {
+  override def shortenTo(intWidth: Int = Complex.getInt): DSPFixed = {
     val newWidth = DSPFixed.paramsToWidth((intWidth,getFracWidth))
     if (newWidth > getWidth) Error("New width must be <= old Fixed width.")
     val out = fromSInt(this.toSInt,getFracWidth,DSPFixed.toRange(newWidth))

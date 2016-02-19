@@ -1,6 +1,7 @@
 /** Useful console status shorthand */
+package ChiselDSP
 
-package Chisel
+import Chisel._
 
 /** Red error message on console with [optional] stack trace. Throws exception. */
 object Error {

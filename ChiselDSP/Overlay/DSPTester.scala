@@ -305,6 +305,9 @@ class DSPTester[+T <: ModuleOverride](c: T, verilogTester:Boolean = DSPTester.ve
 
   /** Poke with VerilogTB */
   private def pokeTB(node:Bits, x: BigInt): Unit = {
+    val unsignedBW = x.bitLength
+    val neededWidth = if (isSigned(node)) unsignedBW + 1 else unsignedBW
+    if (neededWidth > node.getWidth) Error("Poke value is not in the range of the input port")
     val ioName = getIOName(node)
     if (verilogTester && node.isTopLevelIO && node.dir == INPUT)
       tb write "    %s = %d;\n".format(ioName,x)

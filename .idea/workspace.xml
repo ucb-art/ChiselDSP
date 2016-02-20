@@ -2,8 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="9595d754-400a-43c8-b000-cec8f2a2c299" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ChiselDSP/Overlay/DSPTester.scala" afterPath="$PROJECT_DIR$/ChiselDSP/Overlay/DSPTester.scala" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ChiselPrjFFT/scala/FFTTester.scala" afterPath="$PROJECT_DIR$/ChiselPrjFFT/scala/FFTTester.scala" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ChiselPrjFFT/scala/new/Main.scala" afterPath="$PROJECT_DIR$/ChiselPrjFFT/scala/new/Main.scala" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ChiselPrjFFT/scala/new/Params.scala" afterPath="$PROJECT_DIR$/ChiselPrjFFT/scala/new/Params.scala" />
@@ -168,12 +166,24 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="Main.scala" pinned="false" current-in-tab="true">
+      <file leaf-file-name="Main.scala" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/ChiselPrjFFT/scala/new/Main.scala">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.31887755">
+            <state vertical-scroll-proportion="-4.6296296">
               <caret line="31" column="8" selection-start-line="31" selection-start-column="8" selection-end-line="31" selection-end-column="8" />
               <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="DSPTester.scala" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/ChiselDSP/Overlay/DSPTester.scala">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.4260204">
+              <caret line="439" column="46" selection-start-line="439" selection-start-column="46" selection-end-line="439" selection-end-column="46" />
+              <folding>
+                <element signature="e#156#187#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -181,7 +191,7 @@
     </leaf>
   </component>
   <component name="Git.Settings">
-    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/ChiselPrjFFT" />
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="GradleLocalSettings">
     <option name="externalProjectsViewState">
@@ -1619,16 +1629,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/ChiselDSP/Overlay/DSPTester.scala">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.5739796">
-          <caret line="17" column="25" selection-start-line="17" selection-start-column="25" selection-end-line="17" selection-end-column="25" />
-          <folding>
-            <element signature="e#156#187#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/ChiselPrjFFT/scala/FFTTester.scala">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="-7.296296">
@@ -1641,9 +1641,19 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/ChiselPrjFFT/scala/new/Main.scala">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.31887755">
+        <state vertical-scroll-proportion="-4.6296296">
           <caret line="31" column="8" selection-start-line="31" selection-start-column="8" selection-end-line="31" selection-end-column="8" />
           <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ChiselDSP/Overlay/DSPTester.scala">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.4260204">
+          <caret line="439" column="46" selection-start-line="439" selection-start-column="46" selection-end-line="439" selection-end-column="46" />
+          <folding>
+            <element signature="e#156#187#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>

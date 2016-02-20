@@ -441,16 +441,11 @@ class DSPTester[+T <: ModuleOverride](c: T, verilogTester:Boolean = DSPTester.ve
     }
     val good = {
       if (dblVal0 != expected0) {
-        data match {
-          case _: Dbl | _: DSPDbl | _: Flo => {
-            val gotDiff = math.abs(dblVal0-expected0)
-            (gotDiff <= tolDec)
-          }
-          case _ => {
-            val gotDiff = (bitVal - expectedBits).abs
-            (gotDiff <= tolerance)
-          }
-        }
+        val gotDiffDbl = math.abs(dblVal0-expected0)
+        val gotDiffBits = (bitVal - expectedBits).abs
+        val passDbl = gotDiffDbl <= tolDec
+        val passBits = gotDiffBits <= tolerance
+        passDbl & passBits
       }
       else true
     }

@@ -441,8 +441,9 @@ class DSPTester[+T <: ModuleOverride](c: T, verilogTester:Boolean = DSPTester.ve
     }
     val good = {
       if (dblVal0 != expected0) {
-        val gotDiff = (bitVal - expectedBits).abs
-        (gotDiff <= tolerance)
+        // TODO: Don't need BigInt input to function
+        val gotDiff = math.abs(dblVal0-expected0)
+        (gotDiff <= tolDec)
       }
       else true
     }

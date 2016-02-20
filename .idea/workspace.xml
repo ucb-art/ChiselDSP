@@ -2,8 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="9595d754-400a-43c8-b000-cec8f2a2c299" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ChiselDSP/Overlay/DSPTester.scala" afterPath="$PROJECT_DIR$/ChiselDSP/Overlay/DSPTester.scala" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ChiselPrjFFT/scala/FFTTester.scala" afterPath="$PROJECT_DIR$/ChiselPrjFFT/scala/FFTTester.scala" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ChiselPrjFFT/scala/new/Main.scala" afterPath="$PROJECT_DIR$/ChiselPrjFFT/scala/new/Main.scala" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ChiselPrjFFT/scala/new/Params.scala" afterPath="$PROJECT_DIR$/ChiselPrjFFT/scala/new/Params.scala" />
@@ -181,8 +179,8 @@
       <file leaf-file-name="DSPTester.scala" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/ChiselDSP/Overlay/DSPTester.scala">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.57908165">
-              <caret line="443" column="20" selection-start-line="443" selection-start-column="20" selection-end-line="443" selection-end-column="20" />
+            <state vertical-scroll-proportion="0.4260204">
+              <caret line="439" column="46" selection-start-line="439" selection-start-column="46" selection-end-line="439" selection-end-column="46" />
               <folding>
                 <element signature="e#156#187#0" expanded="true" />
               </folding>
@@ -1651,8 +1649,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/ChiselDSP/Overlay/DSPTester.scala">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.57908165">
-          <caret line="443" column="20" selection-start-line="443" selection-start-column="20" selection-end-line="443" selection-end-column="20" />
+        <state vertical-scroll-proportion="0.4260204">
+          <caret line="439" column="46" selection-start-line="439" selection-start-column="46" selection-end-line="439" selection-end-column="46" />
           <folding>
             <element signature="e#156#187#0" expanded="true" />
           </folding>

@@ -1,6 +1,5 @@
-/** Changes to Chisel Module */
-
 package Chisel
+import ChiselDSP.Error
 
 abstract class ModuleOverride(_clock: Option[Clock] = None, _reset: Option[Bool] = None)
                              extends Module(_clock,_reset) {
@@ -36,4 +35,3 @@ abstract class ModuleOverride(_clock: Option[Clock] = None, _reset: Option[Bool]
   val io = new Bundle
 
 }
-

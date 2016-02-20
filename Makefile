@@ -8,7 +8,7 @@ FIXED = true
 VERILOGTB = false
 
 # Setup environment with 'make reset'
-reset:
+reset: chisel
 	make clean; make scrub; make setup
 
 # Clean Chisel generated files
@@ -108,11 +108,8 @@ link:
 	cd ChiselProject/sbt/src/main; rm -f scala; ln -s ../../../../ChiselPrj${PRJ}/scala/ scala; \
 	rm -f resources; ln -s ../../../../ChiselPrj${PRJ}/resources/ resources
 
-.PHONY: vlsi debug clean
+chisel:
+	git submodule update --init
+	cd chisel && sbt publish-local
 
-
-
-
-
-
-
+.PHONY: vlsi debug clean chisel

@@ -4,7 +4,7 @@ val prjSettings = Project.defaultSettings ++ Seq(
   scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-language:reflectiveCalls",
                         "-language:implicitConversions", "-language:existentials"),
   libraryDependencies += "org.json4s" %% "json4s-native" % "3.3.0",
-  libraryDependencies += "edu.berkeley.cs" %% "chisel" % "latest.release",
+  libraryDependencies += "edu.berkeley.cs" %% "chisel" % "2.3-SNAPSHOT",
   libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-compiler" % _ ) 
 )
  

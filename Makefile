@@ -3,7 +3,7 @@
 # Project Name
 PRJ = FFT
 # True -> tests with fixed point, else tests with double precision floating point
-FIXED = false
+FIXED = true
 # True -> generate Verilog TB (only in Fixed mode)
 VERILOGTB = false
 

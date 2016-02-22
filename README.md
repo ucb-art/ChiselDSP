@@ -72,7 +72,7 @@ Testing & Verilog Generation
 
 - `make debug PRJ=☆ FIXED=true/false` runs your instance of **DSPTester** and displays results on the console. The version of the module tested either uses *DSPFixed* or *DSPDbl* for *gen* depending on *FIXED*.
 
-- `make asic PRJ=☆` generates a version of the Verilog RTL that is best suited for ASICs. Essentially, memories are blackboxed and a script in **ChiselEnvironment/VerilogHelpers/vlsi_mem_gen** is used to replace the black boxes with SRAM from an appropriate technology. Note that the script is not publicly available as it is technology/vendor specific. The output is located in **ChiselEnvironment/ChiselPrj☆/asic/**. The files generated are:
+- `make asic PRJ=☆` generates a version of the Verilog RTL that is best suited for ASICs. Essentially, memories are blackboxed and a script in **ChiselEnvironment/VerilogHelpers/vlsi_mem_gen** is used to replace the black boxes with **SRAM** from an appropriate technology. Note that the script is not publicly available as it is technology/vendor specific. The output is located in **ChiselEnvironment/ChiselPrj☆/asic/**. The files generated are:
      - **☆.conf** details SRAM configuration i.e. depth, width, & ports for all memories required (used by *vlsi_mem_gen*)
      - **☆.v** is your top module's Verilog RTL (with SRAMs swapped in)
      - **generator_out.json** saves the parameters used for this generated design
@@ -80,7 +80,7 @@ Testing & Verilog Generation
 
 - `make asic_tb PRJ=☆` does the same as `make asic`, but also runs `make debug` and generates an additional **tb.v**, which is your Chisel testbench translated into a Verilog testbench (with fixed-point IO).
 
-- `make fpga PRJ=☆` generates a version of the Verilog RTL that is best suited for FPGAs. The memories are written as registers, and BRAM can be inferred. The output is located in **ChiselEnvironment/ChiselPrj☆/fpga/**. The files generated are:
+- `make fpga PRJ=☆` generates a version of the Verilog RTL that is best suited for FPGAs. The memories are written as **registers**, and BRAM can be inferred. The output is located in **ChiselEnvironment/ChiselPrj☆/fpga/**. The files generated are:
      - **constraints.xdc** specifies the clock constraints used for synthesis & place/route
      - **☆.v** is your top module's Verilog RTL (where registers are used for memory)
      - **generator_out.json**: See above.

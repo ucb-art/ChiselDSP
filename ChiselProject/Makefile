@@ -1,4 +1,4 @@
-PRJ = xxx
+PRJ = FFT
 FIXED = true
 MEM = --inlineMem
 VERILOGTB = false

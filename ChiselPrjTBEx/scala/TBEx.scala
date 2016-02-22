@@ -12,6 +12,14 @@ class CountIO extends IOBundle {
   val count = DSPUInt(OUTPUT,255)
 }
 
+class TestMod extends DSPModule{
+  override val io = new IOBundle{
+    val in = UInt(INPUT,width=4)
+    val out = UInt(OUTPUT,width=4)
+  }
+  io.out := io.in - UInt(1)
+}
+
 /** Module that supports both fixed and floating point testing */
 class TBEx[T <: DSPQnm[T]](gen : => T) extends GenDSPModule (gen) {
 
@@ -25,11 +33,20 @@ class TBEx[T <: DSPQnm[T]](gen : => T) extends GenDSPModule (gen) {
     val count3 = SInt(OUTPUT,width=8)
     val count4 = DSPSInt(OUTPUT,(-128,127))
     val fix = gen.asOutput
+    val out = UInt(OUTPUT,width=5)
   }
 
   val i = new IOBundle{
     val fix = gen.asInput
+    val in = UInt(INPUT,width=5)
   }
+
+  val testMod = DSPModule(new TestMod)
+
+  val outTemp = UInt(width=5)
+  testMod.io.in := i.in
+  outTemp := testMod.io.out
+  o.out := outTemp - UInt(1,width=5)
 
   val newCount = Mux(io.upDown,io.count +% io.addVal, io.count - io.addVal)
   io.count := Mux(DSPBool(reset),DSPUInt(0),newCount).reg()

@@ -1,9 +1,9 @@
 # TODO: Swap out imports to latest every time 'make debug', 'make vlsi' are run; error out if import Chisel._ is used
 
 # Project Name
-PRJ = FFT
+PRJ = TBEx
 # True -> tests with fixed point, else tests with double precision floating point
-FIXED = true
+FIXED = false
 # True -> generate Verilog TB (only in Fixed mode)
 VERILOGTB = false
 

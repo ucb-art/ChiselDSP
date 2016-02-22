@@ -1,0 +1,1 @@
+create_clock -name clk -period 2 clk

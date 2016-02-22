@@ -1,7 +1,7 @@
 # TODO: Swap out imports to latest every time 'make debug', 'make vlsi' are run; error out if import Chisel._ is used
 
 # Project Name
-PRJ = FFT
+PRJ = test
 # True -> tests with fixed point, else tests with double precision floating point
 FIXED = true
 # True -> generate Verilog TB (only in Fixed mode)
@@ -37,7 +37,7 @@ setup:
 # Setup project templates
 prj:
 	make default; if [ -d "ChiselPrj${PRJ}" ]; then exit 1; fi ;\
-	mkdir -p ChiselPrj${PRJ}; \
+	mkdir -p ChiselPrj${PRJ}; cp -R ChiselDSP/Project/.gitignore ChiselPrj${PRJ}/. ; \
 	cp -R ChiselDSP/Project/* ChiselPrj${PRJ}/. ; \
 	grep -rl '**IMPORTS' ChiselPrj${PRJ}/ | \
 	xargs sed -i'.old' -e '/**IMPORTS/ {' -e 'r ChiselPrj${PRJ}/imports.txt' -e 'd' -e '}' ;\
@@ -65,7 +65,7 @@ genmodule:
 
 # Generate memory
 memgen:
-	cd Verilog${PRJ}/asic && \
+	cd ChiselPrj${PRJ}/asic && \
 	if [ -a ${PRJ}.conf ]; then \
 		sed -i'' -e 's*^*../../VLSIHelpers/vlsi_mem_gen *' ${PRJ}.conf && \
 		sed -i'' -e 's*$$* >> ${PRJ}.v*' ${PRJ}.conf && \
@@ -86,17 +86,17 @@ fpga:
 # Run Chisel Debug (fixed or not should be specified)
 debug:
 	make default; make link; \
-	cd ChiselProject ; make debug PRJ=${PRJ} FIXED=${FIXED} VERILOGTB=${VERILOGTB}
+	cd ChiselProject ; make debug_novcd PRJ=${PRJ} FIXED=${FIXED} VERILOGTB=${VERILOGTB}
 
 # Make ASIC Verilog with Verilog testbench
 asic_tb:
-	make asic ; make debug VERILOGTB=true FIXED=true ; \
-	mv ChiselProject/sbt/tb.v Verilog${PRJ}/asic/. ; mv ChiselProject/sbt/Makefrag Verilog${PRJ}/asic/Makefrag_prj
+	make asic ; make debug_novcd VERILOGTB=true FIXED=true ; \
+	mv ChiselProject/sbt/tb.v ChiselPrj${PRJ}/asic/. ; mv ChiselProject/sbt/Makefrag ChiselPrj${PRJ}/asic/Makefrag_prj
 
 # Make FPGA Verilog with Verilog testbench
 fpga_tb:
-	make fpga ; make debug VERILOGTB=true FIXED=true ;\
-	mv ChiselProject/sbt/tb.v Verilog${PRJ}/fpga/. ; mv ChiselProject/sbt/constraints.xdc Verilog${PRJ}/fpga/.
+	make fpga ; make debug_novcd VERILOGTB=true FIXED=true ;\
+	mv ChiselProject/sbt/tb.v ChiselPrj${PRJ}/fpga/. ; mv ChiselProject/sbt/constraints.xdc ChiselPrj${PRJ}/fpga/.
 
 default:
 	sed -i'.old' -e 's/^FIXED = .*/FIXED = ${FIXED}/g' Makefile; \

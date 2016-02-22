@@ -10,6 +10,6 @@
     "mulFracGrowth":1
   },
   "clock":{
-    "periodx100ps":39
+    "periodx100ps":195
   }
 }

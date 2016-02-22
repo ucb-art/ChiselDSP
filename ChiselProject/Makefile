@@ -1,4 +1,4 @@
-PRJ = test
+PRJ = TBEx
 FIXED = true
 MEM = --inlineMem
 VERILOGTB = false

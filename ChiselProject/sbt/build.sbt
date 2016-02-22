@@ -5,6 +5,11 @@ val prjSettings = Project.defaultSettings ++ Seq(
                         "-language:implicitConversions", "-language:existentials"),
   libraryDependencies += "org.json4s" %% "json4s-native" % "3.3.0",
   libraryDependencies += "edu.berkeley.cs" %% "chisel" % "2.3-SNAPSHOT",
+  libraryDependencies  ++= Seq(
+    "org.scalanlp" %% "breeze" % "0.12",
+    "org.scalanlp" %% "breeze-natives" % "0.12",
+    "org.scalanlp" %% "breeze-viz" % "0.12"
+  ),
   libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-compiler" % _ ) 
 )
  

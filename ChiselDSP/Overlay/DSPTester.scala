@@ -433,6 +433,10 @@ class DSPTester[+T <: ModuleOverride](c: T, verilogTester:Boolean = DSPTester.ve
       case f2: DSPFixed => DSPFixed.toFixed(expected0,f2.getFracWidth)
       case _ => Error("Node type should be *Dbl, *Fixed, or Flo for expect"); BigInt(0)
     }
+
+    // TODO: Should this be here? This will fail even if you do normal Dbl, Fixed (not gen)
+    if (expectedBits.bitLength > data.getWidth-1) Error("Expected value is out of output node range")
+
     // Allow for some tolerance in error checking
     val (tolerance,tolDec) = data match {
       case f1: Fixed => (fixTolInt,DSPFixed.toDouble(fixTolInt,f1.getFractionalWidth))
@@ -486,8 +490,16 @@ class DSPTester[+T <: ModuleOverride](c: T, verilogTester:Boolean = DSPTester.ve
       tb write "endmodule"
       tb.close()
     }
+
+    c match {
+      case x: GenDSPModule[_] => Status("\n  Instance type: " + x.getType)
+      case _ =>
+    }
+
     if (DSPTester.failedTests.nonEmpty)
       println(Console.RED + Console.BOLD + "\n  Failed test cases: [" + DSPTester.failedTests.mkString(", ") + "]\n")
+    else println("")
+
     super.finish
   }
 

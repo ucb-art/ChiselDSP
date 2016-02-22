@@ -1,6 +1,7 @@
 *~
 ChiselPrj*/
-Verilog*/
+asic/
+fpga/
 .nfs*
 !ChiselPrjDemo/
 !ChiselPrjBaseNExample/

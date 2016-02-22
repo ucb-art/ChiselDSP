@@ -7,6 +7,7 @@
       <sourceFolder url="file://$MODULE_DIR$/ChiselDSP/Modules" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/ChiselDSP/Overlay" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/ChiselPrjDemo/scala" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/ChiselDSP/Overlay/DSPTypes" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

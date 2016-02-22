@@ -1,7 +1,7 @@
 # TODO: Swap out imports to latest every time 'make debug', 'make vlsi' are run; error out if import Chisel._ is used
 
 # Project Name
-PRJ = test
+PRJ = FFT
 # True -> tests with fixed point, else tests with double precision floating point
 FIXED = true
 # True -> generate Verilog TB (only in Fixed mode)
@@ -90,12 +90,12 @@ debug:
 
 # Make ASIC Verilog with Verilog testbench
 asic_tb:
-	make asic ; make debug_novcd VERILOGTB=true FIXED=true ; \
+	make asic ; make debug VERILOGTB=true FIXED=true ; \
 	mv ChiselProject/sbt/tb.v ChiselPrj${PRJ}/asic/. ; mv ChiselProject/sbt/Makefrag ChiselPrj${PRJ}/asic/Makefrag_prj
 
 # Make FPGA Verilog with Verilog testbench
 fpga_tb:
-	make fpga ; make debug_novcd VERILOGTB=true FIXED=true ;\
+	make fpga ; make debug VERILOGTB=true FIXED=true ;\
 	mv ChiselProject/sbt/tb.v ChiselPrj${PRJ}/fpga/. ; mv ChiselProject/sbt/constraints.xdc ChiselPrj${PRJ}/fpga/.
 
 default:

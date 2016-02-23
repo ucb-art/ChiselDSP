@@ -168,14 +168,21 @@ object DSPModule {
     */
   def apply[T <: Module](m: => T, nameExt: String = ""): T = {
     val thisModule = Module(m)
-    var currentName = thisModule.name
-    if (currentName == "") currentName = thisModule.getClass.getName.toString.split('.').last
-    val optName = if (nameExt == "") nameExt else "_" + nameExt
-    val newName = currentName + optName
-    // Name module
-    thisModule.setModuleName(newName)
-    // Name module (used for Verilog file name)
-    thisModule.setName(newName)
+
+    // TODO: Look into weird bug when you setModuleName of multiple modules to be the same -- Chisel doesn't
+    // seem to always automatically infer that there's a name conflict ? This is a problem when you use the same class
+    // but with different parameters... maybe should keep track of all names used and check for conflict?
+
+    if (nameExt != "") {
+      var currentName = thisModule.name
+      if (currentName == "") currentName = thisModule.getClass.getName.toString.split('.').last
+      val optName = if (nameExt == "") nameExt else "_" + nameExt
+      val newName = currentName + optName
+      // Name module
+      thisModule.setModuleName(newName)
+      // Name module (used for Verilog file name)
+      thisModule.setName(newName)
+    }
 
     // Supports both Chisel.Module (do nothing) and DSPModule (custom IO)
     thisModule match {

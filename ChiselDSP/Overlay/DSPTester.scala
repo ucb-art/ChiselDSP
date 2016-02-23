@@ -106,8 +106,11 @@ class DSPTester[+T <: ModuleOverride](c: T, verilogTester:Boolean = DSPTester.ve
     tb write "  // Module OUTPUTS\n"
     outs  foreach (node => tb write "  wire%s[%d:0] %s;\n".format(isSigned(node)._2,node.getWidth-1, getIOName(node)))
     tb write "\n  // DUT Instantiation\n"
-    // TODO: Check name consistency
-    tb write "  %s %s(\n".format(c.moduleName, c.name)
+    // TODO: Figure out why moduleName is "" when not explicitly set... This is ok for now b/c top level shouldn't have
+    // any duplicates ?
+    // moduleName = module entity name, name = instance name
+    // tb write "  %s %s(\n".format(c.moduleName, c.name)
+    tb write "  %s %s(\n".format(c.name, c.name)
     c.getClocks foreach (clk => tb write "    .%s(%s),\n".format(clk.name, clk.name))
     resets   foreach (rst => tb write "    .%s(%s),\n".format(rst.name, rst.name))
     tb write ((ins ++ outs) map (node => "    .%s(%s)".format(getIOName(node), getIOName(node))) mkString ",\n")
@@ -161,7 +164,7 @@ class DSPTester[+T <: ModuleOverride](c: T, verilogTester:Boolean = DSPTester.ve
   /** Peek complex*/
   def peek(data: ComplexBundle): ScalaComplex = peek(data,traceOn,true)._1
   private def peek(data: ComplexBundle, disp:Boolean, pk:Boolean): Tuple3[ScalaComplex,Array[BigInt],String] = {
-    val res = data.flatten map (x => peek(x._2,false,false))
+    val res = data.flatten map (x => peek(x._2,false,pk))
     val names = data.flatten map (x => dumpName(x._2))
     val isLit = data.flatten.map(x => x._2.isLit).toList.reduce(_&&_)
     val realName = names.head.replace("_real","")
@@ -179,7 +182,7 @@ class DSPTester[+T <: ModuleOverride](c: T, verilogTester:Boolean = DSPTester.ve
   /** Convenient peek of a Vec of Bits */
   def peek[A <: Bits](data: Vec[A]): Array[BigInt] = peek(data,traceOn,true)._1
   private def peek[A <: Bits](data: Vec[A], disp:Boolean, pk:Boolean): Tuple2[Array[BigInt],String] = {
-    val res = data.flatten.map(x => peek(x._2,false,false)._2).reverse
+    val res = data.flatten.map(x => peek(x._2,false,pk)._2).reverse
     val names = data.flatten.map(x => dumpName(x._2)).reverse
     val name = names.head.replace("_0","")
     val command = if (pk) "PEEK" else "POKE"
@@ -197,6 +200,7 @@ class DSPTester[+T <: ModuleOverride](c: T, verilogTester:Boolean = DSPTester.ve
       case _: DSPDbl | _: Dbl | _: Flo => true
       case _ => false
     }
+
     if (verilogTester && data.isTopLevelIO && peek && !isDbl)
       tb write "    `expect(\"%s\",%s,%d,cycle)\n".format(ioName,ioName,res)
     val resBits = if (data.isLit || (data.dir == INPUT && data.isTopLevelIO)) signed_fix(data, res) else res
@@ -459,6 +463,7 @@ class DSPTester[+T <: ModuleOverride](c: T, verilogTester:Boolean = DSPTester.ve
   /** Compare Complex */
   def expect(data: ComplexBundle, expected: ScalaComplex): Boolean = expect(data,expected,"","")
   def expect[A <: DSPQnm[A]](data: ComplexBundle, expected: ScalaComplex, test:String, error: String): Boolean = {
+
     val (dblVal,bitVal,consolePeek) = peek(data,traceOn,true)
     val (goodR,toleranceR) = checkDecimal(data.asInstanceOf[Complex[A]].real,expected.real,dblVal.real,bitVal.head)
     val (goodI,toleranceI) = checkDecimal(data.asInstanceOf[Complex[A]].imag,expected.imag,dblVal.imag,bitVal.last)

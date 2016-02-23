@@ -107,6 +107,7 @@ class DSPTester[+T <: ModuleOverride](c: T, verilogTester:Boolean = DSPTester.ve
     outs  foreach (node => tb write "  wire%s[%d:0] %s;\n".format(isSigned(node)._2,node.getWidth-1, getIOName(node)))
     tb write "\n  // DUT Instantiation\n"
     // TODO: Check name consistency
+    // moduleName = module entity name, name = instance name
     tb write "  %s %s(\n".format(c.moduleName, c.name)
     c.getClocks foreach (clk => tb write "    .%s(%s),\n".format(clk.name, clk.name))
     resets   foreach (rst => tb write "    .%s(%s),\n".format(rst.name, rst.name))

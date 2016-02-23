@@ -3,12 +3,6 @@
   <component name="ChangeListManager">
     <list default="true" id="9595d754-400a-43c8-b000-cec8f2a2c299" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ChiselDSP/Overlay/DSPModule.scala" afterPath="$PROJECT_DIR$/ChiselDSP/Overlay/DSPModule.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ChiselDSP/Overlay/DSPTester.scala" afterPath="$PROJECT_DIR$/ChiselDSP/Overlay/DSPTester.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ChiselPrjFFT/README.md" afterPath="$PROJECT_DIR$/ChiselPrjFFT/README.md" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ChiselPrjFFT/scala/old/Calculation_Control.scala" afterPath="$PROJECT_DIR$/ChiselPrjFFT/scala/old/Calculation_Control.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ChiselProject/Makefile" afterPath="$PROJECT_DIR$/ChiselProject/Makefile" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Makefile" afterPath="$PROJECT_DIR$/Makefile" />
     </list>
     <ignored path="ChiselEnvironment.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -160,7 +154,7 @@
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300" />
   </component>
   <component name="Git.Settings">
-    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/ChiselPrjFFT" />
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="GradleLocalSettings">
     <option name="externalProjectsViewState">
@@ -215,12 +209,12 @@
         <option value="$PROJECT_DIR$/ChiselPrjFFT/scala/new/FFTTester.scala" />
         <option value="$PROJECT_DIR$/ChiselPrjTBEx/scala/TBEx.scala" />
         <option value="$PROJECT_DIR$/ChiselPrjFFT/README.md" />
-        <option value="$PROJECT_DIR$/VLSIHelpers/vlsi_mem_gen" />
         <option value="$PROJECT_DIR$/ChiselPrjFFT/asic/FFT.v" />
         <option value="$PROJECT_DIR$/ChiselDSP/Overlay/DSPModule.scala" />
         <option value="$PROJECT_DIR$/ChiselDSP/Overlay/DSPTester.scala" />
         <option value="$PROJECT_DIR$/ChiselPrjFFT/scala/FFT_OLD.scala" />
         <option value="$PROJECT_DIR$/ChiselPrjFFT/scala/old/Calculation_Control.scala" />
+        <option value="$PROJECT_DIR$/VLSIHelpers/vlsi_mem_gen" />
       </list>
     </option>
   </component>
@@ -878,7 +872,7 @@
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.5085414" sideWeight="0.48820755" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.3544137" sideWeight="0.86283183" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Designer" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.15929204" sideWeight="0.8567674" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.3176991" sideWeight="0.8567674" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.42687747" sideWeight="0.78318584" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="5" side_tool="true" content_ui="tabs" />
@@ -1292,14 +1286,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/VLSIHelpers/vlsi_mem_gen">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="3.7922077">
-          <caret line="200" column="17" selection-start-line="200" selection-start-column="17" selection-end-line="200" selection-end-column="17" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/ChiselDSP/Overlay/BaseN.scala">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.2413793">
@@ -1332,14 +1318,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/ChiselPrjFFT/asic/FFT.v">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.33333334">
-          <caret line="7277" column="20" selection-start-line="7277" selection-start-column="7" selection-end-line="7277" selection-end-column="20" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/ChiselPrjFFT/scala/FFT_OLD.scala">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.25735295">
@@ -1352,6 +1330,14 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.18382353">
           <caret line="157" column="18" selection-start-line="157" selection-start-column="18" selection-end-line="157" selection-end-column="18" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/VLSIHelpers/vlsi_mem_gen">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.2857143">
+          <caret line="262" column="22" selection-start-line="262" selection-start-column="22" selection-end-line="262" selection-end-column="22" />
           <folding />
         </state>
       </provider>

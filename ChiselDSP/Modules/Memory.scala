@@ -56,10 +56,13 @@ class Memory[T <: Data](gen : => T, depth: Int, outReg: Boolean = true, seqRead:
     }
   }
 
+  // Force reset signal to exist for module
+  val passThroughTemp = io.passThrough.getOrElse(DSPBool(false)) & DSPBool(~reset)
+
   // Conflict handling for sequential read where passThrough = whether to pass write data to
   // read out on the next clock cycle if write and read addresses are the same.
   val inDly = Pipe(dIn,postDly)
-  val reroute = ((wAddr === io.rAddr.pipe(preDly)) & we & io.passThrough.getOrElse(DSPBool(false)).pipe(preDly))
+  val reroute = ((wAddr === io.rAddr.pipe(preDly)) & we & passThroughTemp.pipe(preDly))
   io.dOut := Mux(reroute.pipe(postDly),inDly,dOut)
 
 }

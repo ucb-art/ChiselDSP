@@ -134,4 +134,23 @@ For more information, see [here](ChiselDSP/Overlay/DSPTypes)) . ChiselDSP types 
 >
 > **Note #2**: Another useful (new) operator is `x ? cond` which will return *x* if *cond* is true else 0. This was used to build the ChiselDSP **Mux**.
 
+----------
+
+A Note on Memories...
+====================
+
+For FPGA's, registering only the read address or only the read data out should allow you to pass behavioral simulation **but** if you try to synthesize with your memories as BRAM, post-synthesis functional simulation most likely fail. It seems to pass if you synthesize your memories into distributed RAM by (in *Vivado*) going to **Synthesis Settings**, **More Options** and using the directive `-ram_style distributed`. Note that distributed RAM can behave like a register file, where read can be performed asynchronously.
+
+In general, however, it's best (safest) to register both the read address and read data out. When you instantiate your ChiselDSP **Memory**, use `seqRead = true, outReg = true`. **seqRead** determines whether to register the read address; **outReg** determines whether to register the data out. That way, post-synthesis functional simulation will also pass with BRAM.
+
+> **Note**: In general, to force the type of RAM Xilinx should infer, use `-ram_style ☆` where ☆ is **block**, **auto**, or **distributed**. Check out [Dillon Engineering](http://www.dilloneng.com/inferring-block-ram-vs-distributed-ram-in-xst-and-precision.html#/) for more information on RAM inference.
+
+
+----------
+
+Functional Programming 101
+====================
+
+Check out [Twitter's Scala School](https://twitter.github.io/scala_school/)!
+
 To be continued...

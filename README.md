@@ -134,4 +134,15 @@ For more information, see [here](ChiselDSP/Overlay/DSPTypes)) . ChiselDSP types 
 >
 > **Note #2**: Another useful (new) operator is `x ? cond` which will return *x* if *cond* is true else 0. This was used to build the ChiselDSP **Mux**.
 
+----------
+
+A Note on Memories...
+====================
+
 To be continued...
+
+If you structured your memory to resemble register files, try distributed ram... in synthesis settings: more options...
+
+-ram_style block # ( | auto | distributed )
+
+http://www.dilloneng.com/inferring-block-ram-vs-distributed-ram-in-xst-and-precision.html#/

@@ -4,7 +4,7 @@ import Chisel._
 // TODO: Support multiple read/write ports, try multiple clock domains, check combinational read, Register file
 
 /** Memory IO where passThrough = whether to pass write data to read out on the next clock cycle if write
-  * and read addresses are the same.
+  * and read addresses are the same. Note that SRAMs should use Chisel reset for initialization!
   */
 class MemIO[T <: Data](gen : => T, depth: Int, conflictHandling: Boolean = true) extends IOBundle {
   val rAddr = DSPUInt(INPUT,depth-1)
@@ -56,7 +56,7 @@ class Memory[T <: Data](gen : => T, depth: Int, outReg: Boolean = true, seqRead:
     }
   }
 
-  // Force reset signal to exist for module
+  // Force reset signal to exist for module, so that SRAM can use it
   val passThroughTemp = io.passThrough.getOrElse(DSPBool(false)) & DSPBool(~reset)
 
   // Conflict handling for sequential read where passThrough = whether to pass write data to

@@ -145,6 +145,7 @@ In general, however, it's best (safest) to register both the read address and re
 
 > **Note**: In general, to force the type of RAM Xilinx should infer, use `-ram_style ☆` where ☆ is **block**, **auto**, or **distributed**. Check out [Dillon Engineering](http://www.dilloneng.com/inferring-block-ram-vs-distributed-ram-in-xst-and-precision.html#/) for more information on RAM inference.
 
+For ASIC, currently the Memory wrapper only supports dual-ported memories, and because most SRAMs need to be initialized, the Chisel **reset** is used for the SRAM reset signal!
 
 ----------
 

@@ -1,6 +1,8 @@
 ChiselDSP Development Environment
 ===================
 
+> Note: The directory structure is in flux. We're in the process of refactoring. :)
+
 This repository hopefully serves as a good starting point for making and easily testing your various ChiselDSP generators *(1 generator at a time)*. See [UC Berkeley Chisel](https://chisel.eecs.berkeley.edu) homepage for more information about Chisel.
 
 ----------
@@ -153,5 +155,40 @@ Functional Programming 101
 ====================
 
 Check out [Twitter's Scala School](https://twitter.github.io/scala_school/)!
+
+----------
+
+
+Clocking
+====================
+
+1. [ASIC clocking tutorial](http://ewh.ieee.org/soc/cas/dallas/documents/clock_balance_ieee_seminar04.pdf)
+
+2. [Constraining your clocks](http://electronics.stackexchange.com/questions/83456/asic-timing-constraints-via-sdc-how-to-correctly-specify-a-ripple-divided-clock)
+
+----------
+
+Lessons Learned
+====================
+
+1. Don't only rely on tools to optimize your design. Sometimes, they just can't. Only you know what the optimal constraints for your design are.
+
+2. FPGA's can't divide (by anything *except* powers of 2).
+
+3. Document your design--especially your external interface (inputs, outputs, & timing, preferably with a timing diagram)--to ease validation and systems integration.
+
+4. Post-synthesis Verilog verification is **extremely important**. Just because Chisel tests pass doesn't mean your design will work post-synthesis (after macros like SRAM, BRAM, distributed RAM, etc. have been swapped in).
+
+5. FPGA's are terrible at retiming across muxes (i.e. when you want to support different rounding modes).
+
+6. Be careful with nested conditions and **when** statements. Don't be sloppy and forget to specify signal output for every possible input condition!
+
+----------
+
+What Does X Error Message Mean?
+====================
+
+1. Previous lines of code have used L in L := R. To ensure range consistency, L cannot be updated with an R of wider range. Move := earlier in the code!
+> This error usually pops up when you reassign to a signal node. The node was already used as the input to some other operation, and the operation relied on known input ranges to infer output bitwidths & ranges. If you reassign a signal with a larger possible range to this node, the range inference previously performed will be wrong. **In general, avoid signal reassignment** where possible. Obviously, this will not work when you have feedback (simplest example is a counter). To get around this limitation, you need to explicitly specify the range of R to be equal to the range of L. Use `L := R.shorten(L.getRange)` for the types: **DSPUInt, DSPSInt, DSPFixed, gen**.
 
 To be continued...

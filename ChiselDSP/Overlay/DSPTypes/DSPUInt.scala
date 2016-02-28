@@ -388,7 +388,7 @@ class DSPUInt extends DSPNum[DSPUInt] {
     out.updateGeneric(this)
   }
   def shorten(newRange: => (Int,Int)): DSPUInt = shorten(BigInt(newRange._1),BigInt(newRange._2))
-  def shorten(newRange: List[BigInt]): DSPUInt = {
+  override def shorten(newRange: List[BigInt]): DSPUInt = {
     if (newRange.length != 2) Error("Range list can only have 2 values")
     shorten(List2Tuple(newRange))
   }

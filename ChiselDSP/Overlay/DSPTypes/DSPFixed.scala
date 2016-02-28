@@ -580,7 +580,7 @@ class DSPFixed (private var fractionalWidth:Int = 0)  extends DSPQnm[DSPFixed] {
 
   // TODO: Redundant List2Tuple
   /** Shorten range for DSPSInt */
-  def shorten(newRange: List[BigInt]): DSPFixed = {
+  override def shorten(newRange: List[BigInt]): DSPFixed = {
     if (newRange.length != 2) Error("Range list can only have 2 values")
     shorten(List2Tuple(newRange))
   }

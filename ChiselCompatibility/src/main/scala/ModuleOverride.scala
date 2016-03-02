@@ -1,5 +1,4 @@
 package Chisel
-import ChiselDSP.Error
 
 abstract class ModuleOverride(_clock: Option[Clock] = None, _reset: Option[Bool] = None)
                              extends Module(_clock,_reset) {
@@ -13,7 +12,7 @@ abstract class ModuleOverride(_clock: Option[Clock] = None, _reset: Option[Bool]
   protected def addPinChiselDSP[T <: Data](pin: T, name: String = "") {
     io match {
       case b: Bundle => assignIO(pin,name,b)
-      case _ => Error("IO should be contained in an IOBundle or Bundle called io.")
+      case _ => ChiselError.error("IO should be contained in an IOBundle or Bundle called io.")
     }
   }
 

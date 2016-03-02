@@ -50,6 +50,9 @@ abstract class DSPQnm[T <: DSPBits[T]] extends DSPNum[T] {
 /** Allow numeric operations */
 abstract class DSPNum[T <: DSPBits[T]] extends DSPBits[T] {
 
+  /** Shorten number to new range (potentially reduces the width) */
+  def shorten(newRange: List[BigInt]): T = this.asInstanceOf[T]
+
   /** Force to be in range */
   def clamp(max: T): T = {
     val clampCond = this > max

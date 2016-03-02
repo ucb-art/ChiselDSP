@@ -1,3 +1,7 @@
+organization := "edu.berkeley.eecs"
+
+version := "0.1"
+
 scalaVersion in ThisBuild := "2.11.7"
 
 val chiselVersion = "88293703119ed6468235bf240b16c637999add61"
@@ -25,21 +29,9 @@ lazy val ChiselCompatibility = Project(
   settings = prjSettings
 ).dependsOn(chisel)
 
-lazy val ChiselDSP_Overlay = Project(
-  id = "chisel-dsp-overlay",
-  base = file("ChiselDSP_Overlay"),
-  settings = prjSettings
-).dependsOn(ChiselCompatibility)
-
-lazy val ChiselDSP_Modules = Project(
-  id = "chisel-dsp-modules",
-  base = file("ChiselDSP_Modules"),
-  settings = prjSettings
-).dependsOn(ChiselDSP_Overlay)
-
 lazy val root = Project(
-  id = "chisel-project",
+  id = "chisel-dsp",
   base = file("."),
   settings = prjSettings
-).dependsOn(ChiselDSP_Overlay,ChiselDSP_Modules
-).aggregate(ChiselDSP_Overlay,ChiselDSP_Modules)
+).dependsOn(ChiselCompatibility
+).aggregate(ChiselCompatibility)

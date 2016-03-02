@@ -1,7 +1,7 @@
 ChiselDSP Development Environment
 ===================
 
-> Note: The directory structure is in flux. We're in the process of refactoring. :)
+> Note: The directory structure is in flux. We're in the process of refactoring. :) Unfortunately, that means the setup instructions will be temporarily out-of-date again :(...
 
 This repository hopefully serves as a good starting point for making and easily testing your various ChiselDSP generators *(1 generator at a time)*. See [UC Berkeley Chisel](https://chisel.eecs.berkeley.edu) homepage for more information about Chisel.
 
@@ -191,4 +191,10 @@ What Does X Error Message Mean?
 1. Previous lines of code have used L in L := R. To ensure range consistency, L cannot be updated with an R of wider range. Move := earlier in the code!
 > This error usually pops up when you reassign to a signal node. The node was already used as the input to some other operation, and the operation relied on known input ranges to infer output bitwidths & ranges. If you reassign a signal with a larger possible range to this node, the range inference previously performed will be wrong. **In general, avoid signal reassignment** where possible. Obviously, this will not work when you have feedback (simplest example is a counter). To get around this limitation, you need to explicitly specify the range of R to be equal to the range of L. Use `L := R.shorten(L.getRange)` for the types: **DSPUInt, DSPSInt, DSPFixed, gen**.
 
-To be continued...
+To be continued... 
+
+----------
+
+This code is maintained by [Angie](https://github.com/shunshou) and [Paul](https://github.com/grebe). Let us know if you have any questions/feedback!
+
+Copyright (c) 2015 - 2016 The Regents of the University of California. Released under the Modified (3-clause) BSD license.

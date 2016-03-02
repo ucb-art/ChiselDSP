@@ -1,16 +1,11 @@
 *~
-ChiselPrj*/
-asic/
-fpga/
 .nfs*
-!ChiselPrjDemo/
-!ChiselPrjBaseNExample/
-!ChiselPrjTBEx/
 *.trc
 *.dmp
 *.phd
 javacore*
 target/
+.idea/
 
 	
 

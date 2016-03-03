@@ -40,6 +40,15 @@ abstract class GenDSPModule[T <: DSPQnm[T]](gen : => T, inputDelay:Int = 0, deco
   def double2T[A <: DSPQnm[A]](x: Double): T = {
     double2T(x,(gen.getIntWidth,gen.getFracWidth))
   }
+  
+  def double2T[A <: DSPQnm[A]](x: Double, gen: A): A = {
+    val out = gen match {
+      case f: DSPFixed => DSPFixed(x, (gen.getIntWidth,gen.getFracWidth))
+      case d: DSPDbl => DSPDbl(x)
+      case _ => gen.error("Illegal generic type. Should be either DSPDbl or DSPFixed.")
+    }
+    out.asInstanceOf[A]
+  }
 
   /** Cast Chisel bits type as Gen (DSPFixed or DSPDbl)*/
   def genCast(x: Bits): T = {

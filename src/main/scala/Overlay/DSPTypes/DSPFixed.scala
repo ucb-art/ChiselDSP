@@ -587,7 +587,9 @@ class DSPFixed (private var fractionalWidth:Int = 0)  extends DSPQnm[DSPFixed] {
 
   // TODO: Combine better with shortenTo and min,max update (like in DSPUInt)
   def shorten(newRange: (BigInt,BigInt)): DSPFixed = {
-    if (getFracWidth != 0) Error("Can only use shorten on DSPSInt (fractional width = 0), not DSPFixed")
+    // TODO: Enforce that Tuple, List[BigInt] only come from getRange, etc. (so user doesn't type unusuable range 
+    // i.e. LSB is normalized based on fractional width for DSPFixed)
+    // if (getFracWidth != 0) Error("Can only use shorten on DSPSInt (fractional width = 0), not DSPFixed")
     val newWidth = DSPFixed.rangeToWidth(newRange)
     if (newWidth > getWidth) Error("New width must be <= old DSPSInt width.")
     val min = newRange._1.max(getRange.min)

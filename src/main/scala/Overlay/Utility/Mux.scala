@@ -1,7 +1,6 @@
 package ChiselDSP
 import Chisel._
 
-// TODO: Mux on 2 Vecs (of the same length)
 /** Mux (sel,tc,fc)
   * sel = (false,true) --> (fc,tc)
   */
@@ -21,6 +20,10 @@ object Mux {
       case (tc: BaseN, fc: BaseN) => {
         tc.sameType(fc)
         BaseN(tc.zip(fc).map{case (t,f) => Mux(sel,t,f)},tc.rad)
+      }
+      case (tc: Vec[_], fc: Vec[_]) => {
+        if (tc.length != fc.length) Error("Mux of 2 Vecs requires Vecs to be the same length!")
+        Vec(tc.zip(fc).map{case (t,f) => Mux(sel,t,f)})
       }
       case (_,_) => {Error("Unsupported mux type"); tc}
     }).asInstanceOf[T]

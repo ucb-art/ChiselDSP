@@ -28,6 +28,8 @@ object DSPTester {
 // TODO: Move XDC, Makefrag out of tester, 't' make private? (user can't change in their
 // top TB), VCD? Switch to Handlebars?
 
+// TODO: Poke vec of complex
+
 class DSPTester[+T <: ModuleOverride](c: T, verilogTester:Boolean = DSPTester.verilogTester,
                                       var traceOn: Boolean = !DSPTester.verilogTester,
                                       var hexOn: Boolean = true, var quitOnError: Boolean = false, var base: Int = 16)

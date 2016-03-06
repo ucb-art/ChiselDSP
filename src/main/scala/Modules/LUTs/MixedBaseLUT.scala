@@ -26,7 +26,15 @@ class MixedBaseLUT (elems: List[(Int,Int)], inDelay: Int = 0) extends DSPModule 
 
   override val io = new MixedBaseLUTIO(depth,bases_max)
 
-  val LUT = Vec(elems.map(x => BaseN.toBits(x._1,r = x._2)))
+  // Nominal # of bits to represent each element, maximum needed bits, LUT with guaranteed
+  // correct padding
+  val LUTNomBits = elems.map(x => BaseN.toBits(x._1,r = x._2))
+  val maxBits = LUTNomBits.map(_.getWidth).max
+  val LUT = Vec(LUTNomBits.map(x => {
+    // TODO: Make helper function?
+    val entry = ZeroPadLit(x.litValue(), maxBits)
+    Lit("b".concat(entry), entry.length) {UInt(width = entry.length)}
+  }))
   io.addr.doNothing()
   val LUTOut = LUT(io.addr.toUInt)
 

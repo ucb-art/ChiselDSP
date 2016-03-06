@@ -61,8 +61,8 @@ object RegNext {
           case x: DSPBits[_] => x.reg(clock = clock)
           case x: Bits => apply_dsp(x,clock = clock)
           case x: BaseN => BaseN(x.map(_.reg(clock = clock)),x.rad)
-          case x: Vec[_] => Vec(x.map( _ => { _ match {
-            case y: Data => RegNext(y,clock = clock) 
+          case x: Vec[_] => Vec(x.map( y => { y match {
+            case z: Data => RegNext(z,clock = clock) 
           }}))
           case _ => {Error("Incompatible element type for RegNext"); x}
         }

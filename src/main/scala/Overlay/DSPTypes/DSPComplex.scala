@@ -64,6 +64,8 @@ class ScalaComplex (var real:Double, var imag:Double){
     val bc = imag * b.real
     Complex(ac-bd,ad+bc)
   }
+  /** Complex Conjugate **/
+  def conjugate : ScalaComplex = Complex(real, -imag)
 }
 
 /** Complex number representation */

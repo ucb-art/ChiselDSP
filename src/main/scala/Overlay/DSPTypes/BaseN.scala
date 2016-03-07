@@ -7,6 +7,7 @@ import Chisel._
 
 object MixRad {
   // TODO: Concatenate a generic list of Ints to Bits (each Int can have a different width)
+  // break out MixedRad
   // Conversion between MixRad (val bases = List[Int]) and BaseN
   // Bits to Vec of varying widths
   // Constant to MixRad Vec ie 15 = 01,11,1 for Radix-4, Radix-2

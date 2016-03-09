@@ -37,6 +37,9 @@ class BaseNCountCtrl (p: BaseNCountParams) extends IOBundle {
 /** Counter that accumulates in Base N notation */
 abstract class BaseNCounter (p: BaseNCountParams) extends DSPModule (inputDelay = p.inDelay) {
 
+  // For reference
+  val rad = p.rad
+
   override val io = new BaseNCountIO(p)
   val iCtrl = new BaseNCountCtrl(p)
   val oCtrl = new BaseNCountCtrl(p).flip
@@ -50,12 +53,12 @@ abstract class BaseNCounter (p: BaseNCountParams) extends DSPModule (inputDelay 
   val newOnClk = Mux(iCtrl.change,nextCount,io.out)
   val count = Mux(iCtrl.reset,zero,newOnClk)
   // TODO: Check critical path with maskWithMaxCheck
-  val (out,eqMax) = RegNext(count).maskWithMaxCheck(io.primeDigits)
-  io.out := out
+  val (out,eqMax) = count.maskWithMaxCheck(io.primeDigits)
+  io.out := RegNext(out)
 
   oCtrl.reset := iCtrl.reset
   // Next counter's update might depend on this counter looping around from the maximum
-  oCtrl.change := eqMax & iCtrl.change
+  oCtrl.change := eqMax.pipe(1) & iCtrl.change
 
 }
 

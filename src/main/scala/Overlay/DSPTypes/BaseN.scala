@@ -211,14 +211,20 @@ class BaseN(gen: (Int) => DSPUInt, elts: Iterable[DSPUInt], val rad: Int) extend
     super.:=(src)
   }
 
-  /** Only keep the lowest numPrimeDigits # of (prime) digits and zero out the rest (equivalent to taking a Mod) */
-  def maskWithMaxCheck(numPrimeDigits: DSPUInt): Tuple2[BaseN,DSPBool] = {
+  /** Only keep the lowest numPrimeDigits # of (prime) digits and zero out the rest (equivalent to taking a Mod)
+    * Note that useM1 is for comparing to max-1 instead of max (i.e. counter transition with control logic pipelining
+    * requires advanced notice)
+    */
+  def maskWithMaxCheck(numPrimeDigits: DSPUInt, useM1:Boolean = false): Tuple2[BaseN,DSPBool] = {
     if (rad %2 != 0 || rad == 2) {
       val (modOut,maxOut) = zipWithIndex.map {
         case (e,i) => {
           val activeDigit = numPrimeDigits > DSPUInt(i)
           val mod = Mux(activeDigit,e,DSPUInt(0,rad-1))
-          val max = Mux(activeDigit,DSPUInt(rad-1),DSPUInt(0,rad-1))
+          val max = {
+            if (i == 0 && useM1) Mux(activeDigit,DSPUInt(rad-2),DSPUInt(0,rad-1))
+            else Mux(activeDigit,DSPUInt(rad-1),DSPUInt(0,rad-1))
+          }
           (mod,max)
         }
       }.unzip
@@ -234,7 +240,10 @@ class BaseN(gen: (Int) => DSPUInt, elts: Iterable[DSPUInt], val rad: Int) extend
         case (e,i) => {
           val activeDigit = (numPrimeDigits > DSPUInt(i)).toBool
           val mod = Mux(activeDigit,e,Bool(false))
-          val max = Mux(activeDigit,Bool(true),Bool(false))
+          val max = {
+            if (i == 0 && useM1) Bool(false)
+            else Mux(activeDigit,Bool(true),Bool(false))
+          }
           (mod.toUInt,max.toUInt)
         }
       }

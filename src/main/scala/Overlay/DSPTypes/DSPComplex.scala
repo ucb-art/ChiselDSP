@@ -73,7 +73,10 @@ private[ChiselDSP] abstract class ComplexBundle extends Bundle {
   def Q : String
 }
 class Complex[T <: DSPQnm[T]](val real: T, val imag: T) extends ComplexBundle {
-
+  
+  /** Complex Conjugate **/
+  def conjugate : Complex[T] = Complex(real, -imag)
+  
   /** Get tracked delay of complex # */
   def getDelay(): Int = {
     if (real.getDelay != imag.getDelay) Error("Real and imaginary components have different delays")

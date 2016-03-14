@@ -45,7 +45,9 @@ case class ComplexParams (
   overflowType: OverflowType = Grow,  // How to handle overflow
   mulFracGrowth: Int = 1              // Product should have mulFracGrowth more fractional bits than inputs (when trim
                                       // enabled)
-)
+){
+  def getFixedParams(): Tuple2[Int,Int] = (intBits,fracBits)
+}
 
 /** Complex class for normal Scala */
 class ScalaComplex (var real:Double, var imag:Double){

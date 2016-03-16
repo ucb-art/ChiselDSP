@@ -68,6 +68,12 @@ class ScalaComplex (var real:Double, var imag:Double){
   }
   /** Complex Conjugate **/
   def conjugate : ScalaComplex = Complex(real, -imag)
+
+  /** Square */
+  def square : ScalaComplex = this * this
+
+  /** Absolute value */
+  def abs : Double = math.sqrt(real*real + imag*imag)
 }
 
 /** Complex number representation */

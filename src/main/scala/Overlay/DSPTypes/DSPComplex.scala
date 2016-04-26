@@ -190,7 +190,7 @@ class Complex[T <: DSPQnm[T]](val real: T, val imag: T) extends ComplexBundle {
   def shortenTo(intWidth: Int): Complex[T] = Complex(real.shortenTo(intWidth),imag.shortenTo(intWidth))
 
   // TODO: shorten should be shorten on signal instead of signal.getRange
-  def shorten(b:Complex[T]): Complex = {
+  def shorten(b:Complex[T]): Complex[T] = {
     Complex(real.shorten(b.real.getRange),imag.shorten(b.imag.getRange))
   }
 

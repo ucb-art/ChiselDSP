@@ -91,7 +91,7 @@ object Init {
       "\"clock\":" + write(p.clockInit) +
       (if (userParams.length > 1) "," else "")
     val newJSON = reqParamStr + userParams + "\n"
-    scala.tools.nsc.io.File("generator_out.json").appendAll(newJSON)
+    scala.tools.nsc.io.File("build/analysis/generator_out.json").appendAll(newJSON)
 
     // SBT parameters (used to set Fixed/Dbl, whether to generate Verilog TB)
     val paramsSBT = """-params_(.*)_(.*)""".r.findFirstMatchIn(args(0))

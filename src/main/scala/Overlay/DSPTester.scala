@@ -48,9 +48,10 @@ class DSPTester[+T <: ModuleOverride](c: T, verilogTester:Boolean = DSPTester.ve
     }
   }
 
-  val tb = new java.io.BufferedWriter(new java.io.FileWriter("tb.v"))
-  val xdc = new java.io.BufferedWriter(new java.io.FileWriter("constraints.xdc"))
-  val mk = new java.io.BufferedWriter(new java.io.FileWriter("Makefrag"))
+  // TODO: Switch to Scala writer, Makefrag + constraints should be in make vlsi (not exclusive to debug)
+  val tb = new java.io.BufferedWriter(new java.io.FileWriter("build/debug/tb.v"))
+  val xdc = new java.io.BufferedWriter(new java.io.FileWriter("build/debug/constraints.xdc"))
+  val mk = new java.io.BufferedWriter(new java.io.FileWriter("build/debug/Makefrag"))
 
   val resets = c.getResets.values.toList
 
@@ -59,6 +60,9 @@ class DSPTester[+T <: ModuleOverride](c: T, verilogTester:Boolean = DSPTester.ve
     tb.close()
     xdc.close()
     mk.close()
+    new java.io.File("build/debug/tb.v").delete()
+    new java.io.File("build/debug/constraints.xdc").delete()
+    new java.io.File("build/debug/Makefrag").delete()
   }
   else {
 

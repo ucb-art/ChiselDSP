@@ -26,3 +26,12 @@ object ZeroPadLit{
     List.fill(width - stringVal.length)("0").mkString("").concat(stringVal)
   }
 }
+
+/** Bit Array to Integer */
+object Bits2Int{
+  def apply(bits:Array[BigInt]): Int = {
+    val temp = bits.toList.zipWithIndex
+    temp.foldLeft(0)((accum,e) => accum + e._1.intValue*math.pow(2,e._2).toInt)
+  }
+}
+  

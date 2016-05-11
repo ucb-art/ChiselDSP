@@ -34,4 +34,15 @@ object Bits2Int{
     temp.foldLeft(0)((accum,e) => accum + e._1.intValue*math.pow(2,e._2).toInt)
   }
 }
-  
+
+/** Clamp list element range */
+object ClampRange{
+  def apply(in:List[Double],range:(Double,Double)): List[Double] = {
+    if (range._2 < range._1) Error("First element of range Tuple should be min; second is max.")
+    in.map (x => {
+      if (x > range._2) range._2
+      else if (x < range._1) range._1
+      else x
+    })
+  }
+}

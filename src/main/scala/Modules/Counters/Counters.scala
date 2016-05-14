@@ -93,7 +93,10 @@ abstract class Counter(countParams: CountParams) extends DSPModule(inputDelay = 
   val eqMax = (io.out === max)
   
   val (upCustom, upCustomWrap) = Mod(io.out + inc, max + DSPUInt(1))
-  val (modOut,overflow) = Mod(io.out + inc,io.modN.getOrElse(DSPUInt(0)))
+  val (modOut,overflow) = {
+    if(io.modN == None) (io.out + inc,DSPBool(false))
+    else Mod(io.out + inc,io.modN.get)
+  }
   
   // Adapt wrap condition based off of type of counter if it isn't retrieved externally
   val wrap = countParams.wrapCtrl match {
@@ -182,6 +185,17 @@ object ModCounter{
   }
 }
 class ModCounter(countParams: CountParams) extends Counter(countParams)
+
+/** Inc with Reset
+  * count_new = {0 if reset; else (count + 1)}
+  */
+object IncReset{
+  def apply(countMax: Int, inputDelay: Int = 0, nameExt: String = "") : IncReset = {
+    val countParams = CountParams(countMax = countMax, wrapCtrl = TieFalse, inputDelay = inputDelay)
+    DSPModule(new IncReset(countParams), nameExt)
+  }
+}
+class IncReset(countParams: CountParams) extends Counter(countParams)
 
 /*
   DEFAULTS

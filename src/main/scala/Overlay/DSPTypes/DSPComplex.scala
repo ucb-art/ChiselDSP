@@ -74,6 +74,12 @@ class ScalaComplex (var real:Double, var imag:Double){
 
   /** Absolute value */
   def abs : Double = math.sqrt(real*real + imag*imag)
+
+  /** Multiply by real or imaginary # */
+  def ** (b: Double, typ: ComplexType = Real): ScalaComplex = {
+      if (typ == Real) Complex(real * b, imag * b)
+      else Complex(imag * (-b),real * b)
+  }
 }
 
 /** Complex number representation */

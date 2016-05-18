@@ -72,7 +72,12 @@ class DSPTester[+T <: ModuleOverride](c: T, verilogTester:Boolean = DSPTester.ve
     val mainClk = Driver.implicitClock
     val clocks = Driver.clocks
 
-    val clkPeriodns = Clock.getPeriodx100ps/10.0
+    // Verilog testbench requires that the clock period actually be multiple of 2; if not, find the more
+    // conservative period that is a multiple of 2
+    val evenPeriodx100ps = { if (Clock.getPeriodx100ps % 2 == 0) Clock.getPeriodx100ps else Clock.getPeriodx100ps-1 }
+
+    val clkPeriodns = evenPeriodx100ps/10.0
+    // Reset device time (needs reset! otherwise post-synthesis might be incorrect!)
     val clksTo120ns = math.round(120/clkPeriodns).intValue
 
     // Write constraints file for FPGA
@@ -85,9 +90,11 @@ class DSPTester[+T <: ModuleOverride](c: T, verilogTester:Boolean = DSPTester.ve
     mk.close()
 
     // Setup TB
+    // Note: Reset, input signals change and outputs are checked on falling edge
+    // Cycle count changes with the clock rising edge
     tb write "`timescale 100ps / 100ps\n"
-    tb write "`define CLK_PERIOD %d\n".format(Clock.getPeriodx100ps)
-    tb write "`define CLK_DELTA 2\n"
+    tb write "`define CLK_PERIOD %d\n".format(evenPeriodx100ps)
+    tb write "`define CLK_DELTA %d\n".format(evenPeriodx100ps/2)
     tb write "`define RESET_TIME (%d*`CLK_PERIOD + 3*`CLK_PERIOD/2 + `CLK_DELTA)\n".format(clksTo120ns)
     tb write "`define expect(nodeName, nodeVal, expVal, cycle) if (nodeVal !== expVal) begin " +
       "\\\n  $display(\"\\t ASSERTION ON %s FAILED @ CYCLE = %d, 0x%h != EXPECTED 0x%h\", " +
@@ -98,6 +105,9 @@ class DSPTester[+T <: ModuleOverride](c: T, verilogTester:Boolean = DSPTester.ve
     // Setup clocks + resets
     clocks foreach (clk => tb write "  reg %s = 0;\n".format(clk.name))
     resets foreach (rst => tb write "  reg %s = 1;\n".format(rst.name))
+
+    if (resets.isEmpty) Error("Design must use RegInit (or explicitly use reset) to pass Verilog TB")
+
     // TODO: Support multiple clock domains! + multiple resets?
     if (clocks.size > 1) Error("Only 1 clock supported currently :( ")
     clocks foreach (clk => tb write "  always #(`CLK_PERIOD/2) %s = ~%s;\n".format(clk.name, clk.name))

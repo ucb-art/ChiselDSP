@@ -123,6 +123,9 @@ class BaseN(gen: (Int) => DSPUInt, elts: Iterable[DSPUInt], val rad: Int) extend
   /** Check for same base + same digit length */
   def sameType(b: BaseN): Unit = {
     if (length != b.length) Error("BaseN Vec lengths must match!")
+    sameRad(b)
+  }
+  def sameRad(b:BaseN): Unit = {
     if (rad != b.rad) Error("Operation can only be performed when both values have the same base!")
   }
 
@@ -255,15 +258,45 @@ class BaseN(gen: (Int) => DSPUInt, elts: Iterable[DSPUInt], val rad: Int) extend
     }
   }
 
+  // TODO: Get rid of redundancy
   /** Pad Base N representation to numDigits # of digits */
   def padTo(numDigits: Int): BaseN = {
     val padLength = (numDigits-length).max(0)
     val pad = Vec(padLength,DSPUInt(0,max = rad-1))
     // Least significant digit indexed by 0
-    BaseN(this ++ pad,rad = rad)
+    val out = BaseN(this ++ pad,rad = rad)
+    out.foreach{_.passDelay(head,0)}
+    out
   }
 
   // TODO: For increments of 1, can check if the previous value was maxed by looking at ANDing all of the carry outs...,
   // Also, the above Max Check will not work for [9,...,9,3], etc.
+
+  /** Select if true; otherwise return 0 in Base N */
+  def ? (sel: DSPBool): BaseN = {
+    // TODO: Check metadata passed through
+    val out = BaseN(this.map(_ ? sel),rad = rad)
+    out.foreach{_.passDelay(head,0)}
+    out
+  }
+
+  // TODO: Migrate + to use matchLength; should BaseN keep track of max?, padTo somewhat redundant
+  /** Match BaseN lengths (pad upper digits) */
+  private def matchLength(b: BaseN): Tuple2[BaseN,BaseN] = {
+    // Note: LSB's always correspond to lower indexing
+    val diff = b.length - length
+    if (diff > 0) (BaseN(this ++ List.fill(diff)(DSPUInt(0)),rad), b) 
+    else if (diff < 0) (this,BaseN(b ++ List.fill(-diff)(DSPUInt(0)),rad)) 
+    else (this, b)
+  }
+
+  /** Bitwise OR (but with metadata, for muxing). Inputs should ideally be mutually exclusive */
+  def | (b: BaseN): BaseN = {
+    sameRad(b)
+    val (x,y) = matchLength(b)
+    val out = BaseN(x.zip(y).map{case (u,v) => {u | v}},rad = rad)
+    out.foreach{_.passDelay(head,0)}
+    out
+  }
 
 }

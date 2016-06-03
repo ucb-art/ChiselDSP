@@ -238,8 +238,8 @@ abstract class DSPBits [T <: DSPBits[T]] extends Bits {
     if (in1.getDelay != in2.getDelay && !someLit) {
       if (CheckDelay.get)
         error("Operator inputs must have the same delay. Delays are " + in1.getDelay + ", " + in2.getDelay)
-      // When you want to override delay check, if the delays aren't the same, take the min value
-      else info.dly = in1.getDelay.min(in2.getDelay)
+      // When you want to override delay check, if the delays aren't the same, take the max value
+      else info.dly = in1.getDelay.max(in2.getDelay)
     }
     else info.dly = (if (!in1.isLit) in1 else in2).getDelay
     this.asInstanceOf[T]
@@ -258,7 +258,7 @@ abstract class DSPBits [T <: DSPBits[T]] extends Bits {
         (in1.getDelay != in3.getDelay && !someLit13)) {
       if (CheckDelay.get) error("Operator inputs must have the same delay. Delays are " + in1.getDelay + ", "
                                 + in2.getDelay + ", " + in3.getDelay)
-      else info.dly = List(in1,in2,in3).map(_.getDelay).min
+      else info.dly = List(in1,in2,in3).map(_.getDelay).max
     }
     else info.dly = (if (!in1.isLit) in1 else if (!in2.isLit) in2 else in3).getDelay
     this.asInstanceOf[T]

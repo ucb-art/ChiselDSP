@@ -5,7 +5,7 @@
 package ChiselDSP
 import Chisel._
 
-object MixRad {
+object MixedRad {
   // TODO: Concatenate a generic list of Ints to Bits (each Int can have a different width)
   // break out MixedRad
   // Conversion between MixRad (val bases = List[Int]) and BaseN
@@ -15,6 +15,12 @@ object MixRad {
   // 7 % 4 = 3 --> 7/4 = 1
   // 1 % 4 = 1
   // Mix radix sum
+
+  /** Converts list, etc. of DSPUInts to MixedRad */
+  def apply(elts: Iterable[DSPUInt]): MixedRad = {
+    new MixedRad(i => elts.head.cloneType,elts)
+  }
+
 }
 
 object BaseN {
@@ -295,6 +301,39 @@ class BaseN(gen: (Int) => DSPUInt, elts: Iterable[DSPUInt], val rad: Int) extend
     sameRad(b)
     val (x,y) = matchLength(b)
     val out = BaseN(x.zip(y).map{case (u,v) => {u | v}},rad = rad)
+    out.foreach{_.passDelay(head,0)}
+    out
+  }
+
+}
+
+// TODO: Expand
+class MixedRad(gen: (Int) => DSPUInt, elts: Iterable[DSPUInt]) extends Vec(gen,elts){
+
+  /** Clone type ! */
+  override def cloneType: this.type = MixedRad(elts.map(x => x.cloneType)).asInstanceOf[this.type]
+
+  // TODO: Handle Iterable[T], Vec[T] 
+  /** Makes sure that reassignment only occurs when radices are the same */
+  def <> (src: MixedRad) : Unit = {
+    super.<>(src)
+  }
+  def := (src: MixedRad) : Unit = {
+    super.:=(src)
+  }
+
+  /** Select if true; otherwise return 0 */
+  def ? (sel: DSPBool): MixedRad = {
+    // TODO: Check metadata passed through
+    val out = MixedRad(this.map(_ ? sel))
+    out.foreach{_.passDelay(head,0)}
+    out
+  }
+
+  /** Bitwise OR (but with metadata, for muxing). Inputs should ideally be mutually exclusive */
+  def | (b: MixedRad): MixedRad = {
+    if (length != b.length) Error("MixedRad lengths must match")
+    val out = MixedRad(this.zip(b).map{case (u,v) => {u | v}})
     out.foreach{_.passDelay(head,0)}
     out
   }

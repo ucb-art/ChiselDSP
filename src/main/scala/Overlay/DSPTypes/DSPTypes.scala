@@ -269,14 +269,15 @@ abstract class DSPBits [T <: DSPBits[T]] extends Bits {
     val thisDly = getDelay
     var dlyNoUpdate = false
     if ((isAssigned || isUsed) && (thisDly != that.getDelay) && !that.isLit) {
-      if (CheckDelay.get) error("Delays of L (" + thisDly + "), R (" + that.getDelay
+      if (CheckDelay.get) error("Delays of (L) " + name + " (" + thisDly + "), R (" + that.getDelay
                                 + ") in L := R should match if L was previously assigned or used.")
       // When you want to override delay check, if the delays aren't the same, don't update delay
       else dlyNoUpdate = true
     }
     if (isUsed && (that.getRange.max > getRange.max || that.getRange.min < getRange.min)){
       error("Previous lines of code have used L in L := R. To ensure range consistency, "
-            + "L cannot be updated with an R of wider range. Move := earlier in the code!")
+            + "L cannot be updated with an R of wider range. Move := earlier in the code! (L) "
+            + name + " has range " + getRange.toString + " and (R) has range " + that.getRange.toString)
     }
     updateLimits(List2Tuple(that.getRange))
     updateGeneric(that)

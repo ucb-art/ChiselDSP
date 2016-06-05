@@ -72,4 +72,14 @@ abstract class IOBundle(val outDlyMatch: Boolean = false) extends Bundle {
     checkOutDly()
   }
 
+  // TODO: Merge?
+  /** Get max of output delays regardless of match */
+  def getMaxOutDelay(): Int = {
+    val temp = flatten.map (x => x._2 match{
+        case d : DSPBits[_] => if(d.dir == OUTPUT && d.isAssigned) d.getDelay() else -1
+        case _ => -1
+      })
+    temp.distinct.filter(_ != -1).max
+  }
+
 }

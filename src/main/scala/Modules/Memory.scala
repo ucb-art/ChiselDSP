@@ -61,8 +61,27 @@ class Memory[T <: Data](gen : => T, depth: Int, outReg: Boolean = true, seqRead:
 
   // Conflict handling for sequential read where passThrough = whether to pass write data to
   // read out on the next clock cycle if write and read addresses are the same.
+
+  // TODO: Double check timing correctness?? (commented out version only works with registers + BRAM)
+  
+  /*
   val inDly = Pipe(dIn,postDly)
   val reroute = ((wAddr === io.rAddr.pipe(preDly)) & we & passThroughTemp.pipe(preDly))
   io.dOut := Mux(reroute.pipe(postDly),inDly,dOut)
+  */
+  
+
+  // + 1 for SeqMem internal read delay
+  val inDlyExcludeSRAM = Pipe(dIn,postDly)
+  val inDly = Pipe(inDlyExcludeSRAM,1)
+  val writeInCalc = we & passThroughTemp.pipe(preDly)
+  val rerouteExcludeSRAM = ((wAddr === io.rAddr.pipe(preDly)) & writeInCalc).pipe(postDly)
+  val reroute = ((wAddr === io.rAddr) & writeInCalc).pipe(postDly+1)
+  val doutConflictExcludeSRAM = Mux(rerouteExcludeSRAM,inDlyExcludeSRAM,dOut)
+  io.dOut := Mux(reroute,inDly,doutConflictExcludeSRAM)  
+  // Note: inDly has highest priority (when conflict detected)
+
+
+
 
 }

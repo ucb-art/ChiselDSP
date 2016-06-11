@@ -38,3 +38,12 @@ class IntLUT2D (ints: List[List[Int]], inDelay: Int = 0) extends DSPModule (inpu
   if (depth > 0) io.dout := out
 
 }
+
+// TODO: Use in LUT
+object IntLUT2DHelper{
+  // Sizes the output Vec based off of inputs
+  def getOutputType (ints: List[List[Int]]) : Vec[DSPUInt] = {
+    val colMax = ints.transpose.map( x => x.max)  
+    Vec(colMax.map(x => DSPUInt(OUTPUT,x)))
+  }
+}

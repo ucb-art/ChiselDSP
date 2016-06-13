@@ -1,3 +1,5 @@
+// TODO: makde upDown more understandable (i.e. isUp)
+
 /** Generator for different flavors of accumulators. 
   * Depending on type of Counter, some IO are not utilized.
   */
@@ -160,7 +162,7 @@ abstract class Counter(countParams: CountParams) extends DSPModule(inputDelay = 
   }
 
   val count = Mux(iCtrl.reset,DSPUInt(countParams.resetVal),newOnClk)
-  io.out := count.reg()
+  io.out := count.shorten(io.out.getRange.max).reg()
   
   // When counters are chained, subsequent counter increments when current counter wraps
   if (countParams.changeCtrl == External) oCtrl.change.get := wrap & iCtrl.change.get

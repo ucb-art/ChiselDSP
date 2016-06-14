@@ -18,6 +18,8 @@ GenDSPModule (gen, inputDelay = inDelay) {
 
   val depth = cx.length
 
+  Status("Complex LUT depth: " + depth)
+
   override val io = new ComplexLUTIO(depth, gen)
 
   io.addr.doNothing()

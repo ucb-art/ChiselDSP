@@ -96,6 +96,9 @@ object Init {
     try{
       scala.tools.nsc.io.File("build/analysis/generator_out.json").appendAll(newJSON)
     }  
+    catch {
+      case ex: Exception => Warn("File exception")
+    }
 
     // SBT parameters (used to set Fixed/Dbl, whether to generate Verilog TB)
     val paramsSBT = """-params_(.*)_(.*)""".r.findFirstMatchIn(args(0))

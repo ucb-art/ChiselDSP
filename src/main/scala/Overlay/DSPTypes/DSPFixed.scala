@@ -31,6 +31,10 @@ object DSPFixed {
     res.assign()
   }
 
+  def apply(s: SInt, fixedParams: (Int, Int)): DSPFixed = {
+    apply(s,fixedParams,toRange(paramsToWidth(fixedParams)))
+  }
+
   /** Creates a DSPFixed object from a constant Double. 
     * fixedParams = (intWidth,fracWidth), or alternatively, fracWidth, must be specified!
     * Qn.m --> n = intWidth, m = fracWidth, width = n + m + 1 (sign).

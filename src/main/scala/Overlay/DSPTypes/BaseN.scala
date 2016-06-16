@@ -17,7 +17,7 @@ object MixedRad {
   // Mix radix sum
 
   /** Converts list, etc. of DSPUInts to MixedRad */
-  def apply(elts: Iterable[DSPUInt]): MixedRad = {
+  def apply(elts: Seq[DSPUInt]): MixedRad = {
     new MixedRad(i => elts.head.cloneType,elts)
   }
 
@@ -104,7 +104,7 @@ object BaseN {
   }
 
   /** Converts list, etc. of DSPUInts to BaseN */
-  def apply(elts: Iterable[DSPUInt], rad: Int): BaseN = {
+  def apply(elts: Seq[DSPUInt], rad: Int): BaseN = {
     new BaseN(i => elts.head.cloneType,elts,rad=rad)
   }
 
@@ -116,7 +116,7 @@ object BaseN {
 // TODO: Ranging?, digit reverse with max digit specified, do I need an explicit mod?
 // TODO: Better delay handling
 /** BaseN type extends Vec */
-class BaseN(gen: (Int) => DSPUInt, elts: Iterable[DSPUInt], val rad: Int) extends Vec(gen,elts){
+class BaseN(gen: (Int) => DSPUInt, elts: Seq[DSPUInt], val rad: Int) extends Vec(gen,elts){
 
   /** Clone type ! */
   override def cloneType: this.type = BaseN(elts.map(x => x.cloneType),rad).asInstanceOf[this.type]
@@ -209,7 +209,7 @@ class BaseN(gen: (Int) => DSPUInt, elts: Iterable[DSPUInt], val rad: Int) extend
     out
   }
 
-  // TODO: Handle Iterable[T], Vec[T] in addition to BaseN
+  // TODO: Handle Seq[T], Vec[T] in addition to BaseN
   /** Makes sure that reassignment only occurs when radices are the same */
   def <> (src: BaseN) : Unit = {
     sameType(src)
@@ -308,12 +308,12 @@ class BaseN(gen: (Int) => DSPUInt, elts: Iterable[DSPUInt], val rad: Int) extend
 }
 
 // TODO: Expand
-class MixedRad(gen: (Int) => DSPUInt, elts: Iterable[DSPUInt]) extends Vec(gen,elts){
+class MixedRad(gen: (Int) => DSPUInt, elts: Seq[DSPUInt]) extends Vec(gen,elts){
 
   /** Clone type ! */
   override def cloneType: this.type = MixedRad(elts.map(x => x.cloneType)).asInstanceOf[this.type]
 
-  // TODO: Handle Iterable[T], Vec[T] 
+  // TODO: Handle Seq[T], Vec[T] 
   /** Makes sure that reassignment only occurs when radices are the same */
   def <> (src: MixedRad) : Unit = {
     super.<>(src)

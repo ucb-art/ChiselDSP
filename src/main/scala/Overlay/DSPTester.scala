@@ -35,6 +35,9 @@ class DSPTester[+T <: ModuleOverride](c: T, verilogTester:Boolean = DSPTester.ve
                                       var hexOn: Boolean = true, var quitOnError: Boolean = false, var base: Int = 16)
   extends Tester(c, false, base){
 
+  // Simulation time
+  // var t = 0
+
   /** Helper function for retrieving IO name for Verilog TB creation */
   def getIOName(n: Node): String = {
     n.name.replace(c.name+"__","")
@@ -366,6 +369,7 @@ class DSPTester[+T <: ModuleOverride](c: T, verilogTester:Boolean = DSPTester.ve
     if (traceOn) println(s"STEP ${n}x -> ${newT}")
     super.step(n)
     if (verilogTester) tb write "    #(%d*`CLK_PERIOD) ".format(n)
+    //t = t + n
   }
   
   /** Hold reset for n cycles */
@@ -373,7 +377,9 @@ class DSPTester[+T <: ModuleOverride](c: T, verilogTester:Boolean = DSPTester.ve
     val newT = t + n
     if (traceOn) println(s"RESET ${n}x -> ${newT}")
     super.reset(n)
-    t += n
+    incTime(n)
+    // t = t + n
+    //t += n
     if (verilogTester)
       resets foreach (rst => tb write "    %s = 1; #(%d*`CLK_PERIOD) %s = 0;\n".format(rst.name,n,rst.name))
   }

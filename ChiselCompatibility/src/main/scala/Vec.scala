@@ -1,4 +1,5 @@
 /** Changed cloneType, so the resultant widths match the widths of the individual elements of the original Vec */
+// Corresponding Chisel version: e9e5bb28ac230ab7c54aab9ca30fbe164bbb84be
 
 /*
  Copyright (c) 2011 - 2016 The Regents of the University of
@@ -56,13 +57,12 @@ object Vec {
     apply(n, gen)
   }
 
-  def checkCloneType[T <: Data](element: T): Option[element.type] = {
+  def checkCloneType[T <: Data](element: T): Unit = {
     // Clone or complain.
     Try(element.checkClone(Array("cloneType"))) match {
-      case Success(c) => Some(c.get.asInstanceOf[element.type])
+      case Success(c) =>
       case Failure(e) =>
         ChiselError.check(s"Chisel3 compatibility: " + e, Version("3.0"))
-        None
     }
   }
 
@@ -95,12 +95,7 @@ object Vec {
     //  ensure the type is cloneable while we know what it is.
     // Chisel3 - compatibility checks
     if (Driver.minimumCompatibility > "2" && n == 0) {
-      // We need to treat empty Vec's here since apply can't deal with an empty sequence.
       checkCloneType(gen(0))
-      // In any case, return an empty Vec.
-      new Vec[T](i => gen(0), Seq[T]())
-    } else {
-      apply((0 until n).map(i => gen(i)))
     }
     apply((0 until n).map(i => gen(i)))
   }
@@ -242,8 +237,9 @@ class Vec[T <: Data](val gen: (Int) => T, elts: Seq[T]) extends Aggregate with V
     }
   }
 
-  override def cloneType: this.type = Vec(elts.map(_.cloneType)).asInstanceOf[this.type]
+  override def cloneType: this.type =  (Vec.tabulate(size){ i => this(i).cloneType}).asInstanceOf[this.type]
   //override def cloneType: this.type = Vec.tabulate(size)(gen).asInstanceOf[this.type] //Vec(this: Seq[T]).asInstanceOf[this.type]
+  
   override def asDirectionless: this.type = { self.foreach(_.asDirectionless) ; this }
   override def asOutput: this.type = { self.foreach(_.asOutput) ; this }
   override def asInput: this.type = { self.foreach(_.asInput) ; this }

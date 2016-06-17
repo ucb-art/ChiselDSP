@@ -4,8 +4,7 @@ version := "0.1"
 
 scalaVersion in ThisBuild := "2.11.7"
 
-//val chiselVersion = "88293703119ed6468235bf240b16c637999add61"
-val chiselVersion = "8292aee94408a0ccb583e0ce2c1ccedc81c39a1b"
+val chiselVersion = "e9e5bb28ac230ab7c54aab9ca30fbe164bbb84be"
 
 lazy val chisel = ProjectRef(
   uri("git://github.com/ucb-bar/chisel.git#%s".format(chiselVersion)),

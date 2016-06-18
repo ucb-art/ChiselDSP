@@ -27,6 +27,16 @@ object Complex {
   def getAddPipe(): Double = opts.addPipe
   def getMulPipe(): Int = opts.mulPipe
 
+  /** Converts bits to Complex with DSPFixed */
+  def fromBits(gen: DSPFixed, bits: Bits) : Complex[DSPFixed] = {
+    val fixedWidth = gen.getWidth
+    if (bits.getWidth < 2*fixedWidth) Error("Cannot represent complex # with enough bits.")
+    val fixedParams = (gen.getIntWidth,gen.getFracWidth)
+    val r = DSPFixed(bits(2*fixedWidth-1,fixedWidth).toSInt,fixedParams)
+    val i = DSPFixed(bits(fixedWidth-1,0).toSInt,fixedParams)
+    Complex(r,i)
+  }
+
 }
 
 /** Complex components */
@@ -47,6 +57,7 @@ case class ComplexParams (
                                       // enabled)
 ){
   def getFixedParams(): Tuple2[Int,Int] = (intBits,fracBits)
+  def getFixedWidth() = intBits + fracBits + 1
 }
 
 /** Complex class for normal Scala */

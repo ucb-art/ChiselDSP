@@ -22,7 +22,7 @@ class MemIO[T <: Data](gen : => T, depth: Int, conflictHandling: Boolean = true)
   * @param seqRead is trea when the read address is delayed 1 clock cycle
   * @tparam T
   */
-class Memory[T <: Data](gen : => T, depth: Int, outReg: Boolean = true, seqRead: Boolean = false,
+class Memory[T <: Data](gen : => T, val depth: Int, outReg: Boolean = true, seqRead: Boolean = false,
                         val conflictHandling: Boolean = true,
                         inDelay: Int = 0) extends DSPModule(inputDelay = inDelay) {
 

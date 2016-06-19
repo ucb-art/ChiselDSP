@@ -167,7 +167,7 @@ class DSPUInt extends DSPNum[DSPUInt] {
   def >= (b : DSPUInt) : DSPBool = {
     val out = {
       // All UInts are >= 0
-      if (b.isLit() && b.litValue() == 0) DSPBool(true)
+      if (b.isLit && b.litValue() == 0) DSPBool(true)
       else{
         val (x,y) = matchWidth(b)
         DSPBool(x.toUInt >= y.toUInt)

@@ -31,10 +31,23 @@ object Complex {
   def fromBits(gen: DSPFixed, bits: Bits) : Complex[DSPFixed] = {
     val fixedWidth = gen.getWidth
     if (bits.getWidth < 2*fixedWidth) Error("Cannot represent complex # with enough bits.")
+    val bitsFixedWidth = bits.getWidth/2
     val fixedParams = (gen.getIntWidth,gen.getFracWidth)
-    val r = DSPFixed(bits(2*fixedWidth-1,fixedWidth).toSInt,fixedParams)
-    val i = DSPFixed(bits(fixedWidth-1,0).toSInt,fixedParams)
+    val r = DSPFixed(bits(2*bitsFixedWidth-1,bitsFixedWidth).toSInt,fixedParams)
+    val i = DSPFixed(bits(bitsFixedWidth-1,0).toSInt,fixedParams)
     Complex(r,i)
+  }
+
+  /** Complex BigInt to Scala Complex + real, imag BigInts */
+  def toScalaComplex(x:BigInt, fracWidth:Int, fixedWidth:Int): Tuple3[ScalaComplex,BigInt,BigInt] = {
+    // Expects x to already be in 2's complement
+    // real = MSBs
+    val r = x >> fixedWidth
+    val i = x.mod(BigInt(1) << fixedWidth)
+    // >= half of full scale implies negative
+    val rnew = if(r >= (BigInt(1) << fixedWidth - 1)) (r - (BigInt(1) << fixedWidth)) else r
+    val inew = if(i >= (BigInt(1) << fixedWidth - 1)) (i - (BigInt(1) << fixedWidth)) else i
+    (Complex(DSPFixed.toDouble(rnew,fracWidth),DSPFixed.toDouble(inew,fracWidth)),rnew,inew)
   }
 
 }
@@ -91,6 +104,18 @@ class ScalaComplex (var real:Double, var imag:Double){
       if (typ == Real) Complex(real * b, imag * b)
       else Complex(imag * (-b),real * b)
   }
+
+  /** Scala Complex to 2's complement BigInt */
+  def toBigInt(fracWidth:Int, fixedWidth:Int) : BigInt = {
+    val r = DSPFixed.toFixed(real,fracWidth)
+    val i = DSPFixed.toFixed(imag,fracWidth)
+    if ((r.bitLength + 1 > fixedWidth) | (i.bitLength + 1 > fixedWidth))
+      Error("real,imaginary widths must be <= fixedWidth")
+    // 2's complement
+    val r2 = if (r < 0) ((BigInt(1) << fixedWidth) + r) else r
+    val i2 = if (i < 0) ((BigInt(1) << fixedWidth) + i) else i
+    (r2 << fixedWidth) + i2
+  }
 }
 
 /** Complex number representation */
@@ -98,6 +123,17 @@ private[ChiselDSP] abstract class ComplexBundle extends Bundle {
   def Q : String
 }
 class Complex[T <: DSPQnm[T]](val real: T, val imag: T) extends ComplexBundle {
+
+  /** Converts to generic Bits representation, with real/imag padded appropriately */
+  def toFixedBits(fixedWidth:Int): Bits = {
+    val rpad = fixedWidth-real.getWidth
+    val ipad = fixedWidth-imag.getWidth
+    if (rpad < 0 || ipad < 0)Error("fixedWidth should be >= real,imag lengths")
+    // Need to pad signed
+    val realCat = Cat(Fill(rpad,real(real.getWidth-1)),real.toBits)
+    val imagCat = Cat(Fill(ipad,imag(imag.getWidth-1)),imag.toBits)
+    Cat(realCat,imagCat)
+  }
   
   /** Complex Conjugate **/
   def conjugate : Complex[T] = Complex(real, -imag)

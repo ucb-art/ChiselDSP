@@ -220,8 +220,10 @@ class DSPTester[+T <: ModuleOverride](c: T, verilogTester:Boolean = DSPTester.ve
       case _ => false
     }
 
-    if (verilogTester && data.isTopLevelIO && peek && !isDbl)
-      tb write "    `expect(\"%s\",%s,%d,cycle)\n".format(ioName,ioName,res)
+    if (verilogTester && data.isTopLevelIO && peek && !isDbl){
+      val id = if (res >= 0) res.bitLength.toString + "\'d" else ""
+      tb write "    `expect(\"%s\",%s,%s%d,cycle)\n".format(ioName,ioName,id,res)
+    }
     val resBits = if (data.isLit || (data.dir == INPUT && data.isTopLevelIO)) signed_fix(data, res) else res
     val command = if (peek) "PEEK" else "POKE"
     val name = if (data.isLit) "*Lit*" else dumpName(data)
@@ -332,8 +334,10 @@ class DSPTester[+T <: ModuleOverride](c: T, verilogTester:Boolean = DSPTester.ve
     val neededWidth = if (isSigned(node)._1) unsignedBW + 1 else unsignedBW
     if (neededWidth > node.getWidth) Error("Poke value is not in the range of the input port")
     val ioName = getIOName(node)
-    if (verilogTester && node.isTopLevelIO && node.dir == INPUT)
-      tb write "    %s = %d;\n".format(ioName,x)
+    if (verilogTester && node.isTopLevelIO && node.dir == INPUT){
+      val id = if (x >= 0) x.bitLength.toString + "\'d" else ""
+      tb write "    %s = %s%d;\n".format(ioName,id,x)
+    }
     super.poke(node,x)
   }
 

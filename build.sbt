@@ -30,11 +30,13 @@ lazy val ChiselCompatibility = Project(
   id = "chisel-compatibility", 
   base = file("ChiselCompatibility"),
   settings = prjSettings
-).dependsOn(chisel)
+).dependsOn(chisel
+).aggregate(chisel)
+
 
 lazy val root = Project(
   id = "chisel-dsp",
   base = file("."),
   settings = prjSettings
-).dependsOn(ChiselCompatibility
-).aggregate(ChiselCompatibility)
+).dependsOn(chisel,ChiselCompatibility
+).aggregate(chisel,ChiselCompatibility)

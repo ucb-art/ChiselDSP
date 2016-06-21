@@ -37,5 +37,5 @@ lazy val root = Project(
   id = "chisel-dsp",
   base = file("."),
   settings = prjSettings
-).dependsOn(chisel,ChiselCompatibility
-).aggregate(chisel,ChiselCompatibility)
+).dependsOn(ChiselCompatibility
+).aggregate(ChiselCompatibility)

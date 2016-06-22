@@ -30,7 +30,7 @@ object DSPTester {
 
 // TODO: Poke vec of complex
 
-class DSPTester[+T <: ModuleOverride](c: T, verilogTester:Boolean = DSPTester.verilogTester,
+class DSPTester[+T <: ModuleOverride](val c: T, verilogTester:Boolean = DSPTester.verilogTester,
                                       var traceOn: Boolean = !DSPTester.verilogTester,
                                       var hexOn: Boolean = true, var quitOnError: Boolean = false, var base: Int = 16)
   extends Tester(c, false, base){

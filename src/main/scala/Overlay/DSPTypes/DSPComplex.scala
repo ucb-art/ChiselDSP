@@ -88,7 +88,7 @@ class ScalaComplex (var real:Double, var imag:Double){
     val bd = imag * b.imag
     val ad = real * b.imag
     val bc = imag * b.real
-    Complex(ac-bd,ad+bc)
+    Complex(ac-bd,ad+bc) 
   }
   /** Complex Conjugate **/
   def conjugate : ScalaComplex = Complex(real, -imag)
@@ -322,16 +322,33 @@ class Complex[T <: DSPQnm[T]](val real: T, val imag: T) extends ComplexBundle {
           fracGrowth: Int = Complex.opts.mulFracGrowth, use4: Boolean = Complex.opts.use4Muls): Complex[T] = {
     val fracW = getMaxFracWidth(b)
     val newFracBits = fracW + fracGrowth
-    val ac = Trim((real * b.real).pipe(mPipe),newFracBits,tType)
-    val bd = Trim((imag * b.imag).pipe(mPipe),newFracBits,tType)
-    val ad = Trim((real * b.imag).pipe(mPipe),newFracBits,tType)
-    val bc = Trim((imag * b.real).pipe(mPipe),newFracBits,tType)
-    val res = {
-      if (ofType == Wrap) Complex(ac -% bd, ad +% bc)
-      else if (ofType == Grow) Complex(ac - bd, ad + bc)
-      else {Error("Overflow type not supported for complex * "); this}
+    if(use4){
+      val ac = Trim((real * b.real).pipe(mPipe),newFracBits,tType)
+      val bd = Trim((imag * b.imag).pipe(mPipe),newFracBits,tType)
+      val ad = Trim((real * b.imag).pipe(mPipe),newFracBits,tType)
+      val bc = Trim((imag * b.real).pipe(mPipe),newFracBits,tType)
+      val res = {
+        if (ofType == Wrap) Complex(ac -% bd, ad +% bc)
+        else if (ofType == Grow) Complex(ac - bd, ad + bc)
+        else {Error("Overflow type not supported for complex * "); this}
+      }
+      res.pipe(aPipe)
     }
-    res.pipe(aPipe)
+    else{
+      // From Stephen's code
+      val c_p_d = (b.real + b.imag).pipe(aPipe)
+      val a_p_b = (real + imag).pipe(aPipe)
+      val b_m_a = (imag - real).pipe(aPipe)
+      val ac_p_ad = Trim( ( real.pipe(aPipe) * c_p_d ).pipe(mPipe) ,newFracBits,tType)
+      val ad_p_bd = Trim( ( a_p_b * b.imag.pipe(aPipe) ).pipe(mPipe) ,newFracBits,tType)
+      val bc_m_ac = Trim( ( b_m_a * b.real.pipe(aPipe) ).pipe(mPipe) ,newFracBits,tType)
+      val res = {
+        if (ofType == Wrap) Complex(ac_p_ad -% ad_p_bd, ac_p_ad +% bc_m_ac)
+        else if (ofType == Grow) Complex(ac_p_ad - ad_p_bd, ac_p_ad + bc_m_ac)
+        else {Error("Overflow type not supported for complex * "); this}
+      }
+      res.pipe(aPipe)
+    } 
   }
   def * (b: Complex[T]) : Complex[T] = this * (b,ofType = Complex.opts.overflowType)
 

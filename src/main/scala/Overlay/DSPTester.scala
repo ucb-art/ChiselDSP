@@ -52,7 +52,7 @@ class DSPTester[+T <: ModuleOverride](val c: T, verilogTester:Boolean = DSPTeste
   }
 
   // TODO: Switch to Scala writer, Makefrag + constraints should be in make vlsi (not exclusive to debug)
-  val tb = new java.io.BufferedWriter(new java.io.FileWriter("build/debug/tb.v"))
+  val tb = new java.io.BufferedWriter(new java.io.FileWriter("build/debug/ModuleTB.v"))
   val xdc = new java.io.BufferedWriter(new java.io.FileWriter("build/debug/constraints.xdc"))
   val mk = new java.io.BufferedWriter(new java.io.FileWriter("build/debug/Makefrag"))
 
@@ -221,7 +221,9 @@ class DSPTester[+T <: ModuleOverride](val c: T, verilogTester:Boolean = DSPTeste
     }
 
     if (verilogTester && data.isTopLevelIO && peek && !isDbl){
-      val id = if (res >= 0) res.bitLength.toString + "\'d" else ""
+      // Don't have 0-width inputs
+      val bitLength = if (res.bitLength == 0) 1 else res.bitLength
+      val id = if (res >= 0) bitLength.toString + "\'d" else ""
       tb write "    `expect(\"%s\",%s,%s%d,cycle)\n".format(ioName,ioName,id,res)
     }
     val resBits = if (data.isLit || (data.dir == INPUT && data.isTopLevelIO)) signed_fix(data, res) else res

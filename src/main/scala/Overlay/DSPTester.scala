@@ -63,7 +63,7 @@ class DSPTester[+T <: ModuleOverride](val c: T, verilogTester:Boolean = DSPTeste
     tb.close()
     xdc.close()
     mk.close()
-    new java.io.File("build/debug/tb.v").delete()
+    new java.io.File("build/debug/ModuleTB.v").delete()
     new java.io.File("build/debug/constraints.xdc").delete()
     new java.io.File("build/debug/Makefrag").delete()
   }
@@ -335,7 +335,9 @@ class DSPTester[+T <: ModuleOverride](val c: T, verilogTester:Boolean = DSPTeste
     if (neededWidth > node.getWidth) Error("Poke value is not in the range of the input port")
     val ioName = getIOName(node)
     if (verilogTester && node.isTopLevelIO && node.dir == INPUT){
-      val id = if (x >= 0) x.bitLength.toString + "\'d" else ""
+      // Don't have 0-width inputs
+      val bitLength = if (x.bitLength == 0) 1 else x.bitLength
+      val id = if (x >= 0) bitLength.toString + "\'d" else ""
       tb write "    %s = %s%d;\n".format(ioName,id,x)
     }
     super.poke(node,x)
